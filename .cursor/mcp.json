@@ -1,17 +1,17 @@
 {
-  "mcpServers": {
-    "laravel-boost": {
-      "command": "/Users/gitag/Library/Application Support/Herd/bin/php",
-      "args": [
-        "/Users/gitag/Desktop/booking2/artisan",
-        "boost:mcp"
-      ]
-    },
-    "herd": {
-      "command": "/Users/gitag/Library/Application Support/Herd/bin/php",
-      "args": [
-        "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
-      ]
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "${userHome}/Library/Application Support/Herd/bin/php",
+            "args": [
+                "${workspaceFolder}/artisan",
+                "boost:mcp"
+            ]
+        },
+        "herd": {
+            "command": "${userHome}/Library/Application Support/Herd/bin/php",
+            "args": [
+                "${userHome}/Library/Application Support/Herd/bin/herd-mcp.phar"
+            ]
+        }
     }
-  }
 }
