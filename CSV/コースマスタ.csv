@@ -1,0 +1,18 @@
+情報名,,コースマスタ,,,,,,,,,
+スキーマ名,,,,,,,,,,,
+エンティティ名,,cource_master,,,,,,,,,
+エンティティ説明,,コースのマスタ情報を格納,,,,,,,,,
+,,,,,,,,,,,
+No.,項目名称,カラムID,PK,FK,"ＵＮ
+制約",Null値,INDEX,データ型,桁,デフォルト値,カラム定義（説明）
+1,コースID,cource_id,〇,,,,,VARCHAR,8,,CR + 6桁数字連番
+2,作成年月日時分秒,crt_time,,,,,,TIMESTAMP,-,,
+3,更新年月日時分秒,upd_time,,,,,,TIMESTAMP,-,,
+4,コース名,cource_name,,,,,,VARCHAR,100,,
+5,StripeID,stripe_id,,〇,,,,VARCHAR,255,,
+6,利用可能数,usage_count,,,,,,SMALLINT,-,,
+7,カテゴリ,category,,,,,,VARCHAR,100,,(サンプル)ヨガ、ピラティス、東大、私大等
+8,レベル,cource_level,,,,,,VARCHAR,50,,初級、中級、上級
+9,詳細,description,,,,,,VARCHAR,500,,
+10,ステータス,status,,,,,,TINYINT,-,1,"1:有効
+9:無効"

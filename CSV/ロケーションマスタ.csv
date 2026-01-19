@@ -1,0 +1,17 @@
+情報名,,ロケーションマスタ,,,,,,,,,
+スキーマ名,,,,,,,,,,,
+エンティティ名,,location_master,,,,,,,,,
+エンティティ説明,,店舗、教室、スタジオの情報を格納,,,,,,,,,
+,,,,,,,,,,,
+No.,項目名称,カラムID,PK,FK,"ＵＮ
+制約",Null値,INDEX,データ型,桁,デフォルト値,カラム定義（説明）
+1,ロケーションID,location_id,〇,,,,,VARCHAR,6,,L + 5桁の数字連番
+2,作成年月日時分秒,crt_time,,,,,,TIMESTAMP,-,,
+3,更新年月日時分秒,upd_time,,,,,,TIMESTAMP,-,,
+4,名称,location_name,,,,,,VARCHAR,100,,
+5,住所,location_address,,,,,,VARCHAR,200,,
+6,電話番号,location_tel,,,,,,VARCHAR,20,,
+7,メール,location_mail,,,,,,VARCHAR,50,,
+8,詳細,description,,,,,,VARCHAR,500,,
+9,ステータス,status,,,,,,TINYINT,-,1,"1:有効
+9:無効"

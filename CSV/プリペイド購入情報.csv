@@ -1,0 +1,17 @@
+情報名,,プリペイド購入情報,,,,,,,,,
+スキーマ名,,,,,,,,,,,
+エンティティ名,,prepaid_purchase,,,,,,,,,
+エンティティ説明,,会員の契約情報を格納,,,,,,,,,
+,,,,,,,,,,,
+No.,項目名称,カラムID,PK,FK,"ＵＮ
+制約",Null値,INDEX,データ型,桁,デフォルト値,カラム定義（説明）
+1,プリペイド購入ID,prepaid_purchase_id,〇,,,,,VARCHAR,10,,PP + ８桁の数字連番
+2,作成年月日時分秒,crt_time,,,,,,TIMESTAMP,-,,
+3,更新年月日時分秒,upd_time,,,,,,TIMESTAMP,-,,
+4,会員ID,member_id,,〇,,,,VARCHAR,8,,
+5,プリペイドID,prepaid_master_id,,〇,,,,VARCHAR,8,,
+6,購入日,purchase_date,,,,,,DATE,-,,YYYY/MM/DD
+7,有効期限,limit_date,,,,,,DATE,-,,YYYYMMDD
+8,ステータス,status,,,,,,TINYINT,-,9,"1:有効
+8:終了
+9:無効"
