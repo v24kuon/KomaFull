@@ -1,14 +1,14 @@
 {
     "mcpServers": {
         "laravel-boost": {
-            "command": "/Users/gitag/Library/Application Support/Herd/bin/php",
+            "command": "${userHome}/Library/Application Support/Herd/bin/php",
             "args": [
-                "/Users/gitag/Desktop/booking/artisan",
+                "${workspaceFolder}/artisan",
                 "boost:mcp"
             ]
         },
         "herd": {
-            "command": "/Users/gitag/Library/Application Support/Herd/bin/php",
+            "command": "${userHome}/Library/Application Support/Herd/bin/php",
             "args": [
                 "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
             ]
