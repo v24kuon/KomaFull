@@ -10,7 +10,7 @@
         "herd": {
             "command": "${userHome}/Library/Application Support/Herd/bin/php",
             "args": [
-                "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
+                "${userHome}/Library/Application Support/Herd/bin/herd-mcp.phar"
             ]
         }
     }
