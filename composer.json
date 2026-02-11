@@ -6,7 +6,7 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.5",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1"
     },
@@ -41,10 +41,10 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "bash -c 'export PATH=\"/Users/gitag/Library/Application Support/Herd/bin:$PATH\" && php artisan serve --host=127.0.0.1 --port=8000'"
+            "php artisan serve --host=127.0.0.1 --port=8000"
         ],
         "queue:dev": [
-            "bash -c 'export PATH=\"/Users/gitag/Library/Application Support/Herd/bin:$PATH\" && php artisan queue:work --tries=1 --timeout=90 --sleep=3 --max-jobs=1000'"
+            "php artisan queue:work --tries=1 --timeout=90 --sleep=3 --max-jobs=1000"
         ],
         "test": [
             "@php artisan config:clear --ansi",

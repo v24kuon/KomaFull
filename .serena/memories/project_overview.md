@@ -1,1 +1,1 @@
-Laravel 12 web application (PHP 8.5) under `/Users/gitag/Desktop/booking2`, intended to implement a KomaFull MVP with booking, trial flows, payments, and admin operations. Tech stack: Laravel framework, PHPUnit 11, Pint, Boost MCP tooling. Database defaults to sqlite in tests.
+Laravel 12 web application (PHP 8.5) in the current project root, intended to implement a KomaFull MVP with booking, trial flows, payments, and admin operations. Tech stack: Laravel framework, PHPUnit 11, Pint, Boost MCP tooling. Database defaults to sqlite in tests.
