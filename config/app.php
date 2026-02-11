@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'asset_version' => env('ASSET_VERSION', date('Ymd_1')),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

@@ -6,7 +6,7 @@ if (! function_exists('v_asset')) {
      */
     function v_asset(string $path, ?bool $secure = null): string
     {
-        $version = env('ASSET_VERSION', date('Ymd_1'));
+        $version = config('app.asset_version');
 
         return asset($path, $secure).'?v='.$version;
     }
