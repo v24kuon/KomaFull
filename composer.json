@@ -41,10 +41,10 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "@php artisan serve --host=127.0.0.1 --port=8000"
+            "bash -c 'export PATH=\"/Users/gitag/Library/Application Support/Herd/bin:$PATH\" && php artisan serve --host=127.0.0.1 --port=8000'"
         ],
         "queue:dev": [
-            "@php artisan queue:work --tries=1 --timeout=90 --sleep=3 --max-jobs=1000"
+            "bash -c 'export PATH=\"/Users/gitag/Library/Application Support/Herd/bin:$PATH\" && php artisan queue:work --tries=1 --timeout=90 --sleep=3 --max-jobs=1000'"
         ],
         "test": [
             "@php artisan config:clear --ansi",
