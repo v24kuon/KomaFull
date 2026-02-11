@@ -1,0 +1,1 @@
+Follow Laravel way and project rules in `.cursor/rules/*`: explicit PHP types, braces on control structures, Form Requests for validation, Eloquent over raw DB where practical, no `env()` outside config, Laravel 12 structure conventions. Run Pint (`vendor/bin/pint --dirty`) after edits. Use Japanese for commit/PR messages per project rules.

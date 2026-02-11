@@ -1,0 +1,1 @@
+After substantive changes: run related PHPUnit tests, run `vendor/bin/pint --dirty`, check lints for edited files, summarize changed files and remaining risks. Ask user before creating commits/pushes.
