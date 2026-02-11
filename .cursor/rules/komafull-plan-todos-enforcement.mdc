@@ -15,8 +15,8 @@ alwaysApply: true
 - 勝手な推測でプランにない作業（マイグレーションの実行やファイルの削除など）を追加することは厳禁である。
 - 既存の To-do を再作成しない。
 - 作業開始時は先頭の To-do から `in_progress` に更新して着手する。
-- To-do は順序を守って進め、完了したら `completed` に更新する。
+- To-do は順序を守って進め、完了したらプランファイル（`@/.cursor/plans/komafull_mvp_plan_25de4b13.plan.md`）のステータスを必ず `completed` に更新する。
 
 補足:
-- プランファイル本体は編集しない。
+- プランファイル本体は、To-doのステータス更新（`status: in_progress` や `status: completed`）以外の目的で編集しない。
 - もし作業中にプランとの不整合や疑問が生じた場合は、独断で進めず、必ず `AskQuestion` ツール等で確認すること。
