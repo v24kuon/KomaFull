@@ -22,3 +22,6 @@ Provide a quick reference for Stripe test card numbers:
 6. Provide link to full testing documentation: https://docs.stripe.com/testing.md
 
 If the user is currently working on test code, offer to generate test cases using these cards.
+
+Project notes:
+- This repository is Laravel 12 and uses Stripe via Cashier; these cards are for **Stripe test mode**.

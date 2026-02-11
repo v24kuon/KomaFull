@@ -13,13 +13,18 @@
 ## 実行手順（対話なし）
 
 1. 未コミット差分を確認し、コミットメッセージの内容を検討する（例：`git diff` や `git diff --cached`）
-2. 変更のステージング（`git add -A`）
-3. コミット（環境変数または引数でメッセージを渡す）
+2. （推奨）品質チェック（Laravel / 脱Node前提）
+   - 変更にPHPが含まれる場合: `vendor/bin/pint --dirty`
+   - 変更に影響するテストを実行: `php artisan test --compact`（最小スコープ→必要なら全体）
+3. 変更のステージング（`git add -A`）
+4. コミット（環境変数または引数でメッセージを渡す）
 
 ### A) 安全な一括実行（メッセージ引数版）
 
 ```bash
 MSG="<Prefix>: <サマリ（命令形/簡潔に）>" \
+vendor/bin/pint --dirty && \
+php artisan test --compact && \
 git add -A && \
 git commit -m "$MSG"
 ```
@@ -28,8 +33,9 @@ git commit -m "$MSG"
 
 ```bash
 MSG="fix: 不要なデバッグログ出力を削除" \
-git add -A && \
-git commit -m "$MSG"
+vendor/bin/pint --dirty && \
+php artisan test --compact && \
+git add -A && git commit -m "$MSG"
 ```
 
 ### B) ステップ実行（読みやすさ重視）
@@ -39,14 +45,19 @@ git commit -m "$MSG"
 git status
 git diff
 
-# 2) 変更をステージング
+# 2) （推奨）品質チェック
+vendor/bin/pint --dirty
+php artisan test --compact
+
+# 3) 変更をステージング
 git add -A
 
-# 3) コミット（メッセージを編集）
+# 4) コミット（メッセージを編集）
 git commit -m "<Prefix>: <サマリ（命令形/簡潔に）>"
 ```
 
 ## ノート
 
 - コミットメッセージのフォーマットやメッセージ生成の原則は、`.cursor/rules/commit-message-format.mdc` のルールに従ってください。
+- 本プロジェクトは **脱Node/Vite** 方針のため、`npm`/`vite` を前提としたチェックはここに入れません。
 - ブランチ戦略（例：main 直コミット禁止、作業用ブランチ運用）やリモートへのプッシュ (`git push`) は、このコマンドの対象外です。必要に応じて、プロジェクトごとの README / CONTRIBUTING / 別コマンドで定義してください。

@@ -10,14 +10,17 @@ You will analyze recently modified code and apply refinements that:
 
 1. **Preserve Functionality**: Never change what the code does - only how it does it. All original features, outputs, and behaviors must remain intact.
 
-2. **Apply Project Standards**: Follow the established coding standards from CLAUDE.md including:
+2. **Apply Project Standards (Laravel / PHP)**: Follow established Laravel conventions and project rules, including:
 
-   - Use ES modules with proper import sorting and extensions
-   - Prefer `function` keyword over arrow functions
-   - Use explicit return type annotations for top-level functions
-   - Follow proper React component patterns with explicit Props types
-   - Use proper error handling patterns (avoid try/catch when possible)
-   - Maintain consistent naming conventions
+   - Use explicit parameter and return types for PHP methods/functions
+   - Prefer constructor property promotion where appropriate
+   - Keep controllers thin; move business logic to services/actions/jobs
+   - Prefer Form Request classes for validation (avoid ad-hoc validation scattered in controllers)
+   - Prefer Eloquent relationships/scopes; avoid `DB::` unless truly necessary
+   - Avoid `env()` outside `config/*.php`
+   - Use Laravel Pint for formatting when touching PHP files
+   - Keep naming consistent and intention-revealing
+   - This project is moving away from Node/Vite builds; do not introduce bundler-dependent refactors
 
 3. **Enhance Clarity**: Simplify code structure by:
 

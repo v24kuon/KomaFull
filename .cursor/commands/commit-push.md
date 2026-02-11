@@ -13,7 +13,9 @@ main/master への直接プッシュ禁止や、コミット前に実行する�
 ## 実行手順（対話なし）
 
 1. ブランチ確認（main/master 直プッシュ防止）
-2. 必要に応じて品質チェック（lint / test / build など）を実行
+2. 必要に応じて品質チェック（Laravel / 脱Node前提）を実行
+   - 変更にPHPが含まれる場合: `vendor/bin/pint --dirty`
+   - テスト: `php artisan test --compact`（最小スコープ→必要なら全体）
 3. 変更のステージング（`git add -A`）
 4. コミット（引数または環境変数のメッセージ使用）
 5. プッシュ（`git push -u origin <current-branch>`）
@@ -29,9 +31,9 @@ if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then \
   echo "⚠️ main/master への直接プッシュは禁止です"; exit 1; \
 fi
 
-# 任意の品質チェック（必要な場合のみ）
-# 例:
-# ./scripts/lint.sh && ./scripts/test.sh && ./scripts/build.sh || exit 1
+# 任意の品質チェック（必要な場合のみ / Laravel）
+# vendor/bin/pint --dirty || exit 1
+# php artisan test --compact || exit 1
 
 git add -A && \
 git commit -m "$MSG" && \
@@ -65,7 +67,8 @@ fi
 # 2) 任意のローカル品質チェック（必要に応じて追加）
 # 例:
 # echo "品質チェック実行中..."
-# ./scripts/lint.sh && ./scripts/test.sh && ./scripts/build.sh || exit 1
+# vendor/bin/pint --dirty || exit 1
+# php artisan test --compact || exit 1
 
 # 3) 変更をステージング
 git add -A
@@ -81,3 +84,4 @@ git push -u origin "$BRANCH"
 
 - コミットメッセージのフォーマットやメッセージ生成の原則は、`.cursor/rules/commit-message-format.mdc` などの規約に従ってください。
 - 先に `git status` や `git diff` で差分を確認してからの実行を推奨します。
+- 本プロジェクトは **脱Node/Vite** 方針のため、`npm`/`vite` を前提としたチェックはこのテンプレートに含めません。
