@@ -1,0 +1,1 @@
+Common commands: `php artisan test --compact`, `php artisan test --compact tests/Feature/...`, `php artisan test --compact --filter=...`, `vendor/bin/pint --dirty`, `php artisan serve`, `php artisan migrate`, `php artisan route:list`, `git status`, `git diff`. On Darwin shell utilities include `cd`, `pwd`, `ls`, `rg`, `git`.

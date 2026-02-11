@@ -1,0 +1,1 @@
+User directive (must persist): Strictly follow TODOs in `@/.cursor/plans/komafull_mvp_plan_25de4b13.plan.md`. Do not recreate TODOs. Mark the first TODO as in_progress and continue sequentially until all TODOs are completed. Do not edit the plan file itself.
