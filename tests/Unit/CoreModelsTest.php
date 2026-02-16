@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Models\LessonSession;
 use App\Models\MemberProfile;
+use App\Models\Reservation;
+use App\Models\ReservationManagement;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -92,6 +94,84 @@ class CoreModelsTest extends TestCase
 
         // Then: all expected statuses are available
         $this->assertSame(['active', 'inactive'], $statuses);
+    }
+
+    public function test_reservation_has_user_relation(): void
+    {
+        // Given: a reservation model instance
+        $reservation = new Reservation;
+
+        // When: user relation is resolved
+        $relation = $reservation->user();
+
+        // Then: relation type and key mapping are correct
+        $this->assertInstanceOf(BelongsTo::class, $relation);
+        $this->assertSame('user_id', $relation->getForeignKeyName());
+    }
+
+    public function test_reservation_has_lesson_session_relation(): void
+    {
+        // Given: a reservation model instance
+        $reservation = new Reservation;
+
+        // When: lessonSession relation is resolved
+        $relation = $reservation->lessonSession();
+
+        // Then: relation type and key mapping are correct
+        $this->assertInstanceOf(BelongsTo::class, $relation);
+        $this->assertSame('lesson_session_id', $relation->getForeignKeyName());
+    }
+
+    public function test_reservation_has_canceled_at_datetime_cast(): void
+    {
+        // Given: a reservation model instance
+        $reservation = new Reservation;
+
+        // When: cast definitions are inspected
+        $casts = $reservation->getCasts();
+
+        // Then: canceled_at is cast as datetime
+        $this->assertArrayHasKey('canceled_at', $casts);
+        $this->assertSame('datetime', $casts['canceled_at']);
+    }
+
+    public function test_reservation_status_constants_are_defined(): void
+    {
+        // Given: reservation status constants
+        // When: constants are referenced
+        $statuses = [
+            Reservation::STATUS_CONFIRMED,
+            Reservation::STATUS_CANCELED,
+        ];
+
+        // Then: all expected statuses are available
+        $this->assertSame(['confirmed', 'canceled'], $statuses);
+    }
+
+    public function test_reservation_seat_bucket_constants_are_defined(): void
+    {
+        // Given: reservation seat bucket constants
+        // When: constants are referenced
+        $buckets = [
+            Reservation::SEAT_BUCKET_TRIAL,
+            Reservation::SEAT_BUCKET_NORMAL,
+        ];
+
+        // Then: all expected buckets are available
+        $this->assertSame(['trial', 'normal'], $buckets);
+    }
+
+    public function test_reservation_management_has_lesson_session_relation(): void
+    {
+        // Given: a reservation management model instance
+        $management = new ReservationManagement;
+
+        // When: lessonSession relation is resolved
+        $relation = $management->lessonSession();
+
+        // Then: relation type and key mapping are correct
+        $this->assertInstanceOf(BelongsTo::class, $relation);
+        $this->assertSame('lesson_session_id', $relation->getForeignKeyName());
     }
 
     public function test_user_is_administrator_returns_false_when_role_is_not_admin(): void
