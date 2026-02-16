@@ -13,7 +13,10 @@ return new class extends Migration
     {
         Schema::create('trial_applications', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->index();
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnUpdate()
+                ->restrictOnDelete();
             $table->foreignId('lesson_session_id')
                 ->constrained('lesson_sessions')
                 ->cascadeOnUpdate()
