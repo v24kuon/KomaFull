@@ -19,6 +19,12 @@ class CoursePlan extends Model
 
     public const STATUS_INACTIVE = 'inactive';
 
+    public const LEVEL_BEGINNER = 'beginner';
+
+    public const LEVEL_STANDARD = 'standard';
+
+    public const LEVEL_ADVANCED = 'advanced';
+
     /**
      * The attributes that are mass assignable.
      *

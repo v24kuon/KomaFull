@@ -32,12 +32,12 @@ class CourseEntitlementFactory extends Factory
     }
 
     /**
-     * Mark the entitlement as partially consumed.
+     * Mark the entitlement as partially consumed (approximately half used).
      */
     public function partiallyConsumed(): static
     {
         return $this->state(fn (array $attributes): array => [
-            'used_uses' => min(1, (int) ($attributes['granted_uses'] ?? 1)),
+            'used_uses' => (int) floor(($attributes['granted_uses'] ?? 2) / 2),
         ]);
     }
 }

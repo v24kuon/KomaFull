@@ -25,7 +25,11 @@ class CoursePlanFactory extends Factory
             'stripe_price_id' => null,
             'usage_count' => $this->faker->numberBetween(1, 12),
             'allocation_type' => CoursePlan::ALLOCATION_TYPE_TOTAL,
-            'level' => $this->faker->randomElement(['beginner', 'standard', 'advanced']),
+            'level' => $this->faker->randomElement([
+                CoursePlan::LEVEL_BEGINNER,
+                CoursePlan::LEVEL_STANDARD,
+                CoursePlan::LEVEL_ADVANCED,
+            ]),
             'description' => $this->faker->sentence(),
             'status' => CoursePlan::STATUS_ACTIVE,
         ];
