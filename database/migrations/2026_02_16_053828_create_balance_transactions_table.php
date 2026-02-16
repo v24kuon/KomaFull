@@ -34,6 +34,7 @@ return new class extends Migration
             $table->string('stripe_reference_id')->nullable();
             $table->timestamp('occurred_at')->index();
             $table->timestamp('expires_at')->nullable();
+            $table->index(['user_id', 'unit', 'expires_at'], 'balance_transactions_user_unit_expires_index');
             $table->timestamps();
         });
     }

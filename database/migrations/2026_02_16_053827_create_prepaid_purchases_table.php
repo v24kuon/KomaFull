@@ -22,7 +22,7 @@ return new class extends Migration
                 ->constrained('prepaid_products')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
-            $table->timestamp('purchased_at');
+            $table->timestamp('purchased_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->string('status')
                 ->default('pending_payment')
