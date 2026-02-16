@@ -76,4 +76,20 @@ class ContentSecurityPolicyReportOnlyTest extends TestCase
         // Then: report-only header is not attached
         $response->assertHeaderMissing('Content-Security-Policy-Report-Only');
     }
+
+    /**
+     * Report-Only header is skipped when policy contains only whitespace.
+     */
+    public function test_report_only_header_is_not_attached_when_policy_is_whitespace_only(): void
+    {
+        // Given: report-only policy is whitespace only and a test route is available with web middleware
+        Config::set('security.csp.report_only_policy', '   ');
+        Route::middleware(['web'])->get('/csp-test', fn () => response('ok'));
+
+        // When: a web response is returned
+        $response = $this->get('/csp-test');
+
+        // Then: report-only header is not attached
+        $response->assertHeaderMissing('Content-Security-Policy-Report-Only');
+    }
 }

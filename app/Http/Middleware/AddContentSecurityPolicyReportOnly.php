@@ -26,7 +26,7 @@ class AddContentSecurityPolicyReportOnly
             "default-src 'self'; script-src 'self'; style-src 'self';"
         );
 
-        if ($policy !== '') {
+        if (trim($policy) !== '') {
             $response->headers->set('Content-Security-Policy-Report-Only', $policy);
         }
 
