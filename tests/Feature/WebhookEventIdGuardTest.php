@@ -49,6 +49,34 @@ class WebhookEventIdGuardTest extends TestCase
         $this->assertDatabaseCount('webhook_logs', 1);
     }
 
+    public function test_it_rejects_same_event_id_with_different_provider(): void
+    {
+        // Given: the event_id is already recorded with stripe provider
+        $guard = app(WebhookEventIdGuard::class);
+        $eventId = 'evt_provider_conflict_001';
+        $payload = ['id' => $eventId, 'type' => 'checkout.session.completed'];
+        $guard->recordReceived($eventId, 'stripe', $payload);
+
+        // When: the same event_id is recorded with a different provider
+        try {
+            $guard->recordReceived($eventId, 'stripe_connect', $payload);
+            $this->fail('Expected InvalidArgumentException was not thrown.');
+        } catch (InvalidArgumentException $exception) {
+            // Then: the provider mismatch is rejected and original record remains unchanged
+            $this->assertSame(
+                "event_id 'evt_provider_conflict_001' is already registered with provider 'stripe'.",
+                $exception->getMessage()
+            );
+        }
+
+        $this->assertDatabaseCount('webhook_logs', 1);
+        $this->assertDatabaseHas('webhook_logs', [
+            'event_id' => $eventId,
+            'provider' => 'stripe',
+            'status' => WebhookLog::STATUS_RECEIVED,
+        ]);
+    }
+
     public function test_it_claims_received_event_only_once(): void
     {
         // Given: a received webhook event

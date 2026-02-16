@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\WebhookLog;
-use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class WebhookEventIdGuard
@@ -24,26 +23,28 @@ class WebhookEventIdGuard
             throw new InvalidArgumentException('provider must not be empty.');
         }
 
-        $encodedPayload = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-        if ($encodedPayload === false) {
+        if (json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) === false) {
             throw new InvalidArgumentException('payload must be JSON serializable.');
         }
 
-        $timestamp = now();
+        $webhookLog = WebhookLog::query()->createOrFirst(
+            ['event_id' => $normalizedEventId],
+            [
+                'provider' => $normalizedProvider,
+                'payload' => $payload,
+                'status' => WebhookLog::STATUS_RECEIVED,
+            ]
+        );
 
-        DB::table('webhook_logs')->insertOrIgnore([
-            'event_id' => $normalizedEventId,
-            'provider' => $normalizedProvider,
-            'payload' => $encodedPayload,
-            'status' => WebhookLog::STATUS_RECEIVED,
-            'created_at' => $timestamp,
-            'updated_at' => $timestamp,
-        ]);
+        if (! $webhookLog->wasRecentlyCreated && $webhookLog->provider !== $normalizedProvider) {
+            throw new InvalidArgumentException(sprintf(
+                "event_id '%s' is already registered with provider '%s'.",
+                $normalizedEventId,
+                $webhookLog->provider
+            ));
+        }
 
-        return WebhookLog::query()
-            ->where('event_id', $normalizedEventId)
-            ->firstOrFail();
+        return $webhookLog;
     }
 
     /**
