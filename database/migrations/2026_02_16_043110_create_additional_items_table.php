@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('additional_items', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            $table->string('additional_item_type');
+            $table->string('additional_item_type')->comment('additional_item_types: text, number, select, checkbox');
             $table->string('label_name');
-            $table->string('input_type');
+            $table->string('input_type')->comment('input_types: text, number, select, checkbox');
             $table->unsignedInteger('digits')->nullable();
-            $table->string('status')->default('active');
+            $table->string('status')->default('active')->comment('statuses: active, inactive');
             $table->timestamps();
         });
     }
