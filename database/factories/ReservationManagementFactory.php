@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\LessonSession;
 use App\Models\ReservationManagement;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -20,7 +21,7 @@ class ReservationManagementFactory extends Factory
     public function definition(): array
     {
         return [
-            'lesson_session_id' => 1,
+            'lesson_session_id' => LessonSession::factory(),
             'reserved_count' => 0,
             'reserved_trial_count' => 0,
         ];

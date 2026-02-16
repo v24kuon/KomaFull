@@ -161,6 +161,37 @@ class CoreModelsTest extends TestCase
         $this->assertSame(['trial', 'normal'], $buckets);
     }
 
+    public function test_reservation_payment_method_constants_are_defined(): void
+    {
+        // Given: reservation payment method constants
+        // When: constants are referenced
+        $methods = [
+            Reservation::PAYMENT_METHOD_SUBSCRIPTION,
+            Reservation::PAYMENT_METHOD_TICKETS,
+            Reservation::PAYMENT_METHOD_POINTS,
+            Reservation::PAYMENT_METHOD_TRIAL_CARD,
+            Reservation::PAYMENT_METHOD_TRIAL_ONSITE,
+        ];
+
+        // Then: all expected payment methods are available
+        $this->assertSame(['subscription', 'tickets', 'points', 'trial_card', 'trial_onsite'], $methods);
+    }
+
+    public function test_reservation_has_cost_integer_casts(): void
+    {
+        // Given: a reservation model instance
+        $reservation = new Reservation;
+
+        // When: cast definitions are inspected
+        $casts = $reservation->getCasts();
+
+        // Then: cost fields are cast as integers
+        $this->assertArrayHasKey('ticket_cost', $casts);
+        $this->assertSame('integer', $casts['ticket_cost']);
+        $this->assertArrayHasKey('point_cost', $casts);
+        $this->assertSame('integer', $casts['point_cost']);
+    }
+
     public function test_reservation_management_has_lesson_session_relation(): void
     {
         // Given: a reservation management model instance

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\LessonSession;
 use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,7 +24,7 @@ class ReservationFactory extends Factory
         return [
             'code' => 'R'.$this->faker->unique()->numerify('######'),
             'user_id' => User::factory(),
-            'lesson_session_id' => 1,
+            'lesson_session_id' => LessonSession::factory(),
             'seat_bucket' => Reservation::SEAT_BUCKET_NORMAL,
             'payment_method' => Reservation::PAYMENT_METHOD_TICKETS,
             'status' => Reservation::STATUS_CONFIRMED,
@@ -49,6 +50,9 @@ class ReservationFactory extends Factory
         ]);
     }
 
+    /**
+     * Create a canceled reservation.
+     */
     public function canceled(): static
     {
         return $this->state(fn (): array => [
@@ -58,6 +62,9 @@ class ReservationFactory extends Factory
         ]);
     }
 
+    /**
+     * Create a trial reservation.
+     */
     public function trial(): static
     {
         return $this->state(fn (): array => [
