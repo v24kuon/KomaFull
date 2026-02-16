@@ -205,6 +205,32 @@ class CoreModelsTest extends TestCase
         $this->assertSame('lesson_session_id', $relation->getForeignKeyName());
     }
 
+    public function test_reservation_management_has_reserved_count_integer_cast(): void
+    {
+        // Given: a reservation management model instance
+        $management = new ReservationManagement;
+
+        // When: casts are retrieved
+        $casts = $management->getCasts();
+
+        // Then: reserved_count has integer cast
+        $this->assertArrayHasKey('reserved_count', $casts);
+        $this->assertSame('integer', $casts['reserved_count']);
+    }
+
+    public function test_reservation_management_has_reserved_trial_count_integer_cast(): void
+    {
+        // Given: a reservation management model instance
+        $management = new ReservationManagement;
+
+        // When: casts are retrieved
+        $casts = $management->getCasts();
+
+        // Then: reserved_trial_count has integer cast
+        $this->assertArrayHasKey('reserved_trial_count', $casts);
+        $this->assertSame('integer', $casts['reserved_trial_count']);
+    }
+
     public function test_user_is_administrator_returns_false_when_role_is_not_admin(): void
     {
         // Given: a user model with no role assigned
