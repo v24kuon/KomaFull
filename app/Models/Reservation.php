@@ -72,8 +72,8 @@ class Reservation extends Model
         return $this->belongsTo(LessonSession::class);
     }
 
-    /**
-     * TODO(PH2-3): CourseEntitlement モデル実装後に belongsTo リレーションを追加
-     * - courseEntitlement(): BelongsTo<CourseEntitlement>
-     */
+    public function courseEntitlement(): BelongsTo
+    {
+        return $this->belongsTo(CourseEntitlement::class);
+    }
 }
