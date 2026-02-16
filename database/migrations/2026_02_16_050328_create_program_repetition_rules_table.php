@@ -29,7 +29,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('day_of_week')->nullable();
             $table->unsignedTinyInteger('week_of_month')->nullable();
             $table->date('start_date');
-            $table->date('end_date');
+            $table->date('end_date')->nullable();
             $table->time('start_time');
             $table->unsignedInteger('capacity');
             $table->unsignedInteger('trial_capacity');

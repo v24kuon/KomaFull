@@ -27,6 +27,7 @@ return new class extends Migration
             $table->unsignedBigInteger('course_entitlement_id')->nullable()->index();
             $table->timestamp('canceled_at')->nullable();
             $table->text('cancel_reason')->nullable();
+            $table->index(['user_id', 'lesson_session_id']);
             $table->timestamps();
         });
     }

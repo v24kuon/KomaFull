@@ -26,7 +26,7 @@ return new class extends Migration
                 ->constrained('staffs')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
-            $table->dateTime('starts_at');
+            $table->dateTime('starts_at')->index();
             $table->unsignedInteger('capacity');
             $table->unsignedInteger('trial_capacity');
             $table->string('status')->default('active');
