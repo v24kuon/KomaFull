@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class ContentSecurityPolicyReportOnlyTest extends TestCase
@@ -11,9 +13,11 @@ class ContentSecurityPolicyReportOnlyTest extends TestCase
      */
     public function test_report_only_header_is_attached_to_web_response(): void
     {
-        // Given: the root page is requested
+        // Given: a test route is available with web middleware
+        Route::middleware(['web'])->get('/csp-test', fn () => response('ok'));
+
         // When: a web response is returned
-        $response = $this->get('/');
+        $response = $this->get('/csp-test');
 
         // Then: CSP Report-Only header is attached
         $response->assertOk();
@@ -25,9 +29,11 @@ class ContentSecurityPolicyReportOnlyTest extends TestCase
      */
     public function test_report_only_policy_is_non_enforcing_and_disallows_unsafe_directives(): void
     {
-        // Given: the root page is requested
+        // Given: a test route is available with web middleware
+        Route::middleware(['web'])->get('/csp-test', fn () => response('ok'));
+
         // When: a web response is returned
-        $response = $this->get('/');
+        $response = $this->get('/csp-test');
 
         // Then: enforcing CSP header is not attached
         $response->assertHeaderMissing('Content-Security-Policy');
@@ -44,11 +50,12 @@ class ContentSecurityPolicyReportOnlyTest extends TestCase
      */
     public function test_report_only_header_is_not_attached_when_disabled(): void
     {
-        // Given: report-only mode is disabled
-        config(['security.csp.report_only_enabled' => false]);
+        // Given: report-only mode is disabled and a test route is available with web middleware
+        Config::set('security.csp.report_only_enabled', false);
+        Route::middleware(['web'])->get('/csp-test', fn () => response('ok'));
 
         // When: a web response is returned
-        $response = $this->get('/');
+        $response = $this->get('/csp-test');
 
         // Then: report-only header is not attached
         $response->assertHeaderMissing('Content-Security-Policy-Report-Only');
@@ -59,11 +66,12 @@ class ContentSecurityPolicyReportOnlyTest extends TestCase
      */
     public function test_report_only_header_is_not_attached_when_policy_is_empty(): void
     {
-        // Given: report-only policy is empty
-        config(['security.csp.report_only_policy' => '']);
+        // Given: report-only policy is empty and a test route is available with web middleware
+        Config::set('security.csp.report_only_policy', '');
+        Route::middleware(['web'])->get('/csp-test', fn () => response('ok'));
 
         // When: a web response is returned
-        $response = $this->get('/');
+        $response = $this->get('/csp-test');
 
         // Then: report-only header is not attached
         $response->assertHeaderMissing('Content-Security-Policy-Report-Only');
