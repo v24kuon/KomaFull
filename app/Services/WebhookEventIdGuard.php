@@ -9,6 +9,12 @@ class WebhookEventIdGuard
 {
     /**
      * Record a webhook event only once by event_id.
+     *
+     * @param string $eventId Webhook イベントの一意識別子
+     * @param string $provider Webhook プロバイダー名
+     * @param array<string, mixed> $payload Webhook ペイロード
+     * @return WebhookLog
+     * @throws InvalidArgumentException event_id/provider が空、payload がJSON変換不可、またはprovider不一致の場合
      */
     public function recordReceived(string $eventId, string $provider, array $payload): WebhookLog
     {
