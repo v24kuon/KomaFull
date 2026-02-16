@@ -64,6 +64,36 @@ class CoreModelsTest extends TestCase
         $this->assertSame(['provisional', 'active', 'withdrawn'], $statuses);
     }
 
+    public function test_member_profile_has_date_and_datetime_casts(): void
+    {
+        // Given: a member profile model instance
+        $profile = new MemberProfile;
+
+        // When: cast definitions are inspected
+        $casts = $profile->getCasts();
+
+        // Then: date and datetime casts are properly defined
+        $this->assertArrayHasKey('birth_date', $casts);
+        $this->assertSame('date', $casts['birth_date']);
+        $this->assertArrayHasKey('activated_at', $casts);
+        $this->assertSame('datetime', $casts['activated_at']);
+        $this->assertArrayHasKey('withdrawn_at', $casts);
+        $this->assertSame('datetime', $casts['withdrawn_at']);
+    }
+
+    public function test_lesson_session_status_constants_are_defined(): void
+    {
+        // Given: lesson session status constants
+        // When: constants are referenced
+        $statuses = [
+            LessonSession::STATUS_ACTIVE,
+            LessonSession::STATUS_INACTIVE,
+        ];
+
+        // Then: all expected statuses are available
+        $this->assertSame(['active', 'inactive'], $statuses);
+    }
+
     public function test_user_is_administrator_returns_false_when_role_is_not_admin(): void
     {
         // Given: a user model with no role assigned

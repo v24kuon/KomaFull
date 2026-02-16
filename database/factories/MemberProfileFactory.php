@@ -30,4 +30,20 @@ class MemberProfileFactory extends Factory
             'withdrawn_at' => null,
         ];
     }
+
+    public function active(): static
+    {
+        return $this->state(fn (): array => [
+            'member_status' => MemberProfile::STATUS_ACTIVE,
+            'activated_at' => now(),
+        ]);
+    }
+
+    public function withdrawn(): static
+    {
+        return $this->state(fn (): array => [
+            'member_status' => MemberProfile::STATUS_WITHDRAWN,
+            'withdrawn_at' => now(),
+        ]);
+    }
 }

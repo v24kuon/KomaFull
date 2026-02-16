@@ -31,6 +31,13 @@ class LessonSessionFactory extends Factory
         ];
     }
 
+    /**
+     * Set specific relation IDs for testing.
+     *
+     * @param  int  $programId  The program ID to assign
+     * @param  int  $locationId  The location ID to assign
+     * @param  int  $staffId  The staff ID to assign
+     */
     public function forRelationIds(int $programId, int $locationId, int $staffId): static
     {
         return $this->state(fn (): array => [
