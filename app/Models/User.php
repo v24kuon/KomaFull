@@ -26,8 +26,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
-        'is_admin',
     ];
 
     /**
@@ -50,7 +48,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_admin' => 'boolean',
         ];
     }
 
@@ -61,7 +58,6 @@ class User extends Authenticatable
 
     public function isAdministrator(): bool
     {
-        return (bool) $this->getAttribute('is_admin')
-            || $this->getAttribute('role') === self::ROLE_ADMIN;
+        return $this->getAttribute('role') === self::ROLE_ADMIN;
     }
 }

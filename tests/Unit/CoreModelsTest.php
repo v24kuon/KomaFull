@@ -75,4 +75,30 @@ class CoreModelsTest extends TestCase
         // Then: user is treated as non-admin
         $this->assertFalse($isAdministrator);
     }
+
+    public function test_user_is_administrator_returns_true_when_role_is_admin(): void
+    {
+        // Given: a user model with admin role
+        $user = new User;
+        $user->setAttribute('role', User::ROLE_ADMIN);
+
+        // When: administrator check is executed
+        $isAdministrator = $user->isAdministrator();
+
+        // Then: user is treated as admin
+        $this->assertTrue($isAdministrator);
+    }
+
+    public function test_user_is_administrator_does_not_use_is_admin_flag_directly(): void
+    {
+        // Given: a user model with only is_admin set
+        $user = new User;
+        $user->setAttribute('is_admin', true);
+
+        // When: administrator check is executed
+        $isAdministrator = $user->isAdministrator();
+
+        // Then: user is treated as non-admin without role=admin
+        $this->assertFalse($isAdministrator);
+    }
 }

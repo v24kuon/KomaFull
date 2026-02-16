@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MemberProfile extends Model
 {
+    /** @use HasFactory<\Database\Factories\MemberProfileFactory> */
+    use HasFactory;
+
     public const STATUS_PROVISIONAL = 'provisional';
 
     public const STATUS_ACTIVE = 'active';
