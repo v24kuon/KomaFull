@@ -31,6 +31,9 @@ class MemberProfileFactory extends Factory
         ];
     }
 
+    /**
+     * Mark the profile as active.
+     */
     public function active(): static
     {
         return $this->state(fn (): array => [
@@ -39,10 +42,14 @@ class MemberProfileFactory extends Factory
         ]);
     }
 
+    /**
+     * Mark the profile as withdrawn.
+     */
     public function withdrawn(): static
     {
-        return $this->state(fn (): array => [
+        return $this->state(fn (array $attributes): array => [
             'member_status' => MemberProfile::STATUS_WITHDRAWN,
+            'activated_at' => $attributes['activated_at'] ?? now()->subDay(),
             'withdrawn_at' => now(),
         ]);
     }
