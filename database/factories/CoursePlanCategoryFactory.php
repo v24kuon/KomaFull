@@ -24,7 +24,7 @@ class CoursePlanCategoryFactory extends Factory
     {
         return [
             'course_plan_id' => CoursePlan::factory(),
-            'category_id' => $this->resolveCategoryId(),
+            'category_id' => fn (): int => $this->resolveCategoryId(),
         ];
     }
 

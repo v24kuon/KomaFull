@@ -24,7 +24,7 @@ class CourseEntitlementItemFactory extends Factory
     {
         return [
             'course_entitlement_id' => CourseEntitlement::factory(),
-            'category_id' => $this->resolveCategoryId(),
+            'category_id' => fn (): int => $this->resolveCategoryId(),
             'granted_uses' => $this->faker->numberBetween(1, 12),
             'used_uses' => 0,
         ];

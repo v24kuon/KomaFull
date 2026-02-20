@@ -53,11 +53,21 @@ class CoursePlan extends Model
         ];
     }
 
+    /**
+     * Get the course plan categories (plan–category pivot).
+     *
+     * @return HasMany<CoursePlanCategory>
+     */
     public function categories(): HasMany
     {
         return $this->hasMany(CoursePlanCategory::class);
     }
 
+    /**
+     * Get the course entitlements (granted usage per period).
+     *
+     * @return HasMany<CourseEntitlement>
+     */
     public function entitlements(): HasMany
     {
         return $this->hasMany(CourseEntitlement::class);
