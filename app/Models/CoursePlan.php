@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class CoursePlan extends Model
+{
+    /** @use HasFactory<\Database\Factories\CoursePlanFactory> */
+    use HasFactory;
+
+    public const ALLOCATION_TYPE_TOTAL = 'total';
+
+    public const ALLOCATION_TYPE_PER_CATEGORY = 'per_category';
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_INACTIVE = 'inactive';
+
+    public const LEVEL_BEGINNER = 'beginner';
+
+    public const LEVEL_STANDARD = 'standard';
+
+    public const LEVEL_ADVANCED = 'advanced';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'code',
+        'name',
+        'stripe_price_id',
+        'usage_count',
+        'allocation_type',
+        'level',
+        'description',
+        'status',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'usage_count' => 'integer',
+        ];
+    }
+
+    /**
+     * Get the course plan categories (plan–category pivot).
+     *
+     * @return HasMany<CoursePlanCategory>
+     */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(CoursePlanCategory::class);
+    }
+
+    /**
+     * Get the course entitlements (granted usage per period).
+     *
+     * @return HasMany<CourseEntitlement>
+     */
+    public function entitlements(): HasMany
+    {
+        return $this->hasMany(CourseEntitlement::class);
+    }
+}
