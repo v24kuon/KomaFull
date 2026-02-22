@@ -40,11 +40,8 @@ class CoreModelsTest extends TestCase
         // Given: a user model instance
         $user = new User;
 
-        // When: checking implemented authentication contract
-        $implementsContract = $user instanceof MustVerifyEmail;
-
         // Then: user model supports email verification workflow
-        $this->assertTrue($implementsContract);
+        $this->assertInstanceOf(MustVerifyEmail::class, $user);
     }
 
     public function test_member_profile_belongs_to_user(): void
