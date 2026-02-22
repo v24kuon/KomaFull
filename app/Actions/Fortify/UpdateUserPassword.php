@@ -13,7 +13,7 @@ class UpdateUserPassword implements UpdatesUserPasswords
     /**
      * Validate and update the user's password.
      *
-     * @param  array<string, string>  $input
+     * @param  array{current_password: string, password: string, password_confirmation: string}  $input
      */
     public function update(User $user, array $input): void
     {
