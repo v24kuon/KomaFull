@@ -12,3 +12,9 @@ alwaysApply: false
 - 認証リンク再送 `POST /email/verification-notification` 後に `status=verification-link-sent` がセットされること
 - ゲストが `GET /email/verify` にアクセスするとログイン画面へリダイレクトされること
 - 認証済みユーザーが `GET /email/verify` にアクセスするとホームへリダイレクトされること
+- 認証済みユーザーが `verification.verify` の署名付きURLを再クリックした場合の挙動（プロフィール等の副次処理が重複しないこと）
+- 認証フロー内のイベントリスナーが例外を投げても、メール認証自体は完了すること（try-catch で握る設計）
+
+## 運用
+
+- 蓄積のトリガー・分類・追記形式・RACI は `.cursor/rules/review-feedback-prevention.mdc` の「4) 蓄積運用」に従う。
