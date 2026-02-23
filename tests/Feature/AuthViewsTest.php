@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\MemberProfile;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -344,5 +345,69 @@ class AuthViewsTest extends TestCase
         $response->assertRedirect('/?verified=1');
         $user->refresh();
         $this->assertTrue($user->hasVerifiedEmail());
+    }
+
+    /**
+     * TC-N-15: メール認証完了時に仮会員プロフィール作成
+     */
+    public function test_member_profile_is_created_when_email_is_verified(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->unverified()->create();
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $user->getKey(),
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        $response = $this->actingAs($user)->get($verificationUrl);
+
+        $response->assertRedirect('/?verified=1');
+        $this->assertDatabaseHas('member_profiles', [
+            'user_id' => $user->id,
+            'member_status' => MemberProfile::STATUS_PROVISIONAL,
+        ]);
+
+        /** @var MemberProfile|null $profile */
+        $profile = MemberProfile::query()->where('user_id', $user->id)->first();
+        $this->assertNotNull($profile);
+        $this->assertMatchesRegularExpression('/^MB\d{6}$/', $profile->code);
+    }
+
+    /**
+     * TC-N-16: 既存プロフィールがある場合は重複作成しない
+     */
+    public function test_member_profile_is_not_duplicated_when_user_verifies_email(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->unverified()->create();
+
+        /** @var MemberProfile $existingProfile */
+        $existingProfile = MemberProfile::factory()->create([
+            'user_id' => $user->id,
+            'member_status' => MemberProfile::STATUS_PROVISIONAL,
+        ]);
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $user->getKey(),
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        $response = $this->actingAs($user)->get($verificationUrl);
+
+        $response->assertRedirect('/?verified=1');
+        $this->assertDatabaseCount('member_profiles', 1);
+
+        /** @var MemberProfile $profile */
+        $profile = MemberProfile::query()->where('user_id', $user->id)->firstOrFail();
+        $this->assertSame($existingProfile->id, $profile->id);
     }
 }
