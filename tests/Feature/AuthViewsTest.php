@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class AuthViewsTest extends TestCase
@@ -16,11 +17,8 @@ class AuthViewsTest extends TestCase
 
     public function test_login_screen_can_be_rendered(): void
     {
-        // Given: ゲストユーザー
-        // When: GET /login にアクセス
         $response = $this->get('/login');
 
-        // Then: 200でログインフォームが表示される
         $response->assertStatus(200);
         $response->assertSee('ログイン');
         $response->assertSee('メールアドレス');
@@ -33,11 +31,8 @@ class AuthViewsTest extends TestCase
 
     public function test_register_screen_can_be_rendered(): void
     {
-        // Given: ゲストユーザー
-        // When: GET /register にアクセス
         $response = $this->get('/register');
 
-        // Then: 200で登録フォームが表示される
         $response->assertStatus(200);
         $response->assertSee('会員登録');
         $response->assertSee('お名前');
@@ -50,8 +45,6 @@ class AuthViewsTest extends TestCase
 
     public function test_new_users_can_register(): void
     {
-        // Given: 有効な登録情報
-        // When: POST /register を送信
         $response = $this->post('/register', [
             'name' => 'テストユーザー',
             'email' => 'test@example.com',
@@ -59,7 +52,6 @@ class AuthViewsTest extends TestCase
             'password_confirmation' => 'Password123!',
         ]);
 
-        // Then: ユーザーが作成され認証状態になりリダイレクト
         $this->assertAuthenticated();
         $response->assertRedirect('/');
     }
@@ -70,16 +62,14 @@ class AuthViewsTest extends TestCase
 
     public function test_users_can_authenticate_using_login_screen(): void
     {
-        // Given: 登録済みユーザー
+        /** @var User $user */
         $user = User::factory()->createOne();
 
-        // When: 正しいメールアドレスとパスワードでPOST /login
         $response = $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
 
-        // Then: 認証成功しリダイレクト
         $this->assertAuthenticated();
         $response->assertRedirect('/');
     }
@@ -90,14 +80,11 @@ class AuthViewsTest extends TestCase
 
     public function test_users_can_logout(): void
     {
-        // Given: 認証済みユーザー
         /** @var User $user */
         $user = User::factory()->createOne();
 
-        // When: POST /logout を送信
         $response = $this->actingAs($user)->post('/logout');
 
-        // Then: ゲスト状態になりリダイレクト
         $this->assertGuest();
         $response->assertRedirect('/');
     }
@@ -108,14 +95,11 @@ class AuthViewsTest extends TestCase
 
     public function test_authenticated_user_is_redirected_from_login(): void
     {
-        // Given: 認証済みユーザー
         /** @var User $user */
         $user = User::factory()->createOne();
 
-        // When: GET /login にアクセス
         $response = $this->actingAs($user)->get('/login');
 
-        // Then: リダイレクトされる（再ログイン不要）
         $response->assertRedirect('/');
     }
 
@@ -125,14 +109,11 @@ class AuthViewsTest extends TestCase
 
     public function test_authenticated_user_is_redirected_from_register(): void
     {
-        // Given: 認証済みユーザー
         /** @var User $user */
         $user = User::factory()->createOne();
 
-        // When: GET /register にアクセス
         $response = $this->actingAs($user)->get('/register');
 
-        // Then: リダイレクトされる（再登録不要）
         $response->assertRedirect('/');
     }
 
@@ -142,14 +123,11 @@ class AuthViewsTest extends TestCase
 
     public function test_login_fails_with_empty_email(): void
     {
-        // Given: emailが空
-        // When: POST /login を送信
         $response = $this->post('/login', [
             'email' => '',
             'password' => 'password',
         ]);
 
-        // Then: バリデーションエラー、ゲストのまま
         $this->assertGuest();
         $response->assertSessionHasErrors('email');
     }
@@ -160,17 +138,14 @@ class AuthViewsTest extends TestCase
 
     public function test_login_fails_with_empty_password(): void
     {
-        // Given: passwordが空
         /** @var User $user */
         $user = User::factory()->createOne();
 
-        // When: POST /login を送信
         $response = $this->post('/login', [
             'email' => $user->email,
             'password' => '',
         ]);
 
-        // Then: バリデーションエラー、ゲストのまま
         $this->assertGuest();
         $response->assertSessionHasErrors('password');
     }
@@ -181,17 +156,14 @@ class AuthViewsTest extends TestCase
 
     public function test_login_fails_with_invalid_credentials(): void
     {
-        // Given: 登録済みユーザー
         /** @var User $user */
         $user = User::factory()->createOne();
 
-        // When: 間違ったパスワードでPOST /login
         $response = $this->post('/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
 
-        // Then: 認証失敗、ゲストのまま
         $this->assertGuest();
         $response->assertSessionHasErrors('email');
     }
@@ -202,8 +174,6 @@ class AuthViewsTest extends TestCase
 
     public function test_register_fails_with_empty_name(): void
     {
-        // Given: nameが空
-        // When: POST /register を送信
         $response = $this->post('/register', [
             'name' => '',
             'email' => 'test@example.com',
@@ -211,7 +181,6 @@ class AuthViewsTest extends TestCase
             'password_confirmation' => 'Password123!',
         ]);
 
-        // Then: バリデーションエラー、ゲストのまま
         $this->assertGuest();
         $response->assertSessionHasErrors('name');
     }
@@ -222,8 +191,6 @@ class AuthViewsTest extends TestCase
 
     public function test_register_fails_with_empty_email(): void
     {
-        // Given: emailが空
-        // When: POST /register を送信
         $response = $this->post('/register', [
             'name' => 'テストユーザー',
             'email' => '',
@@ -231,7 +198,6 @@ class AuthViewsTest extends TestCase
             'password_confirmation' => 'Password123!',
         ]);
 
-        // Then: バリデーションエラー、ゲストのまま
         $this->assertGuest();
         $response->assertSessionHasErrors('email');
     }
@@ -242,8 +208,6 @@ class AuthViewsTest extends TestCase
 
     public function test_register_fails_with_password_mismatch(): void
     {
-        // Given: passwordとpassword_confirmationが不一致
-        // When: POST /register を送信
         $response = $this->post('/register', [
             'name' => 'テストユーザー',
             'email' => 'test@example.com',
@@ -251,7 +215,6 @@ class AuthViewsTest extends TestCase
             'password_confirmation' => 'DifferentPass123!',
         ]);
 
-        // Then: バリデーションエラー、ゲストのまま
         $this->assertGuest();
         $response->assertSessionHasErrors('password');
     }
@@ -262,12 +225,10 @@ class AuthViewsTest extends TestCase
 
     public function test_register_fails_with_duplicate_email(): void
     {
-        // Given: 既に登録済みのメールアドレス
         User::factory()->create([
             'email' => 'existing@example.com',
         ]);
 
-        // When: 同じメールアドレスでPOST /register
         $response = $this->post('/register', [
             'name' => '別のユーザー',
             'email' => 'existing@example.com',
@@ -275,7 +236,6 @@ class AuthViewsTest extends TestCase
             'password_confirmation' => 'Password123!',
         ]);
 
-        // Then: バリデーションエラー（unique制約）
         $this->assertGuest();
         $response->assertSessionHasErrors('email');
     }
@@ -286,8 +246,6 @@ class AuthViewsTest extends TestCase
 
     public function test_register_fails_with_short_password(): void
     {
-        // Given: 短すぎるパスワード（Passwordデフォルト: 8文字未満）
-        // When: POST /register を送信
         $response = $this->post('/register', [
             'name' => 'テストユーザー',
             'email' => 'test@example.com',
@@ -295,7 +253,6 @@ class AuthViewsTest extends TestCase
             'password_confirmation' => 'Ab1!',
         ]);
 
-        // Then: バリデーションエラー
         $this->assertGuest();
         $response->assertSessionHasErrors('password');
     }
@@ -306,11 +263,8 @@ class AuthViewsTest extends TestCase
 
     public function test_forgot_password_screen_can_be_rendered(): void
     {
-        // Given: ゲストユーザー
-        // When: GET /forgot-password にアクセス
         $response = $this->get('/forgot-password');
 
-        // Then: 200でフォームが表示される
         $response->assertStatus(200);
         $response->assertSee('パスワード再設定');
     }
@@ -321,13 +275,10 @@ class AuthViewsTest extends TestCase
 
     public function test_reset_password_screen_can_be_rendered(): void
     {
-        // Given: パスワード再設定トークン
         $token = 'test-reset-token';
 
-        // When: GET /reset-password/{token} にアクセス
         $response = $this->get('/reset-password/'.$token.'?email=test@example.com');
 
-        // Then: 200で再設定フォームが表示される
         $response->assertStatus(200);
         $response->assertSee('新しいパスワードの設定');
     }
@@ -338,14 +289,54 @@ class AuthViewsTest extends TestCase
 
     public function test_verify_email_screen_can_be_rendered(): void
     {
-        // Given: メール未認証の認証済みユーザー
+        /** @var User $user */
         $user = User::factory()->unverified()->create();
 
-        // When: GET /email/verify にアクセス
         $response = $this->actingAs($user)->get('/email/verify');
 
-        // Then: 200でメール認証案内が表示される
         $response->assertStatus(200);
         $response->assertSee('メールアドレスの確認');
+    }
+
+    // ========================================================
+    // TC-N-11: メール認証リンク再送
+    // ========================================================
+
+    public function test_resend_verification_email_returns_status(): void
+    {
+        Notification::fake();
+
+        /** @var User $user */
+        $user = User::factory()->unverified()->create();
+
+        $response = $this->actingAs($user)->post('/email/verification-notification');
+
+        $response->assertRedirect();
+        $response->assertSessionHas('status', 'verification-link-sent');
+    }
+
+    // ========================================================
+    // TC-N-12: ゲストのメール認証画面アクセス
+    // ========================================================
+
+    public function test_guest_is_redirected_from_verify_email(): void
+    {
+        $response = $this->get('/email/verify');
+
+        $response->assertRedirect('/login');
+    }
+
+    // ========================================================
+    // TC-N-13: 認証済みユーザーのメール認証画面アクセス
+    // ========================================================
+
+    public function test_verified_user_is_redirected_from_verify_email(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/email/verify');
+
+        $response->assertRedirect('/');
     }
 }

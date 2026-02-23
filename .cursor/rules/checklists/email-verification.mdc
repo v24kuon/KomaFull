@@ -1,0 +1,14 @@
+---
+description: メール認証フローの必須観点
+alwaysApply: false
+---
+
+# メール認証フロー チェックリスト
+
+適用条件:
+- `/email/verify` または `/email/verification-notification` を含む認証フローを変更した場合
+
+最低限カバーする観点:
+- 認証リンク再送 `POST /email/verification-notification` 後に `status=verification-link-sent` がセットされること
+- ゲストが `GET /email/verify` にアクセスするとログイン画面へリダイレクトされること
+- 認証済みユーザーが `GET /email/verify` にアクセスするとホームへリダイレクトされること
