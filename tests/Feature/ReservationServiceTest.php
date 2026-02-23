@@ -5,13 +5,10 @@ namespace Tests\Feature;
 use App\Models\Reservation;
 use App\Services\ReservationService;
 use BadMethodCallException;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ReservationServiceTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_service_can_be_resolved_from_container(): void
     {
         $service = app(ReservationService::class);
@@ -32,7 +29,10 @@ class ReservationServiceTest extends TestCase
     public function test_cancel_throws_until_ph4_3_is_implemented(): void
     {
         $service = app(ReservationService::class);
-        $reservation = new Reservation;
+        $reservation = Reservation::factory()->make([
+            'user_id' => 1,
+            'lesson_session_id' => 1,
+        ]);
 
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('PH4-3');
