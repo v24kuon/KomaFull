@@ -7,7 +7,6 @@ use App\Models\Reservation;
 use App\Models\ReservationManagement;
 use App\Models\User;
 use App\Services\ReservationService;
-use BadMethodCallException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
@@ -243,13 +242,194 @@ class ReservationServiceTest extends TestCase
         );
     }
 
-    public function test_cancel_throws_until_ph4_3_is_implemented(): void
+    public function test_cancel_decrements_reserved_count_and_marks_reservation_as_canceled(): void
     {
-        $reservation = Reservation::factory()->make();
+        $user = User::factory()->create();
+        $lessonSession = LessonSession::factory()->create([
+            'capacity' => 2,
+            'trial_capacity' => 1,
+        ]);
 
-        $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('PH4-3');
+        ReservationManagement::factory()
+            ->forLessonSessionId($lessonSession->id)
+            ->create([
+                'reserved_count' => 1,
+                'reserved_trial_count' => 0,
+            ]);
 
-        $this->service->cancel($reservation, 'user_request');
+        $reservation = Reservation::factory()
+            ->forRelationIds($lessonSession->id, $user->id)
+            ->create([
+                'seat_bucket' => Reservation::SEAT_BUCKET_NORMAL,
+                'status' => Reservation::STATUS_CONFIRMED,
+            ]);
+
+        $canceledReservation = $this->service->cancel($reservation, 'user_request');
+
+        $this->assertSame(Reservation::STATUS_CANCELED, $canceledReservation->status);
+        $this->assertNotNull($canceledReservation->canceled_at);
+        $this->assertSame('user_request', $canceledReservation->cancel_reason);
+
+        $reservationManagement = ReservationManagement::query()
+            ->where('lesson_session_id', $lessonSession->id)
+            ->firstOrFail();
+        $this->assertSame(0, $reservationManagement->reserved_count);
+        $this->assertSame(0, $reservationManagement->reserved_trial_count);
+    }
+
+    public function test_cancel_decrements_reserved_trial_count_for_trial_reservation(): void
+    {
+        $user = User::factory()->create();
+        $lessonSession = LessonSession::factory()->create([
+            'capacity' => 2,
+            'trial_capacity' => 1,
+        ]);
+
+        ReservationManagement::factory()
+            ->forLessonSessionId($lessonSession->id)
+            ->create([
+                'reserved_count' => 0,
+                'reserved_trial_count' => 1,
+            ]);
+
+        $reservation = Reservation::factory()
+            ->forRelationIds($lessonSession->id, $user->id)
+            ->trial()
+            ->create([
+                'status' => Reservation::STATUS_CONFIRMED,
+            ]);
+
+        $canceledReservation = $this->service->cancel($reservation, 'trial_cancel');
+
+        $this->assertSame(Reservation::STATUS_CANCELED, $canceledReservation->status);
+        $this->assertNotNull($canceledReservation->canceled_at);
+        $this->assertSame('trial_cancel', $canceledReservation->cancel_reason);
+
+        $reservationManagement = ReservationManagement::query()
+            ->where('lesson_session_id', $lessonSession->id)
+            ->firstOrFail();
+        $this->assertSame(0, $reservationManagement->reserved_count);
+        $this->assertSame(0, $reservationManagement->reserved_trial_count);
+    }
+
+    public function test_cancel_is_idempotent_for_already_canceled_reservation(): void
+    {
+        $user = User::factory()->create();
+        $lessonSession = LessonSession::factory()->create([
+            'capacity' => 2,
+            'trial_capacity' => 1,
+        ]);
+
+        ReservationManagement::factory()
+            ->forLessonSessionId($lessonSession->id)
+            ->create([
+                'reserved_count' => 1,
+                'reserved_trial_count' => 0,
+            ]);
+
+        $reservation = Reservation::factory()
+            ->forRelationIds($lessonSession->id, $user->id)
+            ->canceled()
+            ->create([
+                'seat_bucket' => Reservation::SEAT_BUCKET_NORMAL,
+                'cancel_reason' => 'already_canceled',
+            ]);
+
+        $originalCanceledAt = $reservation->canceled_at;
+
+        $canceledReservation = $this->service->cancel($reservation, 'duplicate_request');
+
+        $this->assertSame(Reservation::STATUS_CANCELED, $canceledReservation->status);
+        $this->assertEquals($originalCanceledAt, $canceledReservation->canceled_at);
+        $this->assertSame('already_canceled', $canceledReservation->cancel_reason);
+
+        $reservationManagement = ReservationManagement::query()
+            ->where('lesson_session_id', $lessonSession->id)
+            ->firstOrFail();
+        $this->assertSame(1, $reservationManagement->reserved_count);
+        $this->assertSame(0, $reservationManagement->reserved_trial_count);
+    }
+
+    public function test_cancel_throws_when_reason_is_empty(): void
+    {
+        $reservation = Reservation::factory()->create();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cancel reason cannot be empty.');
+
+        $this->service->cancel($reservation, '   ');
+    }
+
+    public function test_cancel_throws_when_reservation_management_is_missing(): void
+    {
+        $user = User::factory()->create();
+        $lessonSession = LessonSession::factory()->create([
+            'capacity' => 2,
+            'trial_capacity' => 1,
+        ]);
+
+        $reservation = Reservation::factory()
+            ->forRelationIds($lessonSession->id, $user->id)
+            ->create([
+                'seat_bucket' => Reservation::SEAT_BUCKET_NORMAL,
+                'status' => Reservation::STATUS_CONFIRMED,
+            ]);
+
+        $this->assertDatabaseMissing('reservation_management', [
+            'lesson_session_id' => $lessonSession->id,
+        ]);
+
+        try {
+            $this->service->cancel($reservation, 'user_request');
+            $this->fail('Expected ModelNotFoundException was not thrown.');
+        } catch (ModelNotFoundException $exception) {
+            $this->assertStringContainsString('ReservationManagement', $exception->getMessage());
+        }
+
+        $stillConfirmedReservation = Reservation::query()->findOrFail($reservation->id);
+        $this->assertSame(Reservation::STATUS_CONFIRMED, $stillConfirmedReservation->status);
+        $this->assertNull($stillConfirmedReservation->canceled_at);
+        $this->assertNull($stillConfirmedReservation->cancel_reason);
+    }
+
+    public function test_cancel_throws_when_management_counter_is_inconsistent(): void
+    {
+        $user = User::factory()->create();
+        $lessonSession = LessonSession::factory()->create([
+            'capacity' => 2,
+            'trial_capacity' => 1,
+        ]);
+
+        ReservationManagement::factory()
+            ->forLessonSessionId($lessonSession->id)
+            ->create([
+                'reserved_count' => 0,
+                'reserved_trial_count' => 0,
+            ]);
+
+        $reservation = Reservation::factory()
+            ->forRelationIds($lessonSession->id, $user->id)
+            ->create([
+                'seat_bucket' => Reservation::SEAT_BUCKET_NORMAL,
+                'status' => Reservation::STATUS_CONFIRMED,
+            ]);
+
+        try {
+            $this->service->cancel($reservation, 'user_request');
+            $this->fail('Expected RuntimeException was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('counter is inconsistent', $exception->getMessage());
+        }
+
+        $reservationManagement = ReservationManagement::query()
+            ->where('lesson_session_id', $lessonSession->id)
+            ->firstOrFail();
+        $this->assertSame(0, $reservationManagement->reserved_count);
+        $this->assertSame(0, $reservationManagement->reserved_trial_count);
+
+        $stillConfirmedReservation = Reservation::query()->findOrFail($reservation->id);
+        $this->assertSame(Reservation::STATUS_CONFIRMED, $stillConfirmedReservation->status);
+        $this->assertNull($stillConfirmedReservation->canceled_at);
+        $this->assertNull($stillConfirmedReservation->cancel_reason);
     }
 }

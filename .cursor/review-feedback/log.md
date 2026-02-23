@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-02-23
+  branch: feat/ph4-3-cancel-logic
+  scope: PH4-3 予約キャンセル・巻き戻しロジック実装
+  adopted: no
+  classification: none
+  targets: app/Services/ReservationService.php, tests/Feature/ReservationServiceTest.php
+  notes: ReservationService::cancel() を実装。トランザクション・lockForUpdate・冪等・カウンタデクリメント・異常系テストを追加。
+
+- date: 2026-02-23
   branch: feat/ph4-2-booking-logic
   scope: ReservationService / ReservationServiceTest（レビュー対応一式）
   adopted: yes

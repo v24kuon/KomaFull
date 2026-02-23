@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\LessonSession;
 use App\Models\Reservation;
 use App\Models\ReservationManagement;
-use BadMethodCallException;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -78,12 +77,50 @@ class ReservationService
 
     /**
      * Cancel an existing reservation.
-     *
-     * TODO(PH4-3): Implement cancellation and rollback logic.
      */
     public function cancel(Reservation $reservation, string $reason): Reservation
     {
-        throw new BadMethodCallException('ReservationService::cancel() is not implemented yet. See PH4-3.');
+        $normalizedReason = trim($reason);
+
+        if ($normalizedReason === '') {
+            throw new InvalidArgumentException('Cancel reason cannot be empty.');
+        }
+
+        if (! $reservation->exists) {
+            throw new InvalidArgumentException('Reservation must exist before cancellation.');
+        }
+
+        return $this->connection->transaction(function () use ($reservation, $normalizedReason): Reservation {
+            $lockedReservation = Reservation::query()
+                ->whereKey($reservation->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedReservation->status === Reservation::STATUS_CANCELED) {
+                return $lockedReservation;
+            }
+
+            $reservedCountColumn = $this->resolveReservedCountColumn($lockedReservation->seat_bucket);
+
+            $reservationManagement = ReservationManagement::query()
+                ->where('lesson_session_id', $lockedReservation->lesson_session_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($reservationManagement->{$reservedCountColumn} < 1) {
+                throw new RuntimeException('Reservation management counter is inconsistent.');
+            }
+
+            $reservationManagement->decrement($reservedCountColumn);
+
+            $lockedReservation->update([
+                'status' => Reservation::STATUS_CANCELED,
+                'canceled_at' => now(),
+                'cancel_reason' => $normalizedReason,
+            ]);
+
+            return $lockedReservation->refresh();
+        });
     }
 
     /**
@@ -92,10 +129,24 @@ class ReservationService
     private function resolveCounterColumnAndCapacity(int $lessonSessionId, string $seatBucket): array
     {
         $lessonSession = LessonSession::query()->findOrFail($lessonSessionId);
+        $reservedCountColumn = $this->resolveReservedCountColumn($seatBucket);
 
+        return [
+            $reservedCountColumn,
+            $reservedCountColumn === 'reserved_count'
+                ? $lessonSession->capacity
+                : $lessonSession->trial_capacity,
+        ];
+    }
+
+    /**
+     * @return 'reserved_count'|'reserved_trial_count'
+     */
+    private function resolveReservedCountColumn(string $seatBucket): string
+    {
         return match ($seatBucket) {
-            Reservation::SEAT_BUCKET_NORMAL => ['reserved_count', $lessonSession->capacity],
-            Reservation::SEAT_BUCKET_TRIAL => ['reserved_trial_count', $lessonSession->trial_capacity],
+            Reservation::SEAT_BUCKET_NORMAL => 'reserved_count',
+            Reservation::SEAT_BUCKET_TRIAL => 'reserved_trial_count',
             default => throw new InvalidArgumentException(sprintf('Unsupported seat bucket: %s', $seatBucket)),
         };
     }
