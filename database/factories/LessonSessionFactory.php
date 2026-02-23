@@ -3,6 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\LessonSession;
+use App\Models\Location;
+use App\Models\Program;
+use App\Models\Staff;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,9 +24,9 @@ class LessonSessionFactory extends Factory
     {
         return [
             'code' => 'LS'.$this->faker->unique()->numerify('######'),
-            'program_id' => 1,
-            'location_id' => 1,
-            'staff_id' => 1,
+            'program_id' => Program::factory(),
+            'location_id' => Location::factory(),
+            'staff_id' => Staff::factory(),
             'starts_at' => $this->faker->dateTimeBetween('+1 day', '+3 months'),
             'capacity' => $this->faker->numberBetween(1, 30),
             'trial_capacity' => $this->faker->numberBetween(0, 10),

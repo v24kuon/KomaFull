@@ -6,18 +6,19 @@ use App\Models\LessonSession;
 use App\Models\Reservation;
 use App\Models\ReservationManagement;
 use BadMethodCallException;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\ConnectionInterface;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use RuntimeException;
 
 class ReservationService
 {
+    public function __construct(private ConnectionInterface $connection) {}
+
     /**
      * Book a reservation for a lesson session.
      *
-     * TODO(PH4-2): Implement booking transaction and lock logic.
-     *
-     * @param  array<string, mixed>  $options
+     * @param  array{ticket_cost?: int, point_cost?: int, course_entitlement_id?: int}  $options
      */
     public function book(
         int $userId,
@@ -26,7 +27,7 @@ class ReservationService
         string $paymentMethod,
         array $options = []
     ): Reservation {
-        return DB::transaction(function () use (
+        return $this->connection->transaction(function () use (
             $userId,
             $lessonSessionId,
             $seatBucket,
@@ -38,7 +39,7 @@ class ReservationService
                 seatBucket: $seatBucket
             );
 
-            ReservationManagement::query()->firstOrCreate(
+            ReservationManagement::query()->createOrFirst(
                 ['lesson_session_id' => $lessonSessionId],
                 [
                     'reserved_count' => 0,
@@ -71,7 +72,7 @@ class ReservationService
 
             $reservationManagement->increment($reservedCountColumn);
 
-            return $reservation->fresh();
+            return $reservation;
         });
     }
 
@@ -101,14 +102,6 @@ class ReservationService
 
     private function generateUniqueReservationCode(): string
     {
-        for ($attempt = 0; $attempt < 100; $attempt++) {
-            $code = sprintf('R%06d', random_int(0, 999999));
-
-            if (! Reservation::query()->where('code', $code)->exists()) {
-                return $code;
-            }
-        }
-
-        throw new RuntimeException('Failed to generate unique reservation code.');
+        return 'R'.strtoupper((string) Str::ulid());
     }
 }
