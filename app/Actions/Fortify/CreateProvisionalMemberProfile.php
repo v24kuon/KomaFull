@@ -20,7 +20,7 @@ class CreateProvisionalMemberProfile
     public function createFor(User $user): MemberProfile
     {
         /** @var MemberProfile|null $existingProfile */
-        $existingProfile = MemberProfile::query()->where('user_id', $user->id)->first();
+        $existingProfile = $user->memberProfile()->first();
 
         if ($existingProfile instanceof MemberProfile) {
             return $existingProfile;
@@ -35,7 +35,7 @@ class CreateProvisionalMemberProfile
                 ]);
             } catch (UniqueConstraintViolationException $exception) {
                 /** @var MemberProfile|null $profile */
-                $profile = MemberProfile::query()->where('user_id', $user->id)->first();
+                $profile = $user->memberProfile()->first();
 
                 if ($profile instanceof MemberProfile) {
                     return $profile;
@@ -45,7 +45,7 @@ class CreateProvisionalMemberProfile
                     'user_id' => $user->id,
                     'attempt' => $attempt + 1,
                     'max_attempts' => self::CREATE_RETRY_MAX_ATTEMPTS,
-                    'exception' => $exception->getMessage(),
+                    'exception' => $exception,
                 ]);
             }
         }

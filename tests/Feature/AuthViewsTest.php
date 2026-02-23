@@ -373,9 +373,8 @@ class AuthViewsTest extends TestCase
             'member_status' => MemberProfile::STATUS_PROVISIONAL,
         ]);
 
-        /** @var MemberProfile|null $profile */
-        $profile = MemberProfile::query()->where('user_id', $user->id)->first();
-        $this->assertNotNull($profile);
+        /** @var MemberProfile $profile */
+        $profile = $user->memberProfile()->firstOrFail();
         $this->assertMatchesRegularExpression('/^MB\d{6}$/', $profile->code);
     }
 
@@ -408,7 +407,7 @@ class AuthViewsTest extends TestCase
         $this->assertDatabaseCount('member_profiles', 1);
 
         /** @var MemberProfile $profile */
-        $profile = MemberProfile::query()->where('user_id', $user->id)->firstOrFail();
+        $profile = $user->memberProfile()->firstOrFail();
         $this->assertSame($existingProfile->id, $profile->id);
     }
 
