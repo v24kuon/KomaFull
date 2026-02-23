@@ -22,9 +22,6 @@ while IFS= read -r file; do
     app/*|tests/*|database/*|routes/*|config/*|bootstrap/*)
       requires_tracking_update=1
       ;;
-  esac
-
-  case "$file" in
     .cursor/review-feedback/log.md)
       has_log_update=1
       ;;

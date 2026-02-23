@@ -8,6 +8,7 @@ use App\Models\ReservationManagement;
 use App\Models\User;
 use App\Services\ReservationService;
 use BadMethodCallException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
 use RuntimeException;
@@ -196,6 +197,21 @@ class ReservationServiceTest extends TestCase
             userId: $user->id,
             lessonSessionId: $lessonSession->id,
             seatBucket: 'vip',
+            paymentMethod: Reservation::PAYMENT_METHOD_TICKETS
+        );
+    }
+
+    public function test_book_throws_when_lesson_session_does_not_exist(): void
+    {
+        $user = User::factory()->create();
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('No query results for model [App\\Models\\LessonSession]');
+
+        $this->service->book(
+            userId: $user->id,
+            lessonSessionId: 999999,
+            seatBucket: Reservation::SEAT_BUCKET_NORMAL,
             paymentMethod: Reservation::PAYMENT_METHOD_TICKETS
         );
     }
