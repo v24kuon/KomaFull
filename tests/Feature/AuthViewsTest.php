@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\Fortify\CreateProvisionalMemberProfile;
 use App\Models\MemberProfile;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -409,5 +410,65 @@ class AuthViewsTest extends TestCase
         /** @var MemberProfile $profile */
         $profile = MemberProfile::query()->where('user_id', $user->id)->firstOrFail();
         $this->assertSame($existingProfile->id, $profile->id);
+    }
+
+    /**
+     * TC-N-17: 認証済みユーザーの認証リンク再クリックでプロフィールは作成されない
+     */
+    public function test_verified_user_clicking_verification_link_does_not_create_member_profile(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $user->getKey(),
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        $response = $this->actingAs($user)->get($verificationUrl);
+
+        $response->assertRedirect('/?verified=1');
+        $this->assertDatabaseMissing('member_profiles', [
+            'user_id' => $user->id,
+        ]);
+    }
+
+    /**
+     * TC-A-09: プロフィール作成失敗時もメール認証は完了する
+     */
+    public function test_email_verification_succeeds_even_when_profile_creation_fails(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->unverified()->create();
+
+        $this->app->instance(CreateProvisionalMemberProfile::class, new class
+        {
+            public function createFor(User $user): MemberProfile
+            {
+                throw new \RuntimeException('Simulated profile creation failure.');
+            }
+        });
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $user->getKey(),
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        $response = $this->actingAs($user)->get($verificationUrl);
+
+        $response->assertRedirect('/?verified=1');
+        $user->refresh();
+        $this->assertTrue($user->hasVerifiedEmail());
+        $this->assertDatabaseMissing('member_profiles', [
+            'user_id' => $user->id,
+        ]);
     }
 }

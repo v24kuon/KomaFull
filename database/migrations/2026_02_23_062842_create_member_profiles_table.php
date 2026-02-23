@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
             $table->string('code')->unique();
             $table->string('member_status')->default('provisional');
+            $table->index('member_status');
             $table->string('tel')->nullable();
             $table->date('birth_date')->nullable();
             $table->timestamp('activated_at')->nullable();
