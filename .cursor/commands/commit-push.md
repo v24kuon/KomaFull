@@ -36,8 +36,10 @@ fi
 # 変更をステージング
 git add -A || exit 1
 
-# 任意の品質チェック（必要な場合のみ / Laravel）
+# レビュー指摘の蓄積ガード（必須）
 bash scripts/review-feedback-guard.sh || exit 1
+
+# 任意の品質チェック（必要な場合のみ / Laravel）
 # vendor/bin/pint --dirty || exit 1
 # php artisan test --compact || exit 1
 
@@ -57,8 +59,10 @@ fi
 # 変更をステージング
 git add -A || exit 1
 
-# 任意の品質チェック（必要な場合のみ）
+# レビュー指摘の蓄積ガード（必須）
 bash scripts/review-feedback-guard.sh || exit 1
+
+# 任意の品質チェック（必要な場合のみ）
 # ./scripts/quality-check.sh || exit 1
 
 git commit -m "$MSG" && git push -u origin "$BRANCH"
@@ -77,7 +81,7 @@ fi
 git add -A
 
 # 3) レビュー指摘の蓄積ガード（必須）
-bash scripts/review-feedback-guard.sh
+bash scripts/review-feedback-guard.sh || exit 1
 
 # 4) 任意のローカル品質チェック（必要に応じて追加）
 # 例:

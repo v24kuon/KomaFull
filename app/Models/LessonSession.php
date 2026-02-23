@@ -43,16 +43,25 @@ class LessonSession extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Program, self>
+     */
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class);
     }
 
+    /**
+     * @return BelongsTo<Location, self>
+     */
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
     }
 
+    /**
+     * @return BelongsTo<Staff, self>
+     */
     public function staff(): BelongsTo
     {
         return $this->belongsTo(Staff::class);

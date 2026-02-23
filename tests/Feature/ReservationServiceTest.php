@@ -204,13 +204,14 @@ class ReservationServiceTest extends TestCase
     public function test_book_throws_when_lesson_session_does_not_exist(): void
     {
         $user = User::factory()->create();
+        $nonExistentLessonSessionId = ((int) LessonSession::query()->max('id')) + 1;
 
         $this->expectException(ModelNotFoundException::class);
         $this->expectExceptionMessage('No query results for model [App\\Models\\LessonSession]');
 
         $this->service->book(
             userId: $user->id,
-            lessonSessionId: 999999,
+            lessonSessionId: $nonExistentLessonSessionId,
             seatBucket: Reservation::SEAT_BUCKET_NORMAL,
             paymentMethod: Reservation::PAYMENT_METHOD_TICKETS
         );
