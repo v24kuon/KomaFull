@@ -16,13 +16,19 @@ Located in `~/.cursor/agents/`:
 | refactor-cleaner | Dead code cleanup | Code maintenance |
 | doc-updater | Documentation | Updating docs |
 
+## 部長組織との棲み分け
+
+設計・アーキテクチャの **意思決定** を伴う判断は `/bucho` 経由で部長組織に諮ること。
+個別エージェント（architect, security-reviewer 等）の直接起動は、意思決定を伴わない **単体調査・レビュー** に限定する。
+
 ## Immediate Agent Usage
 
 No user prompt needed:
 1. Complex feature requests - Use **planner** agent
 2. Code just written/modified - Use **code-reviewer** agent
 3. Bug fix or new feature - Use **tdd-guide** agent
-4. Architectural decision - Use **architect** agent
+4. Architectural decision with trade-offs - Use **bucho** (部長組織で多角的判断)
+5. Simple architectural question - Use **architect** agent (単体調査)
 
 ## Parallel Task Execution
 
