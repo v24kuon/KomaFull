@@ -71,7 +71,7 @@ class AuthViewsTest extends TestCase
     public function test_users_can_authenticate_using_login_screen(): void
     {
         // Given: 登録済みユーザー
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         // When: 正しいメールアドレスとパスワードでPOST /login
         $response = $this->post('/login', [
@@ -91,7 +91,8 @@ class AuthViewsTest extends TestCase
     public function test_users_can_logout(): void
     {
         // Given: 認証済みユーザー
-        $user = User::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->createOne();
 
         // When: POST /logout を送信
         $response = $this->actingAs($user)->post('/logout');
@@ -108,12 +109,30 @@ class AuthViewsTest extends TestCase
     public function test_authenticated_user_is_redirected_from_login(): void
     {
         // Given: 認証済みユーザー
-        $user = User::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->createOne();
 
         // When: GET /login にアクセス
         $response = $this->actingAs($user)->get('/login');
 
         // Then: リダイレクトされる（再ログイン不要）
+        $response->assertRedirect('/');
+    }
+
+    // ========================================================
+    // TC-N-07: 認証済みユーザーの会員登録画面アクセス
+    // ========================================================
+
+    public function test_authenticated_user_is_redirected_from_register(): void
+    {
+        // Given: 認証済みユーザー
+        /** @var User $user */
+        $user = User::factory()->createOne();
+
+        // When: GET /register にアクセス
+        $response = $this->actingAs($user)->get('/register');
+
+        // Then: リダイレクトされる（再登録不要）
         $response->assertRedirect('/');
     }
 
@@ -132,6 +151,7 @@ class AuthViewsTest extends TestCase
 
         // Then: バリデーションエラー、ゲストのまま
         $this->assertGuest();
+        $response->assertSessionHasErrors('email');
     }
 
     // ========================================================
@@ -141,7 +161,8 @@ class AuthViewsTest extends TestCase
     public function test_login_fails_with_empty_password(): void
     {
         // Given: passwordが空
-        $user = User::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->createOne();
 
         // When: POST /login を送信
         $response = $this->post('/login', [
@@ -151,6 +172,7 @@ class AuthViewsTest extends TestCase
 
         // Then: バリデーションエラー、ゲストのまま
         $this->assertGuest();
+        $response->assertSessionHasErrors('password');
     }
 
     // ========================================================
@@ -160,7 +182,8 @@ class AuthViewsTest extends TestCase
     public function test_login_fails_with_invalid_credentials(): void
     {
         // Given: 登録済みユーザー
-        $user = User::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->createOne();
 
         // When: 間違ったパスワードでPOST /login
         $response = $this->post('/login', [
@@ -170,6 +193,7 @@ class AuthViewsTest extends TestCase
 
         // Then: 認証失敗、ゲストのまま
         $this->assertGuest();
+        $response->assertSessionHasErrors('email');
     }
 
     // ========================================================
@@ -239,7 +263,7 @@ class AuthViewsTest extends TestCase
     public function test_register_fails_with_duplicate_email(): void
     {
         // Given: 既に登録済みのメールアドレス
-        $existingUser = User::factory()->create([
+        User::factory()->create([
             'email' => 'existing@example.com',
         ]);
 
@@ -277,7 +301,7 @@ class AuthViewsTest extends TestCase
     }
 
     // ========================================================
-    // TC-N-07: パスワード再設定画面表示
+    // TC-N-08: パスワード再設定画面表示
     // ========================================================
 
     public function test_forgot_password_screen_can_be_rendered(): void
@@ -292,7 +316,24 @@ class AuthViewsTest extends TestCase
     }
 
     // ========================================================
-    // TC-N-08: メール認証画面表示
+    // TC-N-09: パスワード再設定フォーム表示
+    // ========================================================
+
+    public function test_reset_password_screen_can_be_rendered(): void
+    {
+        // Given: パスワード再設定トークン
+        $token = 'test-reset-token';
+
+        // When: GET /reset-password/{token} にアクセス
+        $response = $this->get('/reset-password/'.$token.'?email=test@example.com');
+
+        // Then: 200で再設定フォームが表示される
+        $response->assertStatus(200);
+        $response->assertSee('新しいパスワードの設定');
+    }
+
+    // ========================================================
+    // TC-N-10: メール認証画面表示
     // ========================================================
 
     public function test_verify_email_screen_can_be_rendered(): void

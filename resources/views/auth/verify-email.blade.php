@@ -14,7 +14,7 @@
                         ご登録いただいたメールアドレスに確認メールを送信しました。メール内のリンクをクリックして認証を完了してください。
                     </p>
 
-                    @if (session('status') == 'verification-link-sent')
+                    @if (session('status') === 'verification-link-sent')
                         <div class="alert alert-success" role="alert">
                             確認メールを再送しました。
                         </div>

@@ -2,12 +2,26 @@
    社長変数ゾーン（色・余白・フォント等のデザイントークン）
    ========================================================== */
 :root {
-    --app-brand-color: var(--bs-primary);
+    --app-brand-color: var(--bs-primary, #0d6efd);
+    --app-brand-color-contrast: #ffffff;
+    --app-surface-color: var(--bs-light, #f8f9fa);
+    --app-text-color: var(--bs-body-color, #212529);
+    --app-space-xs: 0.25rem;
+    --app-space-sm: 0.5rem;
+    --app-space-md: 1rem;
+    --app-space-lg: 1.5rem;
+    --app-space-xl: 2rem;
+    --app-font-size-sm: 0.875rem;
+    --app-font-size-md: 1rem;
+    --app-font-size-lg: 1.125rem;
+    --app-radius-sm: 0.25rem;
+    --app-radius-md: 0.5rem;
 }
 
 /* ==========================================================
    共通スタイル
    ========================================================== */
 body {
-    background-color: var(--bs-light, #f8f9fa);
+    background-color: var(--app-surface-color);
+    color: var(--app-text-color);
 }

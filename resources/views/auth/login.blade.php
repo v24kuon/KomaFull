@@ -57,7 +57,7 @@
                                 id="remember"
                                 name="remember"
                                 class="form-check-input"
-                                {{ old('remember') ? 'checked' : '' }}
+                                @checked(old('remember'))
                             >
                             <label for="remember" class="form-check-label">ログイン状態を保持する</label>
                         </div>
