@@ -1,5 +1,5 @@
 ---
-tools: Read, Grep, Glob, Task
+tools: Read, Write, Grep, Glob, Task
 name: bucho
 model: gpt-5.3-codex-xhigh
 description: 部長（招集役兼統合役）。伝達係（親）から起動され、重要度に応じて部下1〜4名（孫）を Task で適応的招集し、意見を集約して社長に最終報告する。親→子→孫→曾孫の4階層の「子」。
