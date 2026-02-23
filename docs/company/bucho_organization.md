@@ -17,7 +17,7 @@
 | **監査参謀C** | 部下Cの別称（bucho-subordinate-risk）。 |
 | **実装参謀D** | 部下Dの別称（bucho-subordinate-implementation）。 |
 | **親→子→孫→曾孫** | 伝達係（親）→ 部長（子）→ 部下4名（孫）→ 専門サブエージェント（曾孫）の4階層。 |
-| **曾孫** | 孫（部下）が Task で起動する専門サブエージェント（explore, verifier, security-reviewer, code-reviewer, test-runner, planner, generalPurpose 等）。起動条件は各部下の .md に従う。**曾孫は孫・曾孫を起動しない**（4階層で止まる）。 |
+| **曾孫** | 孫（部下）が Task で起動する専門サブエージェント（explore, verifier, security-reviewer, code-reviewer, test-runner, planner, architect, generalPurpose 等）。起動条件は各部下の .md に従う。**曾孫は孫・曾孫を起動しない**（4階層で止まる）。 |
 | **1-Step** | 伝達係が部長を1回だけ起動する現行フロー。旧2-Step（伝達係が部下を直接招集）は廃止。 |
 | **Agent ID** | Task 実行時に付与されるUUID。代筆防止・実行証明に必須。 |
 | **実行証明ゲート** | 報告前に招集した全員のAgent IDが記載されているかを確認する必須チェック。 |
@@ -47,7 +47,7 @@
          ↓
       部長（重要度判定 → 適応的招集 → 集約 → 実行証明ゲート → 報告）
          ↓
-      部下A/B/C/D（並列、観点別プロンプト）
+      部下1〜4名（適応的招集、並列・観点別プロンプト）
          ↓                ↓（必要に応じて）
          ↓           曾孫（explore / verifier / security-reviewer 等）
          ↓                ↓ 検証結果を部下に返却
