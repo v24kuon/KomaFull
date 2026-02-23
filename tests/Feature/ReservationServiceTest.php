@@ -145,15 +145,28 @@ class ReservationServiceTest extends TestCase
                 'reserved_trial_count' => 0,
             ]);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('normal capacity is full');
+        try {
+            $this->service->book(
+                userId: $user->id,
+                lessonSessionId: $lessonSession->id,
+                seatBucket: Reservation::SEAT_BUCKET_NORMAL,
+                paymentMethod: Reservation::PAYMENT_METHOD_TICKETS
+            );
+            $this->fail('Expected RuntimeException was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('normal capacity is full', $exception->getMessage());
+        }
 
-        $this->service->book(
-            userId: $user->id,
-            lessonSessionId: $lessonSession->id,
-            seatBucket: Reservation::SEAT_BUCKET_NORMAL,
-            paymentMethod: Reservation::PAYMENT_METHOD_TICKETS
-        );
+        $this->assertDatabaseMissing('reservations', [
+            'user_id' => $user->id,
+            'lesson_session_id' => $lessonSession->id,
+        ]);
+
+        $reservationManagement = ReservationManagement::query()
+            ->where('lesson_session_id', $lessonSession->id)
+            ->firstOrFail();
+        $this->assertSame(1, $reservationManagement->reserved_count);
+        $this->assertSame(0, $reservationManagement->reserved_trial_count);
     }
 
     public function test_book_throws_when_trial_capacity_is_full(): void
@@ -171,15 +184,28 @@ class ReservationServiceTest extends TestCase
                 'reserved_trial_count' => 1,
             ]);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('trial capacity is full');
+        try {
+            $this->service->book(
+                userId: $user->id,
+                lessonSessionId: $lessonSession->id,
+                seatBucket: Reservation::SEAT_BUCKET_TRIAL,
+                paymentMethod: Reservation::PAYMENT_METHOD_TRIAL_CARD
+            );
+            $this->fail('Expected RuntimeException was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('trial capacity is full', $exception->getMessage());
+        }
 
-        $this->service->book(
-            userId: $user->id,
-            lessonSessionId: $lessonSession->id,
-            seatBucket: Reservation::SEAT_BUCKET_TRIAL,
-            paymentMethod: Reservation::PAYMENT_METHOD_TRIAL_CARD
-        );
+        $this->assertDatabaseMissing('reservations', [
+            'user_id' => $user->id,
+            'lesson_session_id' => $lessonSession->id,
+        ]);
+
+        $reservationManagement = ReservationManagement::query()
+            ->where('lesson_session_id', $lessonSession->id)
+            ->firstOrFail();
+        $this->assertSame(0, $reservationManagement->reserved_count);
+        $this->assertSame(1, $reservationManagement->reserved_trial_count);
     }
 
     public function test_book_throws_for_unsupported_seat_bucket(): void

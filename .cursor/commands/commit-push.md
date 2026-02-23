@@ -78,7 +78,7 @@ if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
 fi
 
 # 2) 変更をステージング
-git add -A
+git add -A || exit 1
 
 # 3) レビュー指摘の蓄積ガード（必須）
 bash scripts/review-feedback-guard.sh || exit 1
@@ -100,7 +100,7 @@ git push -u origin "$BRANCH"
 
 - コミットメッセージのフォーマットやメッセージ生成の原則は、`.cursor/rules/commit-message-format.mdc` などの規約に従ってください。
 - 先に `git status` や `git diff` で差分を確認してからの実行を推奨します。
-- レビュー指摘の蓄積漏れ防止のため、**コード変更（`app/` `tests/` `database/` `routes/` `config/` `bootstrap/`）を含むコミットでは** `.cursor/review-feedback/log.md` の同時更新を必須とするガードを必ず通してください（ドキュメントのみの変更コミットは対象外）。
+- レビュー指摘の蓄積漏れ防止のため、**コード変更（`app/` `tests/` `database/` `routes/` `config/` `bootstrap/` `resources/`）を含むコミットでは** `.cursor/review-feedback/log.md` の同時更新を必須とするガードを必ず通してください（ドキュメントのみの変更コミットは対象外）。
 - `git commit --no-verify` でのガード回避は禁止です。
 - Git Hook を使う場合は `.githooks/pre-commit` を利用します（有効化はチーム運用に従って実施）。
 - 本プロジェクトは **脱Node/Vite** 方針のため、`npm`/`vite` を前提としたチェックはこのテンプレートに含めません。

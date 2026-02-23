@@ -19,7 +19,7 @@ while IFS= read -r file; do
   [[ -z "$file" ]] && continue
 
   case "$file" in
-    app/*|tests/*|database/*|routes/*|config/*|bootstrap/*)
+    app/*|tests/*|database/*|routes/*|config/*|bootstrap/*|resources/*)
       requires_tracking_update=1
       ;;
     .cursor/review-feedback/log.md)
@@ -38,7 +38,7 @@ fi
 
 cat <<'EOF'
 [review-feedback-guard] ERROR:
-コード変更（app/tests/database/routes/config/bootstrap）が含まれていますが、
+コード変更（app/tests/database/routes/config/bootstrap/resources）が含まれていますが、
 レビュー指摘ログ `.cursor/review-feedback/log.md` の更新がステージされていません。
 
 同一コミットに必ず次を含めてください:

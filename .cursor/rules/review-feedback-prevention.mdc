@@ -107,7 +107,7 @@ alwaysApply: true
 
 ## 6) 強制運用ゲート（漏れゼロ運用）
 
-- コミット対象に `app/` `tests/` `database/` `routes/` `config/` `bootstrap/` のいずれかが含まれる場合、**必ず** `.cursor/review-feedback/log.md` を同一コミットで更新する。
+- コミット対象に `app/` `tests/` `database/` `routes/` `config/` `bootstrap/` `resources/` のいずれかが含まれる場合、**必ず** `.cursor/review-feedback/log.md` を同一コミットで更新する。
 - `.cursor/review-feedback/log.md` には、採用指摘がない場合でも `classification: none` として「判定した事実」を残す。
 - コミット直前に `bash scripts/review-feedback-guard.sh` を実行し、ガードを通過しない限りコミットしない。
 - `/commit-only` `/commit-push` の運用では、上記ガード実行を必須手順とする。

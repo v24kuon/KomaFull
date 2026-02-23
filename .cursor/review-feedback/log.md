@@ -47,3 +47,19 @@
   classification: 汎用
   targets: README.md, .cursor/commands/commit-push.md, app/Models/LessonSession.php, tests/Feature/ReservationServiceTest.php
   notes: フック目的・適用対象の明記、必須ガード見出し分離と||exit 1追加、BelongsToジェネリック型PHPDoc、非存在IDの動的生成。
+
+- date: 2026-02-23
+  branch: feat/ph4-2-booking-logic
+  scope: レビュー指摘対応（ロールバック検証とresources対象化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/ReservationServiceTest.php, scripts/review-feedback-guard.sh, .cursor/rules/review-feedback-prevention.mdc, .cursor/commands/commit-only.md, .cursor/commands/commit-push.md, README.md
+  notes: キャパ超過時の例外テストで予約未作成とカウンタ不変を確認し、レビュー蓄積ガード対象にresources/を追加して関連ルール・ドキュメントの記載を統一。
+
+- date: 2026-02-23
+  branch: feat/ph4-2-booking-logic
+  scope: PRレビュー指摘対応（commit-push Bセクション）
+  adopted: yes
+  classification: 汎用
+  targets: .cursor/commands/commit-push.md
+  notes: Bセクションの git add -A に || exit 1 を追加し、Aセクションと整合。

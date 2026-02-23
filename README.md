@@ -26,7 +26,7 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 This project uses a shared pre-commit hook in `.githooks/pre-commit`.
 The hook is required for all contributors and runs `scripts/review-feedback-guard.sh`.
 It enforces review-feedback logging for code commits: when a commit includes changes under
-`app/`, `tests/`, `database/`, `routes/`, `config/`, or `bootstrap/`, the same commit must also
+`app/`, `tests/`, `database/`, `routes/`, `config/`, `bootstrap/`, or `resources/`, the same commit must also
 include `.cursor/review-feedback/log.md` updates (documentation-only commits are not blocked).
 Run the following command once after cloning:
 

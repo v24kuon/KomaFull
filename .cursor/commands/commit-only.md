@@ -67,7 +67,7 @@ git commit -m "<Prefix>: <サマリ（命令形/簡潔に）>"
 ## ノート
 
 - コミットメッセージのフォーマットやメッセージ生成の原則は、`.cursor/rules/commit-message-format.mdc` のルールに従ってください。
-- レビュー指摘の蓄積漏れ防止のため、**コード変更（`app/` `tests/` `database/` `routes/` `config/` `bootstrap/`）を含むコミットでは** `.cursor/review-feedback/log.md` の同時更新を必須とするガードを必ず通してください（ドキュメントのみの変更コミットは対象外）。
+- レビュー指摘の蓄積漏れ防止のため、**コード変更（`app/` `tests/` `database/` `routes/` `config/` `bootstrap/` `resources/`）を含むコミットでは** `.cursor/review-feedback/log.md` の同時更新を必須とするガードを必ず通してください（ドキュメントのみの変更コミットは対象外）。
 - `git commit --no-verify` でのガード回避は禁止です。
 - 本プロジェクトは **脱Node/Vite** 方針のため、`npm`/`vite` を前提としたチェックはここに入れません。
 - ブランチ戦略（例：main 直コミット禁止、作業用ブランチ運用）やリモートへのプッシュ (`git push`) は、このコマンドの対象外です。必要に応じて、プロジェクトごとの README / CONTRIBUTING / 別コマンドで定義してください。
