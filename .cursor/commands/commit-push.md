@@ -13,12 +13,14 @@ main/master への直接プッシュ禁止や、コミット前に実行する�
 ## 実行手順（対話なし）
 
 1. ブランチ確認（main/master 直プッシュ防止）
-2. 必要に応じて品質チェック（Laravel / 脱Node前提）を実行
+2. 変更のステージング（`git add -A`）
+3. レビュー指摘の蓄積ガードを実行（必須）
+   - `bash scripts/review-feedback-guard.sh`
+4. 必要に応じて品質チェック（Laravel / 脱Node前提）を実行
    - 変更にPHPが含まれる場合: `vendor/bin/pint --dirty`
    - テスト: `php artisan test --compact`（最小スコープ→必要なら全体）
-3. 変更のステージング（`git add -A`）
-4. コミット（引数または環境変数のメッセージ使用）
-5. プッシュ（`git push -u origin <current-branch>`）
+5. コミット（引数または環境変数のメッセージ使用）
+6. プッシュ（`git push -u origin <current-branch>`）
 
 ## 使い方
 
@@ -31,11 +33,16 @@ if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then \
   echo "⚠️ main/master への直接プッシュは禁止です"; exit 1; \
 fi
 
+# 変更をステージング
+git add -A || exit 1
+
+# レビュー指摘の蓄積ガード（必須）
+bash scripts/review-feedback-guard.sh || exit 1
+
 # 任意の品質チェック（必要な場合のみ / Laravel）
 # vendor/bin/pint --dirty || exit 1
 # php artisan test --compact || exit 1
 
-git add -A && \
 git commit -m "$MSG" && \
 git push -u origin "$BRANCH"
 ```
@@ -49,10 +56,16 @@ if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then \
   echo "⚠️ main/master への直接プッシュは禁止です"; exit 1; \
 fi
 
+# 変更をステージング
+git add -A || exit 1
+
+# レビュー指摘の蓄積ガード（必須）
+bash scripts/review-feedback-guard.sh || exit 1
+
 # 任意の品質チェック（必要な場合のみ）
 # ./scripts/quality-check.sh || exit 1
 
-git add -A && git commit -m "$MSG" && git push -u origin "$BRANCH"
+git commit -m "$MSG" && git push -u origin "$BRANCH"
 ```
 
 ### B) ステップ実行（読みやすさ重視）
@@ -64,19 +77,22 @@ if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
   echo "⚠️ main/master への直接プッシュは禁止です"; exit 1;
 fi
 
-# 2) 任意のローカル品質チェック（必要に応じて追加）
+# 2) 変更をステージング
+git add -A || exit 1
+
+# 3) レビュー指摘の蓄積ガード（必須）
+bash scripts/review-feedback-guard.sh || exit 1
+
+# 4) 任意のローカル品質チェック（必要に応じて追加）
 # 例:
 # echo "品質チェック実行中..."
 # vendor/bin/pint --dirty || exit 1
 # php artisan test --compact || exit 1
 
-# 3) 変更をステージング
-git add -A
-
-# 4) コミット（メッセージを編集）
+# 5) コミット（メッセージを編集）
 git commit -m "<Prefix>: <サマリ（命令形/簡潔に）>"
 
-# 5) プッシュ
+# 6) プッシュ
 git push -u origin "$BRANCH"
 ```
 
@@ -84,4 +100,7 @@ git push -u origin "$BRANCH"
 
 - コミットメッセージのフォーマットやメッセージ生成の原則は、`.cursor/rules/commit-message-format.mdc` などの規約に従ってください。
 - 先に `git status` や `git diff` で差分を確認してからの実行を推奨します。
+- レビュー指摘の蓄積漏れ防止のため、**コード変更（`app/` `tests/` `database/` `routes/` `config/` `bootstrap/` `resources/`）を含むコミットでは** `.cursor/review-feedback/log.md` の同時更新を必須とするガードを必ず通してください（ドキュメントのみの変更コミットは対象外）。
+- `git commit --no-verify` でのガード回避は禁止です。
+- Git Hook を使う場合は `.githooks/pre-commit` を利用します（有効化はチーム運用に従って実施）。
 - 本プロジェクトは **脱Node/Vite** 方針のため、`npm`/`vite` を前提としたチェックはこのテンプレートに含めません。

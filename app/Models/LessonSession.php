@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LessonSession extends Model
 {
@@ -43,9 +44,26 @@ class LessonSession extends Model
     }
 
     /**
-     * TODO(PH2-2): Program/Location/Staff モデル実装後に belongsTo リレーションを追加
-     * - program(): BelongsTo<Program>
-     * - location(): BelongsTo<Location>
-     * - staff(): BelongsTo<Staff>
+     * @return BelongsTo<Program, self>
      */
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class);
+    }
+
+    /**
+     * @return BelongsTo<Location, self>
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * @return BelongsTo<Staff, self>
+     */
+    public function staff(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class);
+    }
 }

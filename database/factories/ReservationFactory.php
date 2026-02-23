@@ -6,6 +6,7 @@ use App\Models\LessonSession;
 use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Reservation>
@@ -22,7 +23,7 @@ class ReservationFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => 'R'.$this->faker->unique()->numerify('######'),
+            'code' => 'R'.strtoupper((string) Str::ulid()),
             'user_id' => User::factory(),
             'lesson_session_id' => LessonSession::factory(),
             'seat_bucket' => Reservation::SEAT_BUCKET_NORMAL,
