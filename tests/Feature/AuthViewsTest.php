@@ -3,18 +3,19 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class AuthViewsTest extends TestCase
 {
     use RefreshDatabase;
 
-    // ========================================================
-    // TC-N-01: ログイン画面表示
-    // ========================================================
-
+    /**
+     * TC-N-01: ログイン画面表示
+     */
     public function test_login_screen_can_be_rendered(): void
     {
         $response = $this->get('/login');
@@ -25,10 +26,9 @@ class AuthViewsTest extends TestCase
         $response->assertSee('パスワード');
     }
 
-    // ========================================================
-    // TC-N-02: 会員登録画面表示
-    // ========================================================
-
+    /**
+     * TC-N-02: 会員登録画面表示
+     */
     public function test_register_screen_can_be_rendered(): void
     {
         $response = $this->get('/register');
@@ -39,10 +39,9 @@ class AuthViewsTest extends TestCase
         $response->assertSee('メールアドレス');
     }
 
-    // ========================================================
-    // TC-N-03: 正常な会員登録
-    // ========================================================
-
+    /**
+     * TC-N-03: 正常な会員登録
+     */
     public function test_new_users_can_register(): void
     {
         $response = $this->post('/register', [
@@ -53,13 +52,12 @@ class AuthViewsTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/');
+        $response->assertRedirect(config('fortify.home'));
     }
 
-    // ========================================================
-    // TC-N-04: 正常なログイン
-    // ========================================================
-
+    /**
+     * TC-N-04: 正常なログイン
+     */
     public function test_users_can_authenticate_using_login_screen(): void
     {
         /** @var User $user */
@@ -74,10 +72,9 @@ class AuthViewsTest extends TestCase
         $response->assertRedirect('/');
     }
 
-    // ========================================================
-    // TC-N-05: ログアウト
-    // ========================================================
-
+    /**
+     * TC-N-05: ログアウト
+     */
     public function test_users_can_logout(): void
     {
         /** @var User $user */
@@ -89,10 +86,9 @@ class AuthViewsTest extends TestCase
         $response->assertRedirect('/');
     }
 
-    // ========================================================
-    // TC-N-06: 認証済みユーザーのログイン画面アクセス
-    // ========================================================
-
+    /**
+     * TC-N-06: 認証済みユーザーのログイン画面アクセス
+     */
     public function test_authenticated_user_is_redirected_from_login(): void
     {
         /** @var User $user */
@@ -103,10 +99,9 @@ class AuthViewsTest extends TestCase
         $response->assertRedirect('/');
     }
 
-    // ========================================================
-    // TC-N-07: 認証済みユーザーの会員登録画面アクセス
-    // ========================================================
-
+    /**
+     * TC-N-07: 認証済みユーザーの会員登録画面アクセス
+     */
     public function test_authenticated_user_is_redirected_from_register(): void
     {
         /** @var User $user */
@@ -117,10 +112,9 @@ class AuthViewsTest extends TestCase
         $response->assertRedirect('/');
     }
 
-    // ========================================================
-    // TC-A-01: ログイン - email空
-    // ========================================================
-
+    /**
+     * TC-A-01: ログイン - email空
+     */
     public function test_login_fails_with_empty_email(): void
     {
         $response = $this->post('/login', [
@@ -132,10 +126,9 @@ class AuthViewsTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    // ========================================================
-    // TC-A-02: ログイン - password空
-    // ========================================================
-
+    /**
+     * TC-A-02: ログイン - password空
+     */
     public function test_login_fails_with_empty_password(): void
     {
         /** @var User $user */
@@ -150,10 +143,9 @@ class AuthViewsTest extends TestCase
         $response->assertSessionHasErrors('password');
     }
 
-    // ========================================================
-    // TC-A-03: ログイン - 不正な認証情報
-    // ========================================================
-
+    /**
+     * TC-A-03: ログイン - 不正な認証情報
+     */
     public function test_login_fails_with_invalid_credentials(): void
     {
         /** @var User $user */
@@ -168,10 +160,9 @@ class AuthViewsTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    // ========================================================
-    // TC-A-04: 登録 - name空
-    // ========================================================
-
+    /**
+     * TC-A-04: 登録 - name空
+     */
     public function test_register_fails_with_empty_name(): void
     {
         $response = $this->post('/register', [
@@ -185,10 +176,9 @@ class AuthViewsTest extends TestCase
         $response->assertSessionHasErrors('name');
     }
 
-    // ========================================================
-    // TC-A-05: 登録 - email空
-    // ========================================================
-
+    /**
+     * TC-A-05: 登録 - email空
+     */
     public function test_register_fails_with_empty_email(): void
     {
         $response = $this->post('/register', [
@@ -202,10 +192,9 @@ class AuthViewsTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    // ========================================================
-    // TC-A-06: 登録 - パスワード不一致
-    // ========================================================
-
+    /**
+     * TC-A-06: 登録 - パスワード不一致
+     */
     public function test_register_fails_with_password_mismatch(): void
     {
         $response = $this->post('/register', [
@@ -219,10 +208,9 @@ class AuthViewsTest extends TestCase
         $response->assertSessionHasErrors('password');
     }
 
-    // ========================================================
-    // TC-A-07: 登録 - 既存メールアドレス
-    // ========================================================
-
+    /**
+     * TC-A-07: 登録 - 既存メールアドレス
+     */
     public function test_register_fails_with_duplicate_email(): void
     {
         User::factory()->create([
@@ -240,10 +228,9 @@ class AuthViewsTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    // ========================================================
-    // TC-A-08: 登録 - パスワード短すぎ
-    // ========================================================
-
+    /**
+     * TC-A-08: 登録 - パスワード短すぎ
+     */
     public function test_register_fails_with_short_password(): void
     {
         $response = $this->post('/register', [
@@ -257,10 +244,9 @@ class AuthViewsTest extends TestCase
         $response->assertSessionHasErrors('password');
     }
 
-    // ========================================================
-    // TC-N-08: パスワード再設定画面表示
-    // ========================================================
-
+    /**
+     * TC-N-08: パスワード再設定画面表示
+     */
     public function test_forgot_password_screen_can_be_rendered(): void
     {
         $response = $this->get('/forgot-password');
@@ -269,10 +255,9 @@ class AuthViewsTest extends TestCase
         $response->assertSee('パスワード再設定');
     }
 
-    // ========================================================
-    // TC-N-09: パスワード再設定フォーム表示
-    // ========================================================
-
+    /**
+     * TC-N-09: パスワード再設定フォーム表示
+     */
     public function test_reset_password_screen_can_be_rendered(): void
     {
         $token = 'test-reset-token';
@@ -283,10 +268,9 @@ class AuthViewsTest extends TestCase
         $response->assertSee('新しいパスワードの設定');
     }
 
-    // ========================================================
-    // TC-N-10: メール認証画面表示
-    // ========================================================
-
+    /**
+     * TC-N-10: メール認証画面表示
+     */
     public function test_verify_email_screen_can_be_rendered(): void
     {
         /** @var User $user */
@@ -298,10 +282,9 @@ class AuthViewsTest extends TestCase
         $response->assertSee('メールアドレスの確認');
     }
 
-    // ========================================================
-    // TC-N-11: メール認証リンク再送
-    // ========================================================
-
+    /**
+     * TC-N-11: メール認証リンク再送
+     */
     public function test_resend_verification_email_returns_status(): void
     {
         Notification::fake();
@@ -313,12 +296,12 @@ class AuthViewsTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('status', 'verification-link-sent');
+        Notification::assertSentTo($user, VerifyEmail::class);
     }
 
-    // ========================================================
-    // TC-N-12: ゲストのメール認証画面アクセス
-    // ========================================================
-
+    /**
+     * TC-N-12: ゲストのメール認証画面アクセス
+     */
     public function test_guest_is_redirected_from_verify_email(): void
     {
         $response = $this->get('/email/verify');
@@ -326,10 +309,9 @@ class AuthViewsTest extends TestCase
         $response->assertRedirect('/login');
     }
 
-    // ========================================================
-    // TC-N-13: 認証済みユーザーのメール認証画面アクセス
-    // ========================================================
-
+    /**
+     * TC-N-13: 認証済みユーザーのメール認証画面アクセス
+     */
     public function test_verified_user_is_redirected_from_verify_email(): void
     {
         /** @var User $user */
@@ -338,5 +320,29 @@ class AuthViewsTest extends TestCase
         $response = $this->actingAs($user)->get('/email/verify');
 
         $response->assertRedirect('/');
+    }
+
+    /**
+     * TC-N-14: メール認証リンククリック
+     */
+    public function test_unverified_user_can_verify_email_with_valid_signed_link(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->unverified()->create();
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $user->getKey(),
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        $response = $this->actingAs($user)->get($verificationUrl);
+
+        $response->assertRedirect('/?verified=1');
+        $user->refresh();
+        $this->assertTrue($user->hasVerifiedEmail());
     }
 }

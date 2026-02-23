@@ -17,6 +17,11 @@ alwaysApply: true
 - Given / When / Then コメント方針は `.cursor/rules/test-strategy.mdc` の「3. Given / When / Then コメント」を正本として参照する。
 - 本ファイルでは重複定義しない。
 
+## 2.5) PHPDoc 方針（再発防止）
+
+- インラインのセクションコメント（テストケースID、シナリオ見出し、Given/When/Then など）は、PHPDoc ブロックへ移すことを優先する。
+- 全般としてインラインコメントより PHPDoc ブロックを優先し、詳細は `.cursor/rules/laravel-boost.mdc` の Comments / PHPDoc 方針に従う。
+
 ## 3) 機能固有チェックリストの扱い
 
 - 機能固有の検証観点は `.cursor/rules/checklists/<feature>.mdc` に分離して管理する。
