@@ -14,6 +14,7 @@ use App\Models\PrepaidPurchase;
 use App\Models\Reservation;
 use App\Models\ReservationManagement;
 use App\Models\User;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -32,6 +33,15 @@ class CoreModelsTest extends TestCase
         // Then: relation type and key mapping are correct
         $this->assertInstanceOf(HasOne::class, $relation);
         $this->assertSame('user_id', $relation->getForeignKeyName());
+    }
+
+    public function test_user_implements_must_verify_email_contract(): void
+    {
+        // Given: a user model instance
+        $user = new User;
+
+        // Then: user model supports email verification workflow
+        $this->assertInstanceOf(MustVerifyEmail::class, $user);
     }
 
     public function test_member_profile_belongs_to_user(): void
