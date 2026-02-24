@@ -6,6 +6,9 @@ if [[ "${SKIP_REVIEW_FEEDBACK_GUARD:-0}" == "1" ]]; then
   exit 0
 fi
 
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+LOG_PATH="$REPO_ROOT/.cursor/review-feedback/log.md"
+
 staged_files="$(git diff --cached --name-only --diff-filter=ACMRTUXB)"
 
 if [[ -z "$staged_files" ]]; then
@@ -35,9 +38,6 @@ if [[ "$requires_tracking_update" -eq 0 ]]; then
 fi
 
 if [[ "$has_log_update" -eq 0 ]]; then
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
-  LOG_PATH="$REPO_ROOT/.cursor/review-feedback/log.md"
-
   if [[ ! -f "$LOG_PATH" ]]; then
     echo "[review-feedback-guard] ERROR: .cursor/review-feedback/log.md が見つかりません。"
     exit 1
@@ -66,12 +66,11 @@ if [[ "$has_log_update" -eq 0 ]]; then
     echo "  notes: pre-commit が自動で追記。必要に応じて内容を編集してください。"
   } >> "$LOG_PATH"
 
-  git add ".cursor/review-feedback/log.md"
+  git add "$LOG_PATH"
   echo "[review-feedback-guard] INFO: log.md 未更新のためテンプレート行を自動追記しました。"
 fi
 
 # Phase 1+2: Validate log content and RFP rules (staged log.md content)
-REPO_ROOT="$(git rev-parse --show-toplevel)"
 set -o pipefail
 if ! git show ":.cursor/review-feedback/log.md" 2>/dev/null | php "$REPO_ROOT/scripts/review-feedback-validate.php" --log-path=-; then
   echo "[review-feedback-guard] Log validation or RFP check failed. Fix the errors above and retry."

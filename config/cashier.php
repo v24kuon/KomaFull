@@ -3,8 +3,6 @@
 use Laravel\Cashier\Console\WebhookCommand;
 use Laravel\Cashier\Invoices\DompdfInvoiceRenderer;
 
-// use Laravel\Cashier\Invoices\LaravelPdfInvoiceRenderer;
-
 return [
 
     /*
@@ -99,15 +97,15 @@ return [
     | The following options determine how Cashier invoices are converted from
     | HTML into PDFs. You're free to change the options based on the needs
     | of your application or your preferences regarding invoice styling.
+    | Supported renderers: DompdfInvoiceRenderer::class, LaravelPdfInvoiceRenderer::class
+    | Supported paper sizes: letter, legal, A4
     |
     */
 
     'invoices' => [
-        // Supported: DompdfInvoiceRenderer::class, LaravelPdfInvoiceRenderer::class
         'renderer' => env('CASHIER_INVOICE_RENDERER', DompdfInvoiceRenderer::class),
 
         'options' => [
-            // Supported: 'letter', 'legal', 'A4'
             'paper' => env('CASHIER_PAPER', 'letter'),
 
             'remote_enabled' => env('CASHIER_REMOTE_ENABLED', false),
