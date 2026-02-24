@@ -17,6 +17,38 @@
 ## Entries
 
 - date: 2026-02-23
+  branch: feat/ph4-3-cancel-logic
+  scope: PRレビュー指摘対応（インラインコメント→PHPDoc）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php
+  notes: CodeRabbit 指摘。Phase 1/Phase 2 のインラインコメントを PHPDoc ブロックへ置換。review-feedback-prevention 2.5 方針に準拠。
+
+- date: 2026-02-23
+  branch: feat/ph4-3-cancel-logic
+  scope: log.md 自動活用 Phase 1+2 実装
+  adopted: no
+  classification: none
+  targets: scripts/review-feedback-validate.php, scripts/review-feedback-guard.sh, tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: Phase 1: log 必須キー・classification・adopted・日付・targets の検証。Phase 2: RFP-001 チェッカー（->refresh()/->fresh() 禁止）。guard に統合。
+
+- date: 2026-02-23
+  branch: feat/ph4-3-cancel-logic
+  scope: PRレビュー指摘対応（update 直後の refresh 削除）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/ReservationService.php
+  notes: RFP-001 趣旨に沿い、update() 直後の不要な refresh() を削除。Eloquent の update() は in-memory 属性を更新するため追加 SELECT は不要。
+
+- date: 2026-02-23
+  branch: feat/ph4-3-cancel-logic
+  scope: PH4-3 予約キャンセル・巻き戻しロジック実装
+  adopted: no
+  classification: none
+  targets: app/Services/ReservationService.php, tests/Feature/ReservationServiceTest.php
+  notes: ReservationService::cancel() を実装。トランザクション・lockForUpdate・冪等・カウンタデクリメント・異常系テストを追加。
+
+- date: 2026-02-23
   branch: feat/ph4-2-booking-logic
   scope: ReservationService / ReservationServiceTest（レビュー対応一式）
   adopted: yes
