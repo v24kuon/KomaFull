@@ -18,6 +18,14 @@
 
 - date: 2026-02-24
   branch: feat/ph5-2-webhook-signature
+  scope: PR Nitpick 対応（CSRF除外絞り込み・weird path テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: bootstrap/app.php, tests/Feature/StripeWebhookSignatureVerificationTest.php
+  notes: stripe/* → stripe/webhook に限定。署名ヘッダ欠落の feature テスト追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-2-webhook-signature
   scope: PH5-2 Stripe Webhook 署名検証（Stripe-Signature）
   adopted: no
   classification: none

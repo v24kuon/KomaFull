@@ -36,6 +36,35 @@ class StripeWebhookSignatureVerificationTest extends TestCase
         $response->assertStatus(403);
     }
 
+    public function test_it_rejects_webhook_without_signature_header(): void
+    {
+        config()->set('cashier.webhook.secret', 'whsec_test_secret');
+
+        $payload = json_encode([
+            'id' => 'evt_signature_missing_header_001',
+            'type' => 'test.event',
+            'data' => [
+                'object' => [
+                    'id' => 'obj_missing_signature_header',
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $response = $this->call(
+            'POST',
+            route('cashier.webhook'),
+            [],
+            [],
+            [],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            $payload
+        );
+
+        $response->assertStatus(403);
+    }
+
     public function test_it_accepts_webhook_with_valid_signature(): void
     {
         $secret = 'whsec_test_secret';
