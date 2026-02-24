@@ -18,6 +18,14 @@
 
 - date: 2026-02-24
   branch: feat/ph5-2-webhook-signature
+  scope: PR Nitpick 対応（リプレイ攻撃境界テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/StripeWebhookSignatureVerificationTest.php
+  notes: タイムスタンプ期限切れ（time()-301）の境界テスト追加。makeStripeSignatureHeader に ?int $timestamp を追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-2-webhook-signature
   scope: PR Nitpick 対応（PHPDoc・setUp 集約）
   adopted: yes
   classification: 汎用
