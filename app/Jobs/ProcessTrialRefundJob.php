@@ -19,10 +19,22 @@ class ProcessTrialRefundJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    public int $tries = 4;
+
     public function __construct(
         public readonly int $trialApplicationId,
         public readonly ?string $paymentIntentId
     ) {}
+
+    /**
+     * Calculate the number of seconds to wait before retrying the job.
+     *
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [60, 300, 900];
+    }
 
     public function handle(ConnectionInterface $connection, StripeRefundService $stripeRefundService): void
     {

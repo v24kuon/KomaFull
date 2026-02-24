@@ -52,8 +52,11 @@ class AppServiceProvider extends ServiceProvider
             $eventId = trim((string) ($payload['id'] ?? ''));
 
             if ($eventId === '') {
+                $checkoutSessionId = trim((string) data_get($payload, 'data.object.id', ''));
+
                 Log::warning('Stripe webhook payload is missing event id.', [
-                    'payload' => $payload,
+                    'event_type' => $payload['type'] ?? null,
+                    'checkout_session_id' => $checkoutSessionId !== '' ? $checkoutSessionId : null,
                 ]);
 
                 return;

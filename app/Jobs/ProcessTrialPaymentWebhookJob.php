@@ -17,12 +17,20 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
 use Throwable;
 
+/**
+ * Process trial checkout webhooks and persist processing results.
+ *
+ * Failures are recorded on webhook_logs and intentionally not rethrown.
+ * Queue retries are therefore disabled for this job.
+ */
 class ProcessTrialPaymentWebhookJob implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
+
+    public int $tries = 1;
 
     public function __construct(public readonly int $webhookLogId) {}
 
@@ -87,6 +95,7 @@ class ProcessTrialPaymentWebhookJob implements ShouldQueue
                     [
                         TrialApplication::STATUS_RESERVED,
                         TrialApplication::STATUS_REFUND_PENDING,
+                        TrialApplication::STATUS_REFUND_FAILED,
                         TrialApplication::STATUS_REFUNDED,
                     ],
                     true

@@ -63,16 +63,25 @@ class TrialApplication extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<User, self>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<LessonSession, self>
+     */
     public function lessonSession(): BelongsTo
     {
         return $this->belongsTo(LessonSession::class);
     }
 
+    /**
+     * @return BelongsTo<Reservation, self>
+     */
     public function reservation(): BelongsTo
     {
         return $this->belongsTo(Reservation::class);
