@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-02-24
+  branch: feat/ph5-1-cashier-install
+  scope: PH5-1 Cashier インストール & 設定 / log.md 自動追記
+  adopted: no
+  classification: none
+  targets: composer.json, app/Models/User.php, config/services.php, config/cashier.php, .env.example, database/migrations/*, scripts/review-feedback-guard.sh
+  notes: Cashier 導入。User に Billable と $hidden 追加。Stripe 環境変数。guard で log.md 未更新時にテンプレート自動追記。
+
 - date: 2026-02-23
   branch: feat/ph4-3-cancel-logic
   scope: PRレビュー指摘対応（インラインコメント→PHPDoc）
