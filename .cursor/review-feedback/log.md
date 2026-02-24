@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
+  scope: PH5-3 体験決済 Webhook 処理（予約確定/返金: refund_pending/failed + Idempotency-Key）
+  adopted: no
+  classification: none
+  targets: app/Jobs/ProcessTrialPaymentWebhookJob.php, app/Jobs/ProcessTrialRefundJob.php, app/Models/TrialApplication.php, app/Providers/AppServiceProvider.php, app/Services/StripeRefundService.php, config/cashier.php, database/factories/TrialApplicationFactory.php, tests/Feature/ProcessTrialRefundJobTest.php, tests/Feature/TrialPaymentWebhookTest.php
+  notes: checkout.session.completed の Webhook 処理。event_id 冪等、予約確定 or refund_pending + Refund Job。返金は Idempotency-Key で冪等化。
+
+- date: 2026-02-24
   branch: feat/ph5-2-webhook-signature
   scope: PR Nitpick 対応（リプレイ攻撃境界テスト追加）
   adopted: yes

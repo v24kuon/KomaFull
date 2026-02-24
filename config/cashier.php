@@ -47,7 +47,10 @@ return [
     'webhook' => [
         'secret' => env('STRIPE_WEBHOOK_SECRET'),
         'tolerance' => env('STRIPE_WEBHOOK_TOLERANCE', 300),
-        'events' => WebhookCommand::DEFAULT_EVENTS,
+        'events' => array_values(array_unique([
+            ...WebhookCommand::DEFAULT_EVENTS,
+            'checkout.session.completed',
+        ])),
     ],
 
     /*
