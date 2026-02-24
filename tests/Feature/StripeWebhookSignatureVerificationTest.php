@@ -6,10 +6,18 @@ use Tests\TestCase;
 
 class StripeWebhookSignatureVerificationTest extends TestCase
 {
+    private string $webhookSecret;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->webhookSecret = 'whsec_test_secret';
+        config()->set('cashier.webhook.secret', $this->webhookSecret);
+    }
+
     public function test_it_rejects_webhook_with_invalid_signature(): void
     {
-        config()->set('cashier.webhook.secret', 'whsec_test_secret');
-
         $payload = json_encode([
             'id' => 'evt_signature_invalid_001',
             'type' => 'test.event',
@@ -38,8 +46,6 @@ class StripeWebhookSignatureVerificationTest extends TestCase
 
     public function test_it_rejects_webhook_without_signature_header(): void
     {
-        config()->set('cashier.webhook.secret', 'whsec_test_secret');
-
         $payload = json_encode([
             'id' => 'evt_signature_missing_header_001',
             'type' => 'test.event',
@@ -67,9 +73,6 @@ class StripeWebhookSignatureVerificationTest extends TestCase
 
     public function test_it_accepts_webhook_with_valid_signature(): void
     {
-        $secret = 'whsec_test_secret';
-        config()->set('cashier.webhook.secret', $secret);
-
         $payload = json_encode([
             'id' => 'evt_signature_valid_001',
             'type' => 'test.event',
@@ -88,7 +91,7 @@ class StripeWebhookSignatureVerificationTest extends TestCase
             [],
             [
                 'CONTENT_TYPE' => 'application/json',
-                'HTTP_STRIPE_SIGNATURE' => $this->makeStripeSignatureHeader($payload, $secret),
+                'HTTP_STRIPE_SIGNATURE' => $this->makeStripeSignatureHeader($payload, $this->webhookSecret),
             ],
             $payload
         );
@@ -96,6 +99,9 @@ class StripeWebhookSignatureVerificationTest extends TestCase
         $response->assertOk();
     }
 
+    /**
+     * Create a Stripe-Signature header value for test payloads.
+     */
     private function makeStripeSignatureHeader(string $payload, string $secret): string
     {
         $timestamp = time();

@@ -18,6 +18,14 @@
 
 - date: 2026-02-24
   branch: feat/ph5-2-webhook-signature
+  scope: PR Nitpick 対応（PHPDoc・setUp 集約）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/StripeWebhookSignatureVerificationTest.php
+  notes: makeStripeSignatureHeader に PHPDoc 追加。config()->set を setUp へ集約（RFP-007）。
+
+- date: 2026-02-24
+  branch: feat/ph5-2-webhook-signature
   scope: PR Nitpick 対応（CSRF除外絞り込み・weird path テスト追加）
   adopted: yes
   classification: 汎用
