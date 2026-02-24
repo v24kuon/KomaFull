@@ -119,7 +119,7 @@ class ReservationService
                 'cancel_reason' => $normalizedReason,
             ]);
 
-            return $lockedReservation->refresh();
+            return $lockedReservation;
         });
     }
 

@@ -18,6 +18,22 @@
 
 - date: 2026-02-23
   branch: feat/ph4-3-cancel-logic
+  scope: log.md 自動活用 Phase 1+2 実装
+  adopted: no
+  classification: none
+  targets: scripts/review-feedback-validate.php, scripts/review-feedback-guard.sh, tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: Phase 1: log 必須キー・classification・adopted・日付・targets の検証。Phase 2: RFP-001 チェッカー（->refresh()/->fresh() 禁止）。guard に統合。
+
+- date: 2026-02-23
+  branch: feat/ph4-3-cancel-logic
+  scope: PRレビュー指摘対応（update 直後の refresh 削除）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/ReservationService.php
+  notes: RFP-001 趣旨に沿い、update() 直後の不要な refresh() を削除。Eloquent の update() は in-memory 属性を更新するため追加 SELECT は不要。
+
+- date: 2026-02-23
+  branch: feat/ph4-3-cancel-logic
   scope: PH4-3 予約キャンセル・巻き戻しロジック実装
   adopted: no
   classification: none

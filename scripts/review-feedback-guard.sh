@@ -32,11 +32,8 @@ if [[ "$requires_tracking_update" -eq 0 ]]; then
   exit 0
 fi
 
-if [[ "$has_log_update" -eq 1 ]]; then
-  exit 0
-fi
-
-cat <<'EOF'
+if [[ "$has_log_update" -eq 0 ]]; then
+  cat <<'EOF'
 [review-feedback-guard] ERROR:
 コード変更（app/tests/database/routes/config/bootstrap/resources）が含まれていますが、
 レビュー指摘ログ `.cursor/review-feedback/log.md` の更新がステージされていません。
@@ -46,6 +43,14 @@ cat <<'EOF'
 
 その後、再度コミットを実行してください。
 EOF
+  exit 1
+fi
 
-exit 1
+# Phase 1+2: Validate log content and RFP rules (staged log.md content)
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+set -o pipefail
+if ! git show ":.cursor/review-feedback/log.md" 2>/dev/null | php "$REPO_ROOT/scripts/review-feedback-validate.php" --log-path=-; then
+  echo "[review-feedback-guard] Log validation or RFP check failed. Fix the errors above and retry."
+  exit 1
+fi
 
