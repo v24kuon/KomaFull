@@ -34,7 +34,7 @@ if ($logPath === '-' || $logPath === 'stdin') {
 
 $exitCode = 0;
 
-// Phase 1: Log content validation
+/** Phase 1: Log content validation (required keys, classification, adopted, date, targets). */
 $errors = $logContent !== null
     ? validate_log_content($logContent)
     : validate_log_entries($logPath);
@@ -45,7 +45,7 @@ if ($errors !== []) {
     }
 }
 
-// Phase 2: RFP-001 checker (staged app/ PHP files only)
+/** Phase 2: RFP-001 checker (staged app/ PHP files: ->refresh() / ->fresh() after write). */
 if (! $skipRfp && $exitCode === 0) {
     $rfpErrors = run_rfp001_check($repoRoot);
     if ($rfpErrors !== []) {

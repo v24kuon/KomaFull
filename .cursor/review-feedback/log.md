@@ -18,6 +18,14 @@
 
 - date: 2026-02-23
   branch: feat/ph4-3-cancel-logic
+  scope: PRレビュー指摘対応（インラインコメント→PHPDoc）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php
+  notes: CodeRabbit 指摘。Phase 1/Phase 2 のインラインコメントを PHPDoc ブロックへ置換。review-feedback-prevention 2.5 方針に準拠。
+
+- date: 2026-02-23
+  branch: feat/ph4-3-cancel-logic
   scope: log.md 自動活用 Phase 1+2 実装
   adopted: no
   classification: none
