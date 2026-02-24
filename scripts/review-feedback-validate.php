@@ -8,10 +8,11 @@ declare(strict_types=1);
  *
  * Phase 1: Required keys, classification enum, adopted enum, date format, targets non-empty.
  * Phase 2: RFP-001 checker for staged app/ PHP files (->refresh() / ->fresh() after write).
+ * Phase 3: RFP-008 checker for staged app/config PHP files (commented-out import, Supported inline comment).
  *
  * Usage: php scripts/review-feedback-validate.php [--log-path=PATH] [--skip-rfp]
  *   --log-path: Path to log.md (default: .cursor/review-feedback/log.md from repo root)
- *   --skip-rfp: Skip Phase 2 RFP code check (for CI or legacy mode)
+ *   --skip-rfp: Skip Phase 2+3 RFP code checks (for CI or legacy mode)
  */
 $repoRoot = get_repo_root();
 $logPath = $repoRoot.'/.cursor/review-feedback/log.md';
@@ -52,6 +53,17 @@ if (! $skipRfp && $exitCode === 0) {
         $exitCode = 1;
         foreach ($rfpErrors as $err) {
             echo "[review-feedback-validate] RFP-001: {$err}\n";
+        }
+    }
+}
+
+/** Phase 3: RFP-008 checker (staged app/config PHP files: inline comment policy). */
+if (! $skipRfp && $exitCode === 0) {
+    $rfpErrors = run_rfp008_check($repoRoot);
+    if ($rfpErrors !== []) {
+        $exitCode = 1;
+        foreach ($rfpErrors as $err) {
+            echo "[review-feedback-validate] RFP-008: {$err}\n";
         }
     }
 }
@@ -207,6 +219,41 @@ function run_rfp001_check(string $repoRoot): array
 }
 
 /**
+ * RFP-008: Detect commented-out imports and "Supported:" inline comments in PHP files.
+ *
+ * @return list<string>
+ */
+function run_rfp008_check(string $repoRoot): array
+{
+    $errors = [];
+    $stagedFiles = get_staged_php_files_in_app_and_config($repoRoot);
+
+    foreach ($stagedFiles as $file) {
+        $path = $repoRoot.'/'.$file;
+        if (! is_readable($path)) {
+            continue;
+        }
+
+        $content = file_get_contents($path);
+        $lines = explode("\n", $content);
+
+        foreach ($lines as $num => $line) {
+            $lineNum = $num + 1;
+
+            if (preg_match('/^\s*\/\/\s*use\s+[\w\\\\]+(\s+as\s+\w+)?\s*;/', $line)) {
+                $errors[] = "{$file}:{$lineNum}: Commented-out use statement is prohibited. Remove the line or restore it as active code.";
+            }
+
+            if (preg_match('/\/\/\s*Supported:/', $line)) {
+                $errors[] = "{$file}:{$lineNum}: Inline comment '// Supported:' is prohibited. Move this explanation into an appropriate PHPDoc block.";
+            }
+        }
+    }
+
+    return $errors;
+}
+
+/**
  * @return list<string>
  */
 function get_staged_php_files_in_app(string $repoRoot): array
@@ -214,6 +261,33 @@ function get_staged_php_files_in_app(string $repoRoot): array
     $output = [];
     $cmd = sprintf(
         'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- app/',
+        escapeshellarg($repoRoot)
+    );
+    exec($cmd, $output, $code);
+
+    if ($code !== 0) {
+        return [];
+    }
+
+    $files = [];
+    foreach ($output as $line) {
+        $line = trim($line);
+        if ($line !== '' && str_ends_with($line, '.php')) {
+            $files[] = $line;
+        }
+    }
+
+    return $files;
+}
+
+/**
+ * @return list<string>
+ */
+function get_staged_php_files_in_app_and_config(string $repoRoot): array
+{
+    $output = [];
+    $cmd = sprintf(
+        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- app/ config/',
         escapeshellarg($repoRoot)
     );
     exec($cmd, $output, $code);
