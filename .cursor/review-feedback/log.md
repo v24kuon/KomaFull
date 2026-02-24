@@ -17,6 +17,38 @@
 ## Entries
 
 - date: 2026-02-24
+  branch: feat/ph5-2-webhook-signature
+  scope: PR Nitpick 対応（リプレイ攻撃境界テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/StripeWebhookSignatureVerificationTest.php
+  notes: タイムスタンプ期限切れ（time()-301）の境界テスト追加。makeStripeSignatureHeader に ?int $timestamp を追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-2-webhook-signature
+  scope: PR Nitpick 対応（PHPDoc・setUp 集約）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/StripeWebhookSignatureVerificationTest.php
+  notes: makeStripeSignatureHeader に PHPDoc 追加。config()->set を setUp へ集約（RFP-007）。
+
+- date: 2026-02-24
+  branch: feat/ph5-2-webhook-signature
+  scope: PR Nitpick 対応（CSRF除外絞り込み・weird path テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: bootstrap/app.php, tests/Feature/StripeWebhookSignatureVerificationTest.php
+  notes: stripe/* → stripe/webhook に限定。署名ヘッダ欠落の feature テスト追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-2-webhook-signature
+  scope: PH5-2 Stripe Webhook 署名検証（Stripe-Signature）
+  adopted: no
+  classification: none
+  targets: bootstrap/app.php, tests/Feature/StripeWebhookSignatureVerificationTest.php
+  notes: stripe/* の CSRF 除外。署名検証の feature テスト（無効/有効署名）追加。
+
+- date: 2026-02-24
   branch: feat/ph5-1-cashier-install
   scope: PR Nitpick 対応 & RFP-008（インラインコメント禁止）の自動検知追加
   adopted: yes
