@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-02-24
+  branch: feat/ph5-2-webhook-signature
+  scope: PH5-2 Stripe Webhook 署名検証（Stripe-Signature）
+  adopted: no
+  classification: none
+  targets: bootstrap/app.php, tests/Feature/StripeWebhookSignatureVerificationTest.php
+  notes: stripe/* の CSRF 除外。署名検証の feature テスト（無効/有効署名）追加。
+
+- date: 2026-02-24
   branch: feat/ph5-1-cashier-install
   scope: PR Nitpick 対応 & RFP-008（インラインコメント禁止）の自動検知追加
   adopted: yes
