@@ -10,6 +10,7 @@ use Illuminate\Database\ConnectionInterface;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ProcessTrialRefundJob implements ShouldQueue
@@ -80,6 +81,11 @@ class ProcessTrialRefundJob implements ShouldQueue
         $paymentIntentId = trim((string) $this->paymentIntentId);
 
         if ($paymentIntentId === '') {
+            Log::warning('Trial refund skipped: missing payment_intent.', [
+                'trial_application_id' => $this->trialApplicationId,
+                'job' => self::class,
+            ]);
+
             $this->markRefundFailed(
                 $connection,
                 'Missing payment_intent for trial refund processing.'

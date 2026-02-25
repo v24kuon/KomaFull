@@ -18,6 +18,14 @@
 
 - date: 2026-02-24
   branch: feat/ph5-3-trial-webhook
+  scope: PR Nitpick 対応（payment_intent 欠落時の運用検知ログ）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessTrialRefundJob.php, tests/Feature/ProcessTrialRefundJobTest.php
+  notes: paymentIntentId 空時に Log::warning を追加。キュー成功扱いでも運用検知可能に。テストに Log::shouldReceive 検証を追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
   scope: PR Nitpick 対応（ProcessTrialRefundJob PHPDoc・対象外スキップテスト・RFP-009）
   adopted: yes
   classification: 汎用

@@ -6,6 +6,7 @@ use App\Jobs\ProcessTrialRefundJob;
 use App\Models\TrialApplication;
 use App\Services\StripeRefundService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -111,6 +112,14 @@ class ProcessTrialRefundJobTest extends TestCase
 
         $refundService = $this->mock(StripeRefundService::class);
         $refundService->shouldReceive('refundPaymentIntent')->never();
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function (string $message, array $context) use ($trialApplication): bool {
+                return $message === 'Trial refund skipped: missing payment_intent.'
+                    && ($context['trial_application_id'] ?? null) === $trialApplication->id
+                    && ($context['job'] ?? null) === ProcessTrialRefundJob::class;
+            });
 
         ProcessTrialRefundJob::dispatchSync(
             trialApplicationId: $trialApplication->id,
