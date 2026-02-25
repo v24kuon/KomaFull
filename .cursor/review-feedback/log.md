@@ -18,6 +18,14 @@
 
 - date: 2026-02-24
   branch: feat/ph5-3-trial-webhook
+  scope: PR Nitpick 対応（ProcessTrialRefundJob PHPDoc・対象外スキップテスト・RFP-009）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessTrialRefundJob.php, tests/Feature/ProcessTrialRefundJobTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: handle/buildRefundIdempotencyKey/markRefunded/markRefundFailed に PHPDoc 追加。並行実行設計意図を handle に記載。RFP-009 追加。対象外スキップ（id 存在しない・既に refunded）テスト追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
   scope: PR Nitpick 対応（ProcessTrialRefundJob 例外再送出でキュー再試行を有効化）
   adopted: yes
   classification: 汎用

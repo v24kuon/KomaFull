@@ -36,6 +36,17 @@ class ProcessTrialRefundJob implements ShouldQueue
         return [60, 300, 900];
     }
 
+    /**
+     * Process a trial refund request for the target application.
+     *
+     * Eligibility is determined in a short transaction with row locks.
+     * The Stripe API call is intentionally executed outside that transaction so database
+     * locks are not held during external I/O. In concurrent worker scenarios, duplicate
+     * refund attempts are controlled by a fixed Stripe idempotency key and final updates
+     * are persisted under lock in the status update methods.
+     *
+     * @throws Throwable
+     */
     public function handle(ConnectionInterface $connection, StripeRefundService $stripeRefundService): void
     {
         $shouldProcess = $connection->transaction(function (): bool {
@@ -94,11 +105,19 @@ class ProcessTrialRefundJob implements ShouldQueue
         }
     }
 
+    /**
+     * Build a stable Stripe idempotency key for this trial application refund.
+     *
+     * @return non-empty-string
+     */
     private function buildRefundIdempotencyKey(): string
     {
         return sprintf('refund:trial_application:%d', $this->trialApplicationId);
     }
 
+    /**
+     * Mark the trial application as refunded under row-level locking.
+     */
     private function markRefunded(ConnectionInterface $connection): void
     {
         $connection->transaction(function (): void {
@@ -119,6 +138,9 @@ class ProcessTrialRefundJob implements ShouldQueue
         });
     }
 
+    /**
+     * Mark the trial application as refund failed unless it has already been refunded.
+     */
     private function markRefundFailed(ConnectionInterface $connection, string $reason): void
     {
         $connection->transaction(function () use ($reason): void {

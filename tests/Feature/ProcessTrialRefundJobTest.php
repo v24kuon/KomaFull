@@ -67,6 +67,44 @@ class ProcessTrialRefundJobTest extends TestCase
         $this->assertStringContainsString('Stripe refund API error', (string) $trialApplication->refund_reason);
     }
 
+    public function test_it_silently_skips_when_trial_application_is_not_found(): void
+    {
+        $refundService = $this->mock(StripeRefundService::class);
+        $refundService->shouldReceive('refundPaymentIntent')->never();
+
+        ProcessTrialRefundJob::dispatchSync(
+            trialApplicationId: PHP_INT_MAX,
+            paymentIntentId: 'pi_refund_not_found_001'
+        );
+
+        $this->assertDatabaseCount('trial_applications', 0);
+    }
+
+    public function test_it_silently_skips_when_trial_application_is_already_refunded(): void
+    {
+        $trialApplication = TrialApplication::factory()->create([
+            'status' => TrialApplication::STATUS_REFUNDED,
+            'refunded_at' => now(),
+            'refund_reason' => null,
+        ]);
+
+        $originalRefundedAt = $trialApplication->refunded_at;
+
+        $refundService = $this->mock(StripeRefundService::class);
+        $refundService->shouldReceive('refundPaymentIntent')->never();
+
+        ProcessTrialRefundJob::dispatchSync(
+            trialApplicationId: $trialApplication->id,
+            paymentIntentId: 'pi_refund_already_refunded_001'
+        );
+
+        $trialApplication->refresh();
+        $this->assertSame(TrialApplication::STATUS_REFUNDED, $trialApplication->status);
+        $this->assertNotNull($trialApplication->refunded_at);
+        $this->assertTrue($trialApplication->refunded_at?->equalTo($originalRefundedAt));
+        $this->assertNull($trialApplication->refund_reason);
+    }
+
     public function test_it_marks_trial_application_as_refund_failed_when_payment_intent_is_missing(): void
     {
         $trialApplication = TrialApplication::factory()->refundPending()->create();
