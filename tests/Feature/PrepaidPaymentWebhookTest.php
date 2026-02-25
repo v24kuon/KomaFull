@@ -105,6 +105,92 @@ class PrepaidPaymentWebhookTest extends TestCase
         ]);
     }
 
+    public function test_checkout_session_completed_with_unpaid_status_does_not_grant_balance(): void
+    {
+        $prepaidPurchase = PrepaidPurchase::factory()->create([
+            'status' => PrepaidPurchase::STATUS_PENDING_PAYMENT,
+            'stripe_checkout_session_id' => 'cs_prepaid_unpaid_001',
+            'purchased_at' => null,
+            'expires_at' => null,
+        ]);
+
+        $response = $this->postWebhook($this->makeCheckoutCompletedPayload(
+            eventId: 'evt_prepaid_unpaid_001',
+            checkoutSessionId: 'cs_prepaid_unpaid_001',
+            paymentStatus: 'unpaid'
+        ));
+
+        $response->assertOk();
+
+        $prepaidPurchase->refresh();
+        $this->assertSame(PrepaidPurchase::STATUS_PENDING_PAYMENT, $prepaidPurchase->status);
+        $this->assertNull($prepaidPurchase->purchased_at);
+        $this->assertNull($prepaidPurchase->expires_at);
+        $this->assertDatabaseCount('balance_transactions', 0);
+        $this->assertDatabaseHas('webhook_logs', [
+            'event_id' => 'evt_prepaid_unpaid_001',
+            'provider' => 'stripe',
+            'status' => WebhookLog::STATUS_PROCESSED,
+        ]);
+    }
+
+    public function test_async_payment_succeeded_grants_balance_after_unpaid_checkout_session_completed(): void
+    {
+        $prepaidProduct = PrepaidProduct::factory()->create([
+            'prepaid_type' => PrepaidProduct::PREPAID_TYPE_TICKETS,
+            'usage_count' => 3,
+            'expires_in_days' => 14,
+        ]);
+
+        $prepaidPurchase = PrepaidPurchase::factory()->create([
+            'prepaid_product_id' => $prepaidProduct->id,
+            'status' => PrepaidPurchase::STATUS_PENDING_PAYMENT,
+            'stripe_checkout_session_id' => 'cs_prepaid_async_success_001',
+            'purchased_at' => null,
+            'expires_at' => null,
+        ]);
+
+        $completedResponse = $this->postWebhook($this->makeCheckoutCompletedPayload(
+            eventId: 'evt_prepaid_async_completed_001',
+            checkoutSessionId: 'cs_prepaid_async_success_001',
+            paymentStatus: 'unpaid'
+        ));
+
+        $asyncSuccessResponse = $this->postWebhook($this->makeCheckoutCompletedPayload(
+            eventId: 'evt_prepaid_async_succeeded_001',
+            checkoutSessionId: 'cs_prepaid_async_success_001',
+            paymentStatus: 'paid',
+            eventType: 'checkout.session.async_payment_succeeded'
+        ));
+
+        $completedResponse->assertOk();
+        $asyncSuccessResponse->assertOk();
+
+        $prepaidPurchase->refresh();
+        $this->assertSame(PrepaidPurchase::STATUS_COMPLETED, $prepaidPurchase->status);
+        $this->assertNotNull($prepaidPurchase->purchased_at);
+        $this->assertNotNull($prepaidPurchase->expires_at);
+
+        $this->assertSame(
+            1,
+            BalanceTransaction::query()
+                ->where('prepaid_purchase_id', $prepaidPurchase->id)
+                ->where('transaction_type', BalanceTransaction::TYPE_GRANT)
+                ->count()
+        );
+
+        $this->assertDatabaseHas('webhook_logs', [
+            'event_id' => 'evt_prepaid_async_completed_001',
+            'provider' => 'stripe',
+            'status' => WebhookLog::STATUS_PROCESSED,
+        ]);
+        $this->assertDatabaseHas('webhook_logs', [
+            'event_id' => 'evt_prepaid_async_succeeded_001',
+            'provider' => 'stripe',
+            'status' => WebhookLog::STATUS_PROCESSED,
+        ]);
+    }
+
     public function test_duplicate_event_id_is_ignored_and_does_not_create_duplicate_balance_transaction(): void
     {
         $prepaidPurchase = PrepaidPurchase::factory()->create([
@@ -219,7 +305,7 @@ class PrepaidPaymentWebhookTest extends TestCase
     }
 
     /**
-     * @param  array<string, mixed>  $payload
+     * @param  array{id: string, type: 'checkout.session.completed'|'checkout.session.async_payment_succeeded', data: array{object: array{id: string, payment_status: 'paid'|'unpaid'|'no_payment_required'}}}  $payload
      */
     private function postWebhook(array $payload): TestResponse
     {
@@ -240,17 +326,21 @@ class PrepaidPaymentWebhookTest extends TestCase
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{id: string, type: 'checkout.session.completed'|'checkout.session.async_payment_succeeded', data: array{object: array{id: string, payment_status: 'paid'|'unpaid'|'no_payment_required'}}}
      */
-    private function makeCheckoutCompletedPayload(string $eventId, string $checkoutSessionId): array
-    {
+    private function makeCheckoutCompletedPayload(
+        string $eventId,
+        string $checkoutSessionId,
+        string $paymentStatus = 'paid',
+        string $eventType = 'checkout.session.completed'
+    ): array {
         return [
             'id' => $eventId,
-            'type' => 'checkout.session.completed',
+            'type' => $eventType,
             'data' => [
                 'object' => [
                     'id' => $checkoutSessionId,
-                    'payment_status' => 'paid',
+                    'payment_status' => $paymentStatus,
                 ],
             ],
         ];

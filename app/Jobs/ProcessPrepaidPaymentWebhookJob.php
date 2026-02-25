@@ -33,6 +33,10 @@ class ProcessPrepaidPaymentWebhookJob implements ShouldQueue
      * The webhook row is atomically claimed before processing. Purchase state and
      * balance grant are updated in one transaction with row locking and a stable
      * idempotency key to prevent duplicate ledger grants.
+     *
+     * For delayed payment methods, checkout.session.completed may arrive with
+     * payment_status=unpaid. In that case this job does not grant balance and
+     * waits for checkout.session.async_payment_succeeded.
      */
     public function handle(ConnectionInterface $connection, WebhookEventIdGuard $guard): void
     {
@@ -52,7 +56,7 @@ class ProcessPrepaidPaymentWebhookJob implements ShouldQueue
             $payload = $webhookLog->payload;
             $eventType = (string) ($payload['type'] ?? '');
 
-            if ($eventType !== 'checkout.session.completed') {
+            if (! in_array($eventType, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)) {
                 $this->markProcessed();
 
                 return;
@@ -74,7 +78,30 @@ class ProcessPrepaidPaymentWebhookJob implements ShouldQueue
                 return;
             }
 
-            $result = $connection->transaction(function () use ($checkoutSessionId): array {
+            $paymentStatus = trim((string) ($checkoutSession['payment_status'] ?? ''));
+
+            if ($paymentStatus === '') {
+                $this->markFailed('checkout.session.payment_status is missing.');
+
+                return;
+            }
+
+            if ($paymentStatus === 'unpaid') {
+                $this->markProcessed();
+
+                return;
+            }
+
+            if (! in_array($paymentStatus, ['paid', 'no_payment_required'], true)) {
+                $this->markFailed(sprintf('checkout.session.payment_status is unsupported: %s', $paymentStatus));
+
+                return;
+            }
+
+            /**
+             * @return array{status: 'processed'|'failed', message?: non-empty-string, mark_grant_failed?: bool}
+             */
+            $processGrant = function () use ($checkoutSessionId): array {
                 $prepaidPurchase = PrepaidPurchase::query()
                     ->where('stripe_checkout_session_id', $checkoutSessionId)
                     ->lockForUpdate()
@@ -162,7 +189,9 @@ class ProcessPrepaidPaymentWebhookJob implements ShouldQueue
                 ]);
 
                 return ['status' => 'processed'];
-            });
+            };
+
+            $result = $connection->transaction($processGrant);
 
             if ($result['status'] === 'failed') {
                 if (($result['mark_grant_failed'] ?? false) === true) {
@@ -213,7 +242,11 @@ class ProcessPrepaidPaymentWebhookJob implements ShouldQueue
     }
 
     /**
-     * Mark prepaid purchase as grant_failed unless it is already completed.
+     * Mark prepaid purchase as grant_failed unless it has already been completed.
+     *
+     * Runs inside a transaction with lockForUpdate() on the target row to ensure
+     * idempotency under concurrent retries or parallel workers. If the purchase
+     * is already STATUS_COMPLETED, no update is performed.
      */
     private function markGrantFailed(ConnectionInterface $connection, string $checkoutSessionId): void
     {

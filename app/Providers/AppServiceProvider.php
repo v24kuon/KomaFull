@@ -49,7 +49,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(function (WebhookReceived $event): void {
             $payload = $event->payload;
 
-            if (($payload['type'] ?? null) !== 'checkout.session.completed') {
+            $eventType = (string) ($payload['type'] ?? '');
+
+            if (! in_array($eventType, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)) {
                 return;
             }
 

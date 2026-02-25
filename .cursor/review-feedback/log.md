@@ -18,6 +18,14 @@
 
 - date: 2026-02-25
   branch: feat/ph5-4-prepaid-webhook
+  scope: PR Nitpick 対応（payment_status 検証・遅延決済対応・async_payment_succeeded）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessPrepaidPaymentWebhookJob.php, app/Providers/AppServiceProvider.php, config/cashier.php, tests/Feature/PrepaidPaymentWebhookTest.php
+  notes: payment_status を検証（unpaid はスキップ、paid/no_payment_required のみ付与）。checkout.session.async_payment_succeeded を購読・処理対象に追加。handle PHPDoc に遅延決済の扱いを明記。テスト追加（unpaid スキップ・async_succeeded 付与）。
+
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
   scope: PH5-4 プリペイド Webhook 処理
   adopted: no
   classification: none
