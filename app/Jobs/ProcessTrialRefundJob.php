@@ -136,6 +136,10 @@ class ProcessTrialRefundJob implements ShouldQueue
                 return;
             }
 
+            if ($trialApplication->status === TrialApplication::STATUS_REFUNDED) {
+                return;
+            }
+
             $trialApplication->update([
                 'status' => TrialApplication::STATUS_REFUNDED,
                 'refunded_at' => now(),

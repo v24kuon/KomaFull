@@ -7,6 +7,7 @@ use App\Models\TrialApplication;
 use App\Services\StripeRefundService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
+use Mockery\MockInterface;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -14,12 +15,21 @@ class ProcessTrialRefundJobTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @var MockInterface&StripeRefundService */
+    private MockInterface $stripeRefundService;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->stripeRefundService = $this->mock(StripeRefundService::class);
+    }
+
     public function test_it_marks_trial_application_as_refunded_when_refund_succeeds(): void
     {
         $trialApplication = TrialApplication::factory()->refundPending()->create();
 
-        $refundService = $this->mock(StripeRefundService::class);
-        $refundService
+        $this->stripeRefundService
             ->shouldReceive('refundPaymentIntent')
             ->once()
             ->with(
@@ -42,8 +52,7 @@ class ProcessTrialRefundJobTest extends TestCase
     {
         $trialApplication = TrialApplication::factory()->refundPending()->create();
 
-        $refundService = $this->mock(StripeRefundService::class);
-        $refundService
+        $this->stripeRefundService
             ->shouldReceive('refundPaymentIntent')
             ->once()
             ->with(
@@ -70,8 +79,7 @@ class ProcessTrialRefundJobTest extends TestCase
 
     public function test_it_silently_skips_when_trial_application_is_not_found(): void
     {
-        $refundService = $this->mock(StripeRefundService::class);
-        $refundService->shouldReceive('refundPaymentIntent')->never();
+        $this->stripeRefundService->shouldReceive('refundPaymentIntent')->never();
 
         ProcessTrialRefundJob::dispatchSync(
             trialApplicationId: PHP_INT_MAX,
@@ -83,16 +91,11 @@ class ProcessTrialRefundJobTest extends TestCase
 
     public function test_it_silently_skips_when_trial_application_is_already_refunded(): void
     {
-        $trialApplication = TrialApplication::factory()->create([
-            'status' => TrialApplication::STATUS_REFUNDED,
-            'refunded_at' => now(),
-            'refund_reason' => null,
-        ]);
+        $trialApplication = TrialApplication::factory()->refunded()->create();
 
         $originalRefundedAt = $trialApplication->refunded_at;
 
-        $refundService = $this->mock(StripeRefundService::class);
-        $refundService->shouldReceive('refundPaymentIntent')->never();
+        $this->stripeRefundService->shouldReceive('refundPaymentIntent')->never();
 
         ProcessTrialRefundJob::dispatchSync(
             trialApplicationId: $trialApplication->id,
@@ -110,8 +113,7 @@ class ProcessTrialRefundJobTest extends TestCase
     {
         $trialApplication = TrialApplication::factory()->refundPending()->create();
 
-        $refundService = $this->mock(StripeRefundService::class);
-        $refundService->shouldReceive('refundPaymentIntent')->never();
+        $this->stripeRefundService->shouldReceive('refundPaymentIntent')->never();
 
         Log::shouldReceive('warning')
             ->once()

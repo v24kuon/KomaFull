@@ -41,4 +41,13 @@ class TrialApplicationFactory extends Factory
             'status' => TrialApplication::STATUS_REFUND_PENDING,
         ]);
     }
+
+    public function refunded(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => TrialApplication::STATUS_REFUNDED,
+            'refunded_at' => now(),
+            'refund_reason' => null,
+        ]);
+    }
 }

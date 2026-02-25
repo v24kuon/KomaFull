@@ -18,6 +18,14 @@
 
 - date: 2026-02-24
   branch: feat/ph5-3-trial-webhook
+  scope: PR Nitpick 対応（refunded ファクトリ・setUp 集約・markRefunded ガード）
+  adopted: yes
+  classification: 汎用
+  targets: database/factories/TrialApplicationFactory.php, tests/Feature/ProcessTrialRefundJobTest.php, app/Jobs/ProcessTrialRefundJob.php
+  notes: TrialApplicationFactory に refunded() ステート追加。ProcessTrialRefundJobTest で StripeRefundService モックを setUp に集約。markRefunded に STATUS_REFUNDED ガード追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
   scope: PR Nitpick 対応（payment_intent 欠落時の運用検知ログ）
   adopted: yes
   classification: 汎用
