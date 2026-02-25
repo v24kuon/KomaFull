@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
+  scope: PH5-4 プリペイド Webhook 処理
+  adopted: no
+  classification: none
+  targets: app/Jobs/ProcessPrepaidPaymentWebhookJob.php, app/Providers/AppServiceProvider.php, tests/Feature/PrepaidPaymentWebhookTest.php
+  notes: checkout.session.completed のプリペイド向け処理。event_id 冪等、balance_transactions 付与、idempotency_key で二重付与防止。体験/プリペイドの振り分けを AppServiceProvider に追加。
+
 - date: 2026-02-24
   branch: feat/ph5-3-trial-webhook
   scope: PR Nitpick 対応（refunded ファクトリ・setUp 集約・markRefunded ガード）
