@@ -3,11 +3,14 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateProvisionalMemberProfile;
+use App\Jobs\ProcessTrialPaymentWebhookJob;
 use App\Models\User;
+use App\Services\WebhookEventIdGuard;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Cashier\Events\WebhookReceived;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +37,42 @@ class AppServiceProvider extends ServiceProvider
             } catch (\Throwable $exception) {
                 Log::error('Failed to create provisional member profile during email verification.', [
                     'user_id' => $event->user->id,
+                    'exception' => $exception,
+                ]);
+            }
+        });
+
+        Event::listen(function (WebhookReceived $event): void {
+            $payload = $event->payload;
+
+            if (($payload['type'] ?? null) !== 'checkout.session.completed') {
+                return;
+            }
+
+            $eventId = trim((string) ($payload['id'] ?? ''));
+
+            if ($eventId === '') {
+                $checkoutSessionId = trim((string) data_get($payload, 'data.object.id', ''));
+
+                Log::warning('Stripe webhook payload is missing event id.', [
+                    'event_type' => $payload['type'] ?? null,
+                    'checkout_session_id' => $checkoutSessionId !== '' ? $checkoutSessionId : null,
+                ]);
+
+                return;
+            }
+
+            try {
+                $webhookLog = app(WebhookEventIdGuard::class)->recordReceived(
+                    eventId: $eventId,
+                    provider: 'stripe',
+                    payload: $payload
+                );
+
+                ProcessTrialPaymentWebhookJob::dispatch($webhookLog->id);
+            } catch (\Throwable $exception) {
+                Log::error('Failed to queue trial checkout webhook processing.', [
+                    'event_id' => $eventId,
                     'exception' => $exception,
                 ]);
             }

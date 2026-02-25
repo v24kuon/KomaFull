@@ -17,6 +17,54 @@
 ## Entries
 
 - date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
+  scope: PR Nitpick 対応（refunded ファクトリ・setUp 集約・markRefunded ガード）
+  adopted: yes
+  classification: 汎用
+  targets: database/factories/TrialApplicationFactory.php, tests/Feature/ProcessTrialRefundJobTest.php, app/Jobs/ProcessTrialRefundJob.php
+  notes: TrialApplicationFactory に refunded() ステート追加。ProcessTrialRefundJobTest で StripeRefundService モックを setUp に集約。markRefunded に STATUS_REFUNDED ガード追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
+  scope: PR Nitpick 対応（payment_intent 欠落時の運用検知ログ）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessTrialRefundJob.php, tests/Feature/ProcessTrialRefundJobTest.php
+  notes: paymentIntentId 空時に Log::warning を追加。キュー成功扱いでも運用検知可能に。テストに Log::shouldReceive 検証を追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
+  scope: PR Nitpick 対応（ProcessTrialRefundJob PHPDoc・対象外スキップテスト・RFP-009）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessTrialRefundJob.php, tests/Feature/ProcessTrialRefundJobTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: handle/buildRefundIdempotencyKey/markRefunded/markRefundFailed に PHPDoc 追加。並行実行設計意図を handle に記載。RFP-009 追加。対象外スキップ（id 存在しない・既に refunded）テスト追加。
+
+- date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
+  scope: PR Nitpick 対応（ProcessTrialRefundJob 例外再送出でキュー再試行を有効化）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessTrialRefundJob.php, tests/Feature/ProcessTrialRefundJobTest.php
+  notes: catch 内で markRefundFailed 後に throw $exception を追加。tries/backoff が有効化。テストは例外再送出を検証する形に更新。
+
+- date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
+  scope: PR Nitpick 対応（PHPDoc・リトライ・STATUS_REFUND_FAILED・PII・戻り値型）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/StripeRefundService.php, app/Models/TrialApplication.php, app/Jobs/ProcessTrialRefundJob.php, app/Jobs/ProcessTrialPaymentWebhookJob.php, app/Providers/AppServiceProvider.php, tests/Feature/TrialPaymentWebhookTest.php
+  notes: StripeRefundService PHPDoc・TrialApplication BelongsTo PHPDoc・ProcessTrialRefundJob tries/backoff・ProcessTrialPaymentWebhookJob tries=1・STATUS_REFUND_FAILED 冪等ガード・event_id 欠落時の PII 排除（payload→event_type/checkout_session_id）・postWebhook 戻り値型 TestResponse。
+
+- date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
+  scope: PH5-3 体験決済 Webhook 処理（予約確定/返金: refund_pending/failed + Idempotency-Key）
+  adopted: no
+  classification: none
+  targets: app/Jobs/ProcessTrialPaymentWebhookJob.php, app/Jobs/ProcessTrialRefundJob.php, app/Models/TrialApplication.php, app/Providers/AppServiceProvider.php, app/Services/StripeRefundService.php, config/cashier.php, database/factories/TrialApplicationFactory.php, tests/Feature/ProcessTrialRefundJobTest.php, tests/Feature/TrialPaymentWebhookTest.php
+  notes: checkout.session.completed の Webhook 処理。event_id 冪等、予約確定 or refund_pending + Refund Job。返金は Idempotency-Key で冪等化。
+
+- date: 2026-02-24
   branch: feat/ph5-2-webhook-signature
   scope: PR Nitpick 対応（リプレイ攻撃境界テスト追加）
   adopted: yes
