@@ -18,6 +18,14 @@
 
 - date: 2026-02-24
   branch: feat/ph5-3-trial-webhook
+  scope: PR Nitpick 対応（ProcessTrialRefundJob 例外再送出でキュー再試行を有効化）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessTrialRefundJob.php, tests/Feature/ProcessTrialRefundJobTest.php
+  notes: catch 内で markRefundFailed 後に throw $exception を追加。tries/backoff が有効化。テストは例外再送出を検証する形に更新。
+
+- date: 2026-02-24
+  branch: feat/ph5-3-trial-webhook
   scope: PR Nitpick 対応（PHPDoc・リトライ・STATUS_REFUND_FAILED・PII・戻り値型）
   adopted: yes
   classification: 汎用

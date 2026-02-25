@@ -89,6 +89,8 @@ class ProcessTrialRefundJob implements ShouldQueue
                 $connection,
                 sprintf('Stripe refund failed: %s', $exception->getMessage())
             );
+
+            throw $exception;
         }
     }
 

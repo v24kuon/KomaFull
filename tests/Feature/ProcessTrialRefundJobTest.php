@@ -51,10 +51,16 @@ class ProcessTrialRefundJobTest extends TestCase
             )
             ->andThrow(new RuntimeException('Stripe refund API error'));
 
-        ProcessTrialRefundJob::dispatchSync(
-            trialApplicationId: $trialApplication->id,
-            paymentIntentId: 'pi_refund_failure_001'
-        );
+        try {
+            ProcessTrialRefundJob::dispatchSync(
+                trialApplicationId: $trialApplication->id,
+                paymentIntentId: 'pi_refund_failure_001'
+            );
+
+            $this->fail('RuntimeException was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Stripe refund API error', $exception->getMessage());
+        }
 
         $trialApplication->refresh();
         $this->assertSame(TrialApplication::STATUS_REFUND_FAILED, $trialApplication->status);
