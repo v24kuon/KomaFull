@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateProvisionalMemberProfile;
-use App\Jobs\ProcessTrialPaymentWebhookJob;
+use App\Jobs\RouteCheckoutSessionWebhookJob;
 use App\Models\User;
 use App\Services\WebhookEventIdGuard;
 use Illuminate\Auth\Events\Verified;
@@ -45,7 +45,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(function (WebhookReceived $event): void {
             $payload = $event->payload;
 
-            if (($payload['type'] ?? null) !== 'checkout.session.completed') {
+            $eventType = (string) ($payload['type'] ?? '');
+
+            if (! in_array($eventType, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)) {
                 return;
             }
 
@@ -69,11 +71,12 @@ class AppServiceProvider extends ServiceProvider
                     payload: $payload
                 );
 
-                ProcessTrialPaymentWebhookJob::dispatch($webhookLog->id);
+                RouteCheckoutSessionWebhookJob::dispatch($webhookLog->id);
             } catch (\Throwable $exception) {
-                Log::error('Failed to queue trial checkout webhook processing.', [
+                Log::error('Failed to queue checkout webhook processing.', [
                     'event_id' => $eventId,
-                    'exception' => $exception,
+                    'exception_class' => $exception::class,
+                    'message' => $exception->getMessage(),
                 ]);
             }
         });

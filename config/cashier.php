@@ -50,6 +50,7 @@ return [
         'events' => array_values(array_unique([
             ...WebhookCommand::DEFAULT_EVENTS,
             'checkout.session.completed',
+            'checkout.session.async_payment_succeeded',
         ])),
     ],
 

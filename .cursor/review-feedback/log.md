@@ -16,6 +16,46 @@
 
 ## Entries
 
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
+  scope: PR Nitpick 対応（review-feedback-validate PHPDoc・複数行属性スキップ）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php
+  notes: is_rfp009_target_method に PHPDoc 追加。複数行 PHP 8 属性のスキップを skip_attribute_blocks/find_attribute_start_index で対応。
+
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
+  scope: PR Nitpick 対応（release 失敗時の再送出・RFP-009 ガード追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/RouteCheckoutSessionWebhookJob.php, scripts/review-feedback-validate.php
+  notes: release() 失敗時に例外を再送出し retry/failed() に委譲。RFP-009 を Phase 4 として review-feedback-validate.php に追加。
+
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
+  scope: Webhook 受信と購入レコード作成の競合リスク対策（信頼性）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/RouteCheckoutSessionWebhookJob.php, app/Providers/AppServiceProvider.php, app/Jobs/ProcessPrepaidPaymentWebhookJob.php
+  notes: exists() 即 failed を廃止。RouteCheckoutSessionWebhookJob を常時 dispatch し、対象未検出時は遅延リトライ。markFailed は status=received 時のみ更新。クロージャ PHPDoc を @var に変更。
+
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
+  scope: PR Nitpick 対応（payment_status 検証・遅延決済対応・async_payment_succeeded）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessPrepaidPaymentWebhookJob.php, app/Providers/AppServiceProvider.php, config/cashier.php, tests/Feature/PrepaidPaymentWebhookTest.php
+  notes: payment_status を検証（unpaid はスキップ、paid/no_payment_required のみ付与）。checkout.session.async_payment_succeeded を購読・処理対象に追加。handle PHPDoc に遅延決済の扱いを明記。テスト追加（unpaid スキップ・async_succeeded 付与）。
+
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
+  scope: PH5-4 プリペイド Webhook 処理
+  adopted: no
+  classification: none
+  targets: app/Jobs/ProcessPrepaidPaymentWebhookJob.php, app/Providers/AppServiceProvider.php, tests/Feature/PrepaidPaymentWebhookTest.php
+  notes: checkout.session.completed のプリペイド向け処理。event_id 冪等、balance_transactions 付与、idempotency_key で二重付与防止。体験/プリペイドの振り分けを AppServiceProvider に追加。
+
 - date: 2026-02-24
   branch: feat/ph5-3-trial-webhook
   scope: PR Nitpick 対応（refunded ファクトリ・setUp 集約・markRefunded ガード）
