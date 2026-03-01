@@ -331,7 +331,7 @@ function has_adjacent_phpdoc(array $lines, int $methodLineIndex): bool
             return true;
         }
 
-        if (preg_match('/^\s*\*/', $lines[$i]) || preg_match('/^\s*\/\*/', $lines[$i])) {
+        if (preg_match('/^\s*\*/', $lines[$i])) {
             $i--;
 
             continue;
