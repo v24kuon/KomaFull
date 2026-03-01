@@ -32,6 +32,26 @@ class RouteCheckoutSessionWebhookJob implements ShouldQueue
         return [10, 30, 60, 120, 300, 600, 900];
     }
 
+    /**
+     * Route a checkout-session webhook to the domain-specific processing job.
+     *
+     * This method resolves a target by checkout_session_id and dispatches either
+     * trial or prepaid processing. If no target exists yet, it reschedules itself
+     * with backoff so record creation races can settle.
+     *
+     * Side effects:
+     * - May dispatch ProcessTrialPaymentWebhookJob or ProcessPrepaidPaymentWebhookJob.
+     * - May update webhook_logs to failed via markFailed() for terminal states.
+     * - May release this job back to the queue for delayed retry.
+     * - Rethrows when rescheduling fails so queue retry/failed() can take over.
+     *
+     * Consistency guarantees:
+     * - Routing is attempted only while webhook_logs.status is received.
+     * - Repeated execution is safe because status checks and conditional updates
+     *   prevent overwriting processing/proceeding terminal states.
+     * - Retry boundary is controlled by $tries and backoff(); once attempts reach
+     *   the boundary this method marks the webhook as failed.
+     */
     public function handle(): void
     {
         $webhookLog = WebhookLog::query()->find($this->webhookLogId);
@@ -133,6 +153,8 @@ class RouteCheckoutSessionWebhookJob implements ShouldQueue
                 'exception_class' => $exception::class,
                 'message' => $exception->getMessage(),
             ]);
+
+            throw $exception;
         }
     }
 
@@ -147,6 +169,16 @@ class RouteCheckoutSessionWebhookJob implements ShouldQueue
         return $backoffs[min($index, count($backoffs) - 1)];
     }
 
+    /**
+     * Mark the webhook log as failed if it is still pending routing.
+     *
+     * Side effects:
+     * - Updates webhook_logs.status to failed and stores error_message.
+     *
+     * Consistency guarantees:
+     * - The update is conditional on status=received so duplicate workers do not
+     *   overwrite rows already claimed/processed by downstream jobs.
+     */
     private function markFailed(string $message): void
     {
         WebhookLog::query()
@@ -158,6 +190,21 @@ class RouteCheckoutSessionWebhookJob implements ShouldQueue
             ]);
     }
 
+    /**
+     * Handle terminal queue failure after retries are exhausted.
+     *
+     * This callback runs when the queue worker marks the job as failed due to an
+     * unhandled exception or retry exhaustion. It records a terminal failure on
+     * webhook_logs only when the row is still in received state.
+     *
+     * Side effects:
+     * - May update webhook_logs to failed via markFailed().
+     * - Emits a warning log with failure context.
+     *
+     * Consistency guarantees:
+     * - No-op when webhook_logs has already transitioned from received, avoiding
+     *   accidental overwrite of concurrent processor outcomes.
+     */
     public function failed(Throwable $exception): void
     {
         $webhookLog = WebhookLog::query()->find($this->webhookLogId);

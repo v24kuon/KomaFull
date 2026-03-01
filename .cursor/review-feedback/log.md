@@ -18,6 +18,14 @@
 
 - date: 2026-02-25
   branch: feat/ph5-4-prepaid-webhook
+  scope: PR Nitpick 対応（release 失敗時の再送出・RFP-009 ガード追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/RouteCheckoutSessionWebhookJob.php, scripts/review-feedback-validate.php
+  notes: release() 失敗時に例外を再送出し retry/failed() に委譲。RFP-009 を Phase 4 として review-feedback-validate.php に追加。
+
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
   scope: Webhook 受信と購入レコード作成の競合リスク対策（信頼性）
   adopted: yes
   classification: 汎用
