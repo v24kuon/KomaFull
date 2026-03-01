@@ -18,6 +18,14 @@
 
 - date: 2026-02-25
   branch: feat/ph5-4-prepaid-webhook
+  scope: PR Nitpick 対応（review-feedback-validate PHPDoc・複数行属性スキップ）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php
+  notes: is_rfp009_target_method に PHPDoc 追加。複数行 PHP 8 属性のスキップを skip_attribute_blocks/find_attribute_start_index で対応。
+
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
   scope: PR Nitpick 対応（release 失敗時の再送出・RFP-009 ガード追加）
   adopted: yes
   classification: 汎用

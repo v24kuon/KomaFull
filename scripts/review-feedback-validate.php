@@ -320,12 +320,7 @@ function has_adjacent_phpdoc(array $lines, int $methodLineIndex): bool
         $i--;
     }
 
-    while ($i >= 0 && preg_match('/^\s*#\[/', $lines[$i])) {
-        $i--;
-        while ($i >= 0 && trim($lines[$i]) === '') {
-            $i--;
-        }
-    }
+    $i = skip_attribute_blocks($lines, $i);
 
     if ($i < 0 || ! preg_match('/\*\/\s*$/', $lines[$i])) {
         return false;
@@ -348,6 +343,88 @@ function has_adjacent_phpdoc(array $lines, int $methodLineIndex): bool
     return false;
 }
 
+/**
+ * Skip one or more PHP 8 attribute blocks above a method declaration.
+ *
+ * Supports both single-line attributes and multi-line attributes such as:
+ * #[Attribute(value: 'x')]
+ * #[Attribute(
+ *     value: 'x'
+ * )]
+ *
+ * @param  list<string>  $lines
+ */
+function skip_attribute_blocks(array $lines, int $lineIndex): int
+{
+    $current = $lineIndex;
+
+    while ($current >= 0) {
+        while ($current >= 0 && trim($lines[$current]) === '') {
+            $current--;
+        }
+
+        if ($current < 0) {
+            return $current;
+        }
+
+        $attributeStart = find_attribute_start_index($lines, $current);
+
+        if ($attributeStart === null) {
+            return $current;
+        }
+
+        $current = $attributeStart - 1;
+    }
+
+    return $current;
+}
+
+/**
+ * Find the start line (`#[...`) of an attribute block ending at the given line.
+ *
+ * @param  list<string>  $lines
+ * @return int|null line index of attribute start; null when not in attribute block
+ */
+function find_attribute_start_index(array $lines, int $fromIndex): ?int
+{
+    $lookbackLimit = 30;
+    $minIndex = max(0, $fromIndex - $lookbackLimit);
+
+    for ($i = $fromIndex; $i >= $minIndex; $i--) {
+        $trimmed = trim($lines[$i]);
+
+        if ($trimmed === '') {
+            continue;
+        }
+
+        if (str_starts_with($trimmed, '#[')) {
+            return $i;
+        }
+
+        if (preg_match('/\*\/\s*$/', $trimmed) === 1 || preg_match('/^\s*\/\*\*/', $trimmed) === 1) {
+            return null;
+        }
+
+        if (preg_match('/^\s*(?:(?:final|abstract)\s+)*(public|protected|private)\s+(?:static\s+)?function\b/', $trimmed) === 1) {
+            return null;
+        }
+
+        if (str_ends_with($trimmed, ';')) {
+            return null;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Decide whether the method is a target of RFP-009 PHPDoc enforcement.
+ *
+ * Target methods:
+ * - Entry points (`handle`, `failed`)
+ * - State transition helpers (e.g. `markXxx`, `updateXxxStatus`, `setXxxState`)
+ * - Idempotency / key generation helpers (e.g. `buildXxxKey`)
+ */
 function is_rfp009_target_method(string $methodName): bool
 {
     $normalized = strtolower($methodName);
