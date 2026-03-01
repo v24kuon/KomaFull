@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-01
+  branch: feat/ph5-5-subscription
+  scope: PH5-5 サブスク購読Webhookと周期枠付与ジョブ
+  adopted: no
+  classification: none
+  targets: app/Jobs/ProcessSubscriptionPaymentWebhookJob.php, app/Providers/AppServiceProvider.php, app/Jobs/RouteCheckoutSessionWebhookJob.php, database/migrations/2026_03_01_150116_add_unique_period_constraint_to_course_entitlements_table.php, tests/Feature/SubscriptionPaymentWebhookTest.php, config/cashier.php
+  notes: invoice.payment_succeeded で course_entitlements を付与し、checkout.session.* (mode=subscription) は専用Jobへルーティング。user+plan+period の unique 制約で重複付与を防止。
+
 - date: 2026-02-25
   branch: feat/ph5-4-prepaid-webhook
   scope: PR Nitpick 対応（review-feedback-validate PHPDoc・複数行属性スキップ）

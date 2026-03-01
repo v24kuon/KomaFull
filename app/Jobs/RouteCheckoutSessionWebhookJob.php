@@ -41,6 +41,7 @@ class RouteCheckoutSessionWebhookJob implements ShouldQueue
      *
      * Side effects:
      * - May dispatch ProcessTrialPaymentWebhookJob or ProcessPrepaidPaymentWebhookJob.
+     * - May dispatch ProcessSubscriptionPaymentWebhookJob for subscription mode.
      * - May update webhook_logs to failed via markFailed() for terminal states.
      * - May release this job back to the queue for delayed retry.
      * - Rethrows when rescheduling fails so queue retry/failed() can take over.
@@ -72,9 +73,16 @@ class RouteCheckoutSessionWebhookJob implements ShouldQueue
         }
 
         $checkoutSessionId = trim((string) data_get($payload, 'data.object.id', ''));
+        $checkoutMode = trim((string) data_get($payload, 'data.object.mode', ''));
 
         if ($checkoutSessionId === '') {
             $this->markFailed('checkout.session.id is missing.');
+
+            return;
+        }
+
+        if ($checkoutMode === 'subscription') {
+            ProcessSubscriptionPaymentWebhookJob::dispatch($webhookLog->id);
 
             return;
         }

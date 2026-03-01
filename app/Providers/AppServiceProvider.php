@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateProvisionalMemberProfile;
+use App\Jobs\ProcessSubscriptionPaymentWebhookJob;
 use App\Jobs\RouteCheckoutSessionWebhookJob;
 use App\Models\User;
 use App\Services\WebhookEventIdGuard;
@@ -47,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
 
             $eventType = (string) ($payload['type'] ?? '');
 
-            if (! in_array($eventType, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)) {
+            if (! in_array($eventType, ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'invoice.payment_succeeded'], true)) {
                 return;
             }
 
@@ -71,6 +72,12 @@ class AppServiceProvider extends ServiceProvider
                     payload: $payload
                 );
 
+                if ($eventType === 'invoice.payment_succeeded') {
+                    ProcessSubscriptionPaymentWebhookJob::dispatch($webhookLog->id);
+
+                    return;
+                }
+
                 RouteCheckoutSessionWebhookJob::dispatch($webhookLog->id);
             } catch (\Throwable $exception) {
                 Log::error('Failed to queue checkout webhook processing.', [
@@ -78,6 +85,8 @@ class AppServiceProvider extends ServiceProvider
                     'exception_class' => $exception::class,
                     'message' => $exception->getMessage(),
                 ]);
+
+                throw $exception;
             }
         });
     }
