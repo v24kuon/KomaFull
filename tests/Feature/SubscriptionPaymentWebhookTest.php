@@ -291,6 +291,93 @@ class SubscriptionPaymentWebhookTest extends TestCase
         $this->assertDatabaseCount('course_entitlements', 0);
     }
 
+    public function test_invoice_payment_succeeded_with_unknown_price_marks_webhook_failed(): void
+    {
+        $user = User::factory()->create([
+            'stripe_id' => 'cus_subscription_unknown_price_001',
+        ]);
+
+        Subscription::query()->create([
+            'user_id' => $user->id,
+            'type' => 'default',
+            'stripe_id' => 'sub_subscription_unknown_price_001',
+            'stripe_status' => 'active',
+            'stripe_price' => 'price_subscription_unknown_price_001',
+            'quantity' => 1,
+        ]);
+
+        $payload = $this->makeInvoicePaymentSucceededPayload(
+            eventId: 'evt_subscription_unknown_price_001',
+            invoiceId: 'in_subscription_unknown_price_001',
+            subscriptionId: 'sub_subscription_unknown_price_001',
+            priceId: 'price_subscription_unknown_price_001',
+            periodStart: 1735689600,
+            periodEnd: 1738368000
+        );
+
+        $response = $this->postWebhook($payload);
+
+        $response->assertOk();
+
+        $webhookLog = WebhookLog::query()
+            ->where('event_id', 'evt_subscription_unknown_price_001')
+            ->firstOrFail();
+
+        $this->assertSame(WebhookLog::STATUS_FAILED, $webhookLog->status);
+        $this->assertStringContainsString(
+            'course_plans not found for stripe_price_id: price_subscription_unknown_price_001',
+            (string) $webhookLog->error_message
+        );
+        $this->assertDatabaseCount('course_entitlements', 0);
+        $this->assertDatabaseCount('course_entitlement_items', 0);
+    }
+
+    public function test_invoice_payment_succeeded_for_per_category_plan_without_categories_marks_webhook_failed(): void
+    {
+        $user = User::factory()->create([
+            'stripe_id' => 'cus_subscription_per_category_no_categories_001',
+        ]);
+
+        $coursePlan = CoursePlan::factory()->perCategory()->create([
+            'stripe_price_id' => 'price_subscription_per_category_no_categories_001',
+            'usage_count' => 4,
+        ]);
+
+        Subscription::query()->create([
+            'user_id' => $user->id,
+            'type' => 'default',
+            'stripe_id' => 'sub_subscription_per_category_no_categories_001',
+            'stripe_status' => 'active',
+            'stripe_price' => 'price_subscription_per_category_no_categories_001',
+            'quantity' => 1,
+        ]);
+
+        $payload = $this->makeInvoicePaymentSucceededPayload(
+            eventId: 'evt_subscription_per_category_no_categories_001',
+            invoiceId: 'in_subscription_per_category_no_categories_001',
+            subscriptionId: 'sub_subscription_per_category_no_categories_001',
+            priceId: 'price_subscription_per_category_no_categories_001',
+            periodStart: 1735689600,
+            periodEnd: 1738368000
+        );
+
+        $response = $this->postWebhook($payload);
+
+        $response->assertOk();
+
+        $webhookLog = WebhookLog::query()
+            ->where('event_id', 'evt_subscription_per_category_no_categories_001')
+            ->firstOrFail();
+
+        $this->assertSame(WebhookLog::STATUS_FAILED, $webhookLog->status);
+        $this->assertStringContainsString(
+            sprintf('course_plan_categories not found for per_category plan: %d', $coursePlan->id),
+            (string) $webhookLog->error_message
+        );
+        $this->assertDatabaseCount('course_entitlements', 0);
+        $this->assertDatabaseCount('course_entitlement_items', 0);
+    }
+
     /**
      * @param  array<string, mixed>  $payload
      */

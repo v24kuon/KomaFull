@@ -134,6 +134,22 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
      * - Creates or reuses course_entitlements for the billed period.
      * - Creates or reuses course_entitlement_items for per-category plans.
      * - Updates webhook_logs to processed / failed.
+     *
+     * @param  array{
+     *     data?: array{
+     *         object?: array{
+     *             subscription?: string,
+     *             lines?: array{
+     *                 data?: array<int, array{
+     *                     type?: string,
+     *                     subscription?: string,
+     *                     price?: array{id?: string},
+     *                     period?: array{start?: int, end?: int}
+     *                 }>
+     *             }
+     *         }
+     *     }
+     * }  $payload
      */
     private function processInvoicePaymentSucceeded(ConnectionInterface $connection, array $payload): void
     {
@@ -218,6 +234,24 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
                 ];
             }
 
+            $planCategories = null;
+
+            if ($coursePlan->allocation_type === CoursePlan::ALLOCATION_TYPE_PER_CATEGORY) {
+                $planCategories = CoursePlanCategory::query()
+                    ->where('course_plan_id', $coursePlan->id)
+                    ->get();
+
+                if ($planCategories->isEmpty()) {
+                    return [
+                        'status' => 'failed',
+                        'message' => sprintf(
+                            'course_plan_categories not found for per_category plan: %d',
+                            $coursePlan->id
+                        ),
+                    ];
+                }
+            }
+
             $periodStartDate = CarbonImmutable::createFromTimestampUTC($periodStart)->toDateString();
             $periodEndDate = CarbonImmutable::createFromTimestampUTC($periodEnd)->subSecond()->toDateString();
 
@@ -234,21 +268,7 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
                 ]
             );
 
-            if ($coursePlan->allocation_type === CoursePlan::ALLOCATION_TYPE_PER_CATEGORY) {
-                $planCategories = CoursePlanCategory::query()
-                    ->where('course_plan_id', $coursePlan->id)
-                    ->get();
-
-                if ($planCategories->isEmpty()) {
-                    return [
-                        'status' => 'failed',
-                        'message' => sprintf(
-                            'course_plan_categories not found for per_category plan: %d',
-                            $coursePlan->id
-                        ),
-                    ];
-                }
-
+            if ($planCategories !== null) {
                 foreach ($planCategories as $planCategory) {
                     CourseEntitlementItem::query()->createOrFirst(
                         [

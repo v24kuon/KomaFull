@@ -18,6 +18,14 @@
 
 - date: 2026-03-01
   branch: feat/ph5-5-subscription
+  scope: PR指摘対応（RFP-002 PHPDoc・エッジケーステスト）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessSubscriptionPaymentWebhookJob.php, tests/Feature/SubscriptionPaymentWebhookTest.php
+  notes: $payload 配列形状型 @param 追加。unknown_price / per_category_no_categories のエッジケーステスト追加。per_category カテゴリ未設定時の部分保存不整合を修正（付与前にカテゴリチェック）。
+
+- date: 2026-03-01
+  branch: feat/ph5-5-subscription
   scope: PH5-5 サブスク購読Webhookと周期枠付与ジョブ
   adopted: no
   classification: none
