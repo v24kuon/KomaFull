@@ -99,7 +99,7 @@ class ProcessPrepaidPaymentWebhookJob implements ShouldQueue
             }
 
             /**
-             * @return array{status: 'processed'|'failed', message?: non-empty-string, mark_grant_failed?: bool}
+             * @var \Closure(): array{status: 'processed'|'failed', message?: non-empty-string, mark_grant_failed?: bool} $processGrant
              */
             $processGrant = function () use ($checkoutSessionId): array {
                 $prepaidPurchase = PrepaidPurchase::query()

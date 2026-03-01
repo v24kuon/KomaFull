@@ -18,6 +18,14 @@
 
 - date: 2026-02-25
   branch: feat/ph5-4-prepaid-webhook
+  scope: Webhook 受信と購入レコード作成の競合リスク対策（信頼性）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/RouteCheckoutSessionWebhookJob.php, app/Providers/AppServiceProvider.php, app/Jobs/ProcessPrepaidPaymentWebhookJob.php
+  notes: exists() 即 failed を廃止。RouteCheckoutSessionWebhookJob を常時 dispatch し、対象未検出時は遅延リトライ。markFailed は status=received 時のみ更新。クロージャ PHPDoc を @var に変更。
+
+- date: 2026-02-25
+  branch: feat/ph5-4-prepaid-webhook
   scope: PR Nitpick 対応（payment_status 検証・遅延決済対応・async_payment_succeeded）
   adopted: yes
   classification: 汎用
