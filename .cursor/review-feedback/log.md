@@ -18,6 +18,14 @@
 
 - date: 2026-03-02
   branch: feat/ph13-1-1-admin-auth-guard
+  scope: PR指摘対応（nullロールテストをFactoryで統一）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/AdminAuthorizationTest.php
+  notes: test_null_role_is_forbidden_on_admin_route で new User 手動生成を User::factory()->makeOne(['role' => null]) に置換。DB制約上 role は NOT NULL のため create ではなく make を使用。
+
+- date: 2026-03-02
+  branch: feat/ph13-1-1-admin-auth-guard
   scope: PH13-1-1 管理者認可（Gate）と /admin 保護ルート
   adopted: no
   classification: none

@@ -71,11 +71,10 @@ class AdminAuthorizationTest extends TestCase
      */
     public function test_null_role_is_forbidden_on_admin_route(): void
     {
-        $user = new User;
-        $user->setAttribute('id', 999999);
-        $user->setAttribute('role', null);
-        $user->setAttribute('email', 'null-role@example.test');
-        $user->setAttribute('password', 'password');
+        /** @var User $user */
+        $user = User::factory()->makeOne([
+            'role' => null,
+        ]);
 
         $response = $this->actingAs($user)->get('/admin');
 
