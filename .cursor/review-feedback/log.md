@@ -16,6 +16,46 @@
 
 ## Entries
 
+- date: 2026-03-02
+  branch: feat/ph5-5-subscription
+  scope: PR指摘対応（resolveSubscriptionLine の責務分離）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessSubscriptionPaymentWebhookJob.php, tests/Feature/SubscriptionPaymentWebhookTest.php
+  notes: resolveSubscriptionLine で subscription 不一致/price.id 欠落を除外しないようにし、呼び出し側の mismatch / missing price バリデーション分岐を到達可能化。mismatched_line_subscription テスト期待値を具体的な mismatch メッセージに更新。
+
+- date: 2026-03-01
+  branch: feat/ph5-5-subscription
+  scope: PR指摘対応（RFP-005 Subscription テストデータ作成をFactoryへ統一）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/SubscriptionPaymentWebhookTest.php
+  notes: Subscription::query()->create を 6 箇所すべて Subscription::factory()->create へ置換。Cashier同梱Factoryを利用し新規Factory作成は不要。
+
+- date: 2026-03-01
+  branch: feat/ph5-5-subscription
+  scope: PR指摘対応（RFP-003 createOrFirst 後の lockForUpdate 再取得）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessSubscriptionPaymentWebhookJob.php
+  notes: course_entitlements を createOrFirst 後に lockForUpdate で再取得し、子要素作成を同一ロックスコープで実行。
+
+- date: 2026-03-01
+  branch: feat/ph5-5-subscription
+  scope: PR指摘対応（RFP-002 PHPDoc・エッジケーステスト）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessSubscriptionPaymentWebhookJob.php, tests/Feature/SubscriptionPaymentWebhookTest.php
+  notes: $payload 配列形状型 @param 追加。unknown_price / per_category_no_categories のエッジケーステスト追加。per_category カテゴリ未設定時の部分保存不整合を修正（付与前にカテゴリチェック）。
+
+- date: 2026-03-01
+  branch: feat/ph5-5-subscription
+  scope: PH5-5 サブスク購読Webhookと周期枠付与ジョブ
+  adopted: no
+  classification: none
+  targets: app/Jobs/ProcessSubscriptionPaymentWebhookJob.php, app/Providers/AppServiceProvider.php, app/Jobs/RouteCheckoutSessionWebhookJob.php, database/migrations/2026_03_01_150116_add_unique_period_constraint_to_course_entitlements_table.php, tests/Feature/SubscriptionPaymentWebhookTest.php, config/cashier.php
+  notes: invoice.payment_succeeded で course_entitlements を付与し、checkout.session.* (mode=subscription) は専用Jobへルーティング。user+plan+period の unique 制約で重複付与を防止。
+
 - date: 2026-02-25
   branch: feat/ph5-4-prepaid-webhook
   scope: PR Nitpick 対応（review-feedback-validate PHPDoc・複数行属性スキップ）
