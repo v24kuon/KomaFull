@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\WebhookEventIdGuard;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Events\WebhookReceived;
@@ -28,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('access-admin', static function (User $user): bool {
+            return $user->isAdministrator();
+        });
+
         Event::listen(function (Verified $event): void {
             if (! $event->user instanceof User) {
                 return;
