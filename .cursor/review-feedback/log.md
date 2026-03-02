@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PH6-1 マスタ系管理画面 (HTMX) + HTMXインフラ + AdditionalItem/StoreSettingsモデル新規作成
+  adopted: no
+  classification: none
+  targets: routes/web.php, resources/views/layouts/admin.blade.php, public/assets/vendor/htmx/htmx.min.js, app/Http/Controllers/Admin/*.php, app/Http/Requests/Admin/*.php, app/Models/AdditionalItem.php, app/Models/StoreSettings.php, database/factories/AdditionalItemFactory.php, database/factories/StoreSettingsFactory.php, database/migrations/2026_03_02_080811_create_store_settings_table.php, resources/views/admin/**/*.blade.php, tests/Feature/Admin/*.php
+  notes: HTMX自己ホスト配置とCSRF自動付与。Category/ProgramType/Program/Location/Staff/AdditionalItem の6リソースCRUDとStoreSettings単行編集。全7コントローラ・14 FormRequest・全ビュー（index/_table/create/edit/_form）。AdditionalItem/StoreSettingsモデル+Factory新規作成。store_settingsマイグレーション追加。49テスト（認可・CRUD・バリデーション・HTMX部分更新）追加、全176テスト通過。
+
+- date: 2026-03-02
   branch: feat/ph13-2-1-admin-layout
   scope: PR指摘対応（管理画面CSS規約準拠とカード描画の重複解消）
   adopted: yes

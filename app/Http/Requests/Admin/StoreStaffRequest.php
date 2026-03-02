@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Http\Requests\Admin;
+
+use App\Models\Staff;
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreStaffRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array<string, array<int, string>>
+     */
+    public function rules(): array
+    {
+        return [
+            'code' => ['required', 'string', 'max:255', 'unique:staffs,code'],
+            'name' => ['required', 'string', 'max:255'],
+            'gender' => ['nullable', 'string', 'max:20'],
+            'birth_date' => ['nullable', 'date'],
+            'licence_skill' => ['nullable', 'string', 'max:255'],
+            'main_expertise' => ['nullable', 'string', 'max:255'],
+            'role' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'status' => ['required', 'string', 'in:'.Staff::STATUS_ACTIVE.','.Staff::STATUS_INACTIVE],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'code.required' => 'コードは必須です。',
+            'code.unique' => 'このコードは既に使用されています。',
+            'name.required' => '名前は必須です。',
+            'status.required' => 'ステータスは必須です。',
+        ];
+    }
+}
