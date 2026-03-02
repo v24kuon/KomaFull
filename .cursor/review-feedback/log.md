@@ -29,7 +29,7 @@
   scope: PH13-2-1 管理用共通レイアウトとダッシュボードの実装
   adopted: no
   classification: none
-  targets: resources/views/layouts/admin.blade.php, resources/views/admin/dashboard.blade.php, public/assets/css/admin.css, routes/web.php, tests/Feature/AdminDashboardTest.php, tests/Feature/AdminAuthorizationTest.php
+  targets: resources/views/layouts/admin.blade.php, resources/views/admin/dashboard.blade.php, public/assets/css/pages/admin.css, routes/web.php, tests/Feature/AdminDashboardTest.php, tests/Feature/AdminAuthorizationTest.php
   notes: 管理用レイアウト（サイドバー+ヘッダー+メインコンテンツ）を作成。/admin をビュー返却に変更。AdminDashboardTest で描画・ナビ・ログアウト確認。AdminAuthorizationTest のアサーションを日本語化に合わせて更新。
 
 - date: 2026-03-02
