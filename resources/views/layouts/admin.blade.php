@@ -4,23 +4,23 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>@yield('title', '管理画面') - {{ config('app.name', 'KomaFull') }}</title>
+        <title>@yield('page-title', '管理画面') - {{ config('app.name', 'KomaFull') }}</title>
 
         <link rel="stylesheet" href="{{ v_asset('assets/vendor/bootstrap/bootstrap.min.css') }}">
         <link rel="stylesheet" href="{{ v_asset('assets/css/app.css') }}">
-        <link rel="stylesheet" href="{{ v_asset('assets/css/admin.css') }}">
+        <link rel="stylesheet" href="{{ v_asset('assets/css/pages/admin.css') }}">
         @stack('styles')
     </head>
     <body>
-        <div class="d-flex vh-100">
-            <nav id="admin-sidebar" class="admin-sidebar d-flex flex-column flex-shrink-0 bg-dark text-white p-3">
+        <div class="p-admin-layout d-flex vh-100">
+            <nav id="admin-sidebar" class="p-admin-layout__sidebar d-flex flex-column flex-shrink-0 bg-dark text-white p-3">
                 <a href="{{ route('admin.dashboard') }}" class="d-flex align-items-center mb-3 text-white text-decoration-none">
                     <span class="fs-5 fw-semibold">{{ config('app.name', 'KomaFull') }}</span>
                 </a>
                 <hr>
                 <ul class="nav nav-pills flex-column mb-auto">
                     <li class="nav-item">
-                        <a href="{{ route('admin.dashboard') }}" class="nav-link text-white @if(request()->routeIs('admin.dashboard')) active @endif">
+                        <a href="{{ route('admin.dashboard') }}" class="p-admin-layout__nav-link nav-link text-white @if(request()->routeIs('admin.dashboard')) active @endif">
                             ダッシュボード
                         </a>
                     </li>
@@ -35,8 +35,8 @@
                 </div>
             </nav>
 
-            <div id="admin-main" class="admin-main flex-grow-1 d-flex flex-column overflow-auto">
-                <header class="admin-header bg-white border-bottom px-4 py-3 d-flex align-items-center">
+            <div id="admin-main" class="p-admin-layout__main flex-grow-1 d-flex flex-column overflow-auto">
+                <header class="p-admin-layout__header bg-white border-bottom px-4 py-3 d-flex align-items-center">
                     <h1 class="h5 mb-0">@yield('page-title', 'ダッシュボード')</h1>
                 </header>
                 <main class="p-4 flex-grow-1">

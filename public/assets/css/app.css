@@ -16,6 +16,9 @@
     --app-font-size-lg: 1.125rem;
     --app-radius-sm: 0.25rem;
     --app-radius-md: 0.5rem;
+    --app-admin-sidebar-width: 15rem;
+    --app-admin-sidebar-active-bg: var(--app-brand-color);
+    --app-admin-header-min-height: 3.5rem;
 }
 
 /* ==========================================================

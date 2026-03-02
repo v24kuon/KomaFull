@@ -18,6 +18,14 @@
 
 - date: 2026-03-02
   branch: feat/ph13-2-1-admin-layout
+  scope: PR指摘対応（管理画面CSS規約準拠とカード描画の重複解消）
+  adopted: yes
+  classification: 汎用
+  targets: public/assets/css/app.css, public/assets/css/pages/admin.css, resources/views/layouts/admin.blade.php, resources/views/admin/dashboard.blade.php
+  notes: 管理画面CSSを pages/admin.css へ移動し、BEM命名 + app.cssトークン参照へ統一。ダッシュボードサマリーカードを配列+@foreach化して重複マークアップを削減。
+
+- date: 2026-03-02
+  branch: feat/ph13-2-1-admin-layout
   scope: PH13-2-1 管理用共通レイアウトとダッシュボードの実装
   adopted: no
   classification: none

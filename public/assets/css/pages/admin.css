@@ -1,0 +1,16 @@
+/* ==========================================================
+   管理画面レイアウト（BEM）
+   ========================================================== */
+.p-admin-layout__sidebar {
+    width: var(--app-admin-sidebar-width);
+    min-height: 100vh;
+}
+
+.p-admin-layout__nav-link.active {
+    background-color: var(--app-admin-sidebar-active-bg);
+    color: var(--app-brand-color-contrast);
+}
+
+.p-admin-layout__header {
+    min-height: var(--app-admin-header-min-height);
+}
