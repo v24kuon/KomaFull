@@ -304,7 +304,7 @@ class SubscriptionPaymentWebhookTest extends TestCase
 
         $this->assertSame(WebhookLog::STATUS_FAILED, $webhookLog->status);
         $this->assertStringContainsString(
-            'invoice subscription line is missing.',
+            'invoice line subscription mismatch: invoice=sub_subscription_line_mismatch_001 line=sub_other_subscription_001',
             (string) $webhookLog->error_message
         );
         $this->assertDatabaseCount('course_entitlements', 0);

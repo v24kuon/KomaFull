@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-02
+  branch: feat/ph5-5-subscription
+  scope: PR指摘対応（resolveSubscriptionLine の責務分離）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessSubscriptionPaymentWebhookJob.php, tests/Feature/SubscriptionPaymentWebhookTest.php
+  notes: resolveSubscriptionLine で subscription 不一致/price.id 欠落を除外しないようにし、呼び出し側の mismatch / missing price バリデーション分岐を到達可能化。mismatched_line_subscription テスト期待値を具体的な mismatch メッセージに更新。
+
 - date: 2026-03-01
   branch: feat/ph5-5-subscription
   scope: PR指摘対応（RFP-005 Subscription テストデータ作成をFactoryへ統一）

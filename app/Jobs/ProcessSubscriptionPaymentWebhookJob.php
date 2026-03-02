@@ -370,7 +370,12 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
     }
 
     /**
-     * Resolve the matching subscription line object from an invoice payload.
+     * Resolve a candidate subscription line object from an invoice payload.
+     *
+     * Preference order:
+     * - A line whose `subscription` equals the target subscription ID.
+     * - A line whose `subscription` is empty.
+     * - The first subscription-type line.
      *
      * @param  array<string, mixed>  $invoice
      * @return array<string, mixed>|null
@@ -383,6 +388,9 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
             return null;
         }
 
+        $firstSubscriptionLine = null;
+        $subscriptionlessLine = null;
+
         foreach ($lines as $line) {
             if (! is_array($line)) {
                 continue;
@@ -392,20 +400,20 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
                 continue;
             }
 
+            $firstSubscriptionLine ??= $line;
+
             $lineSubscriptionId = trim((string) ($line['subscription'] ?? ''));
 
-            if ($lineSubscriptionId !== '' && $lineSubscriptionId !== $subscriptionId) {
-                continue;
+            if ($lineSubscriptionId === $subscriptionId) {
+                return $line;
             }
 
-            if (trim((string) data_get($line, 'price.id', '')) === '') {
-                continue;
+            if ($lineSubscriptionId === '' && $subscriptionlessLine === null) {
+                $subscriptionlessLine = $line;
             }
-
-            return $line;
         }
 
-        return null;
+        return $subscriptionlessLine ?? $firstSubscriptionLine;
     }
 
     /**
