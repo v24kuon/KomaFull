@@ -40,7 +40,7 @@ class SubscriptionPaymentWebhookTest extends TestCase
             'allocation_type' => CoursePlan::ALLOCATION_TYPE_TOTAL,
         ]);
 
-        Subscription::query()->create([
+        Subscription::factory()->create([
             'user_id' => $user->id,
             'type' => 'default',
             'stripe_id' => 'sub_subscription_total_001',
@@ -106,7 +106,7 @@ class SubscriptionPaymentWebhookTest extends TestCase
             'category_id' => $categoryB->id,
         ]);
 
-        Subscription::query()->create([
+        Subscription::factory()->create([
             'user_id' => $user->id,
             'type' => 'default',
             'stripe_id' => 'sub_subscription_per_category_001',
@@ -162,7 +162,7 @@ class SubscriptionPaymentWebhookTest extends TestCase
             'usage_count' => 5,
         ]);
 
-        Subscription::query()->create([
+        Subscription::factory()->create([
             'user_id' => $user->id,
             'type' => 'default',
             'stripe_id' => 'sub_subscription_duplicate_001',
@@ -219,6 +219,25 @@ class SubscriptionPaymentWebhookTest extends TestCase
         $this->assertDatabaseCount('course_entitlements', 0);
     }
 
+    public function test_subscription_checkout_session_async_payment_succeeded_is_processed_without_failed_routing(): void
+    {
+        $response = $this->postWebhook($this->makeSubscriptionCheckoutPayload(
+            eventId: 'evt_subscription_checkout_async_succeeded_001',
+            checkoutSessionId: 'cs_subscription_checkout_async_succeeded_001',
+            paymentStatus: 'paid',
+            eventType: 'checkout.session.async_payment_succeeded'
+        ));
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('webhook_logs', [
+            'event_id' => 'evt_subscription_checkout_async_succeeded_001',
+            'provider' => 'stripe',
+            'status' => WebhookLog::STATUS_PROCESSED,
+        ]);
+        $this->assertDatabaseCount('course_entitlements', 0);
+    }
+
     public function test_invoice_payment_succeeded_without_subscription_id_marks_webhook_failed(): void
     {
         $payload = $this->makeInvoicePaymentSucceededPayload(
@@ -256,7 +275,7 @@ class SubscriptionPaymentWebhookTest extends TestCase
             'usage_count' => 7,
         ]);
 
-        Subscription::query()->create([
+        Subscription::factory()->create([
             'user_id' => $user->id,
             'type' => 'default',
             'stripe_id' => 'sub_subscription_line_mismatch_001',
@@ -297,7 +316,7 @@ class SubscriptionPaymentWebhookTest extends TestCase
             'stripe_id' => 'cus_subscription_unknown_price_001',
         ]);
 
-        Subscription::query()->create([
+        Subscription::factory()->create([
             'user_id' => $user->id,
             'type' => 'default',
             'stripe_id' => 'sub_subscription_unknown_price_001',
@@ -343,7 +362,7 @@ class SubscriptionPaymentWebhookTest extends TestCase
             'usage_count' => 4,
         ]);
 
-        Subscription::query()->create([
+        Subscription::factory()->create([
             'user_id' => $user->id,
             'type' => 'default',
             'stripe_id' => 'sub_subscription_per_category_no_categories_001',
@@ -445,16 +464,17 @@ class SubscriptionPaymentWebhookTest extends TestCase
     }
 
     /**
-     * @return array{id: string, type: 'checkout.session.completed', data: array{object: array{id: string, mode: 'subscription', payment_status: 'paid'|'unpaid'|'no_payment_required'}}}
+     * @return array{id: string, type: 'checkout.session.completed'|'checkout.session.async_payment_succeeded', data: array{object: array{id: string, mode: 'subscription', payment_status: 'paid'|'unpaid'|'no_payment_required'}}}
      */
     private function makeSubscriptionCheckoutPayload(
         string $eventId,
         string $checkoutSessionId,
-        string $paymentStatus
+        string $paymentStatus,
+        string $eventType = 'checkout.session.completed'
     ): array {
         return [
             'id' => $eventId,
-            'type' => 'checkout.session.completed',
+            'type' => $eventType,
             'data' => [
                 'object' => [
                     'id' => $checkoutSessionId,

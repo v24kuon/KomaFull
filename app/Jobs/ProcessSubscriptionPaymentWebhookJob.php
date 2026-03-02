@@ -33,14 +33,30 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
     /**
      * Process subscription-related webhooks and persist grant processing results.
      *
+     * Preconditions:
+     * - The webhook log must be atomically claimed by WebhookEventIdGuard.
+     * - The target webhook log row must exist.
+     *
      * Supported events:
      * - checkout.session.completed
      * - checkout.session.async_payment_succeeded
      * - invoice.payment_succeeded
      *
-     * checkout.session.* with mode=subscription is marked as processed after
-     * payload validation. Entitlement grants are created only on
-     * invoice.payment_succeeded.
+     * State transition policy:
+     * - This method runs after claimForProcessing() and finalizes the row as
+     *   processed or failed based on validation/business outcomes.
+     * - Unsupported non-target events are treated as terminal processed.
+     *
+     * Idempotency and concurrency:
+     * - claimForProcessing() is the first gate; if claim fails, this execution
+     *   becomes a no-op and exits safely.
+     *
+     * Transaction boundary:
+     * - This method does not open an outer transaction.
+     * - invoice.payment_succeeded data mutations are delegated to
+     *   processInvoicePaymentSucceeded(), which uses one DB transaction.
+     * - Webhook status updates (markProcessed/markFailed) are executed outside
+     *   that helper transaction.
      */
     public function handle(ConnectionInterface $connection, WebhookEventIdGuard $guard): void
     {
@@ -134,6 +150,28 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
      * - Creates or reuses course_entitlements for the billed period.
      * - Creates or reuses course_entitlement_items for per-category plans.
      * - Updates webhook_logs to processed / failed.
+     *
+     * Preconditions:
+     * - Payload must contain invoice object, subscription id, matching
+     *   subscription line, line price.id, and a valid period range.
+     *
+     * State transition policy:
+     * - This method performs business validation and data mutations.
+     * - It returns a terminal result to the caller, and the caller applies the
+     *   final webhook status update (processed/failed).
+     *
+     * Idempotency and concurrency:
+     * - Subscription row is selected with lockForUpdate() to serialize
+     *   competing updates for the same subscription.
+     * - Entitlement/item creation uses createOrFirst() with DB unique
+     *   constraints to avoid duplicate grants during retries/replays.
+     * - Entitlement row is reloaded with lockForUpdate() before child item
+     *   writes to keep dependent writes in the same lock scope.
+     *
+     * Transaction boundary:
+     * - Subscription lookup, plan/category checks, and entitlement/item writes
+     *   are executed in one DB transaction.
+     * - webhook_logs status updates are intentionally outside this transaction.
      *
      * @param  array{
      *     data?: array{
@@ -268,11 +306,23 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
                 ]
             );
 
+            $lockedEntitlement = CourseEntitlement::query()
+                ->whereKey($entitlement->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $lockedEntitlement instanceof CourseEntitlement) {
+                return [
+                    'status' => 'failed',
+                    'message' => sprintf('course_entitlements not found for id: %d', (int) $entitlement->id),
+                ];
+            }
+
             if ($planCategories !== null) {
                 foreach ($planCategories as $planCategory) {
                     CourseEntitlementItem::query()->createOrFirst(
                         [
-                            'course_entitlement_id' => $entitlement->id,
+                            'course_entitlement_id' => $lockedEntitlement->id,
                             'category_id' => $planCategory->category_id,
                         ],
                         [
@@ -360,6 +410,17 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
 
     /**
      * Mark webhook log as processed.
+     *
+     * State transition policy:
+     * - Sets terminal status to processed.
+     * - Stores processed_at timestamp and clears error_message.
+     *
+     * Idempotency:
+     * - Repeated calls are logically safe for status, but processed_at is
+     *   overwritten with the latest timestamp.
+     *
+     * Transaction boundary:
+     * - Single-row update without an explicit transaction.
      */
     private function markProcessed(): void
     {
@@ -374,6 +435,16 @@ class ProcessSubscriptionPaymentWebhookJob implements ShouldQueue
 
     /**
      * Mark webhook log as failed with an error message.
+     *
+     * State transition policy:
+     * - Sets terminal status to failed and records the latest failure reason.
+     * - Leaves processed_at unchanged.
+     *
+     * Idempotency:
+     * - Repeated calls overwrite error_message with the newest message.
+     *
+     * Transaction boundary:
+     * - Single-row update without an explicit transaction.
      */
     private function markFailed(string $message): void
     {

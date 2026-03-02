@@ -18,6 +18,22 @@
 
 - date: 2026-03-01
   branch: feat/ph5-5-subscription
+  scope: PR指摘対応（RFP-005 Subscription テストデータ作成をFactoryへ統一）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/SubscriptionPaymentWebhookTest.php
+  notes: Subscription::query()->create を 6 箇所すべて Subscription::factory()->create へ置換。Cashier同梱Factoryを利用し新規Factory作成は不要。
+
+- date: 2026-03-01
+  branch: feat/ph5-5-subscription
+  scope: PR指摘対応（RFP-003 createOrFirst 後の lockForUpdate 再取得）
+  adopted: yes
+  classification: 汎用
+  targets: app/Jobs/ProcessSubscriptionPaymentWebhookJob.php
+  notes: course_entitlements を createOrFirst 後に lockForUpdate で再取得し、子要素作成を同一ロックスコープで実行。
+
+- date: 2026-03-01
+  branch: feat/ph5-5-subscription
   scope: PR指摘対応（RFP-002 PHPDoc・エッジケーステスト）
   adopted: yes
   classification: 汎用
