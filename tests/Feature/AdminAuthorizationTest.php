@@ -48,7 +48,7 @@ class AdminAuthorizationTest extends TestCase
         $response = $this->actingAs($admin)->get('/admin');
 
         $response->assertOk();
-        $response->assertSeeText('Admin Dashboard');
+        $response->assertSeeText('ダッシュボード');
     }
 
     /**
