@@ -7,7 +7,5 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'can:access-admin'])->group(function (): void {
-    Route::get('/admin', function (): string {
-        return 'Admin Dashboard';
-    })->name('admin.dashboard');
+    Route::view('/admin', 'admin.dashboard')->name('admin.dashboard');
 });
