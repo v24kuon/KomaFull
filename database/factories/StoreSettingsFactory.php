@@ -18,6 +18,7 @@ class StoreSettingsFactory extends Factory
     public function definition(): array
     {
         return [
+            'singleton_key' => 'singleton',
             'program_label' => 'プログラム',
             'session_label' => 'セッション',
             'staff_label' => 'スタッフ',

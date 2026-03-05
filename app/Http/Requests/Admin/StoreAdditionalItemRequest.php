@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\AdditionalItem;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAdditionalItemRequest extends FormRequest
@@ -22,7 +23,7 @@ class StoreAdditionalItemRequest extends FormRequest
             'label_name' => ['required', 'string', 'max:255'],
             'input_type' => ['required', 'string', 'in:text,number,select,checkbox'],
             'digits' => ['nullable', 'integer', 'min:1'],
-            'status' => ['required', 'string', 'in:active,inactive'],
+            'status' => ['required', 'string', 'in:'.AdditionalItem::STATUS_ACTIVE.','.AdditionalItem::STATUS_INACTIVE],
         ];
     }
 

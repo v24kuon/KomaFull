@@ -17,7 +17,7 @@ class AdminCategoryCrudTest extends TestCase
     {
         parent::setUp();
         /** @var User $admin */
-        $admin = User::factory()->createOne(['role' => 'admin']);
+        $admin = User::factory()->createOne(['role' => User::ROLE_ADMIN]);
         $this->admin = $admin;
     }
 
@@ -171,7 +171,7 @@ class AdminCategoryCrudTest extends TestCase
     public function test_non_admin_cannot_access_categories(): void
     {
         /** @var User $member */
-        $member = User::factory()->createOne(['role' => 'member']);
+        $member = User::factory()->createOne(['role' => User::ROLE_MEMBER]);
 
         $response = $this->actingAs($member)->get(route('admin.categories.index'));
 

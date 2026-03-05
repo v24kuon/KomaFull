@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\LessonSession;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,7 +18,7 @@ class AdminLocationCrudTest extends TestCase
     {
         parent::setUp();
         /** @var User $admin */
-        $admin = User::factory()->createOne(['role' => 'admin']);
+        $admin = User::factory()->createOne(['role' => User::ROLE_ADMIN]);
         $this->admin = $admin;
     }
 
@@ -90,5 +91,33 @@ class AdminLocationCrudTest extends TestCase
 
         $response->assertRedirect(route('admin.locations.index'));
         $this->assertDatabaseMissing('locations', ['id' => $location->id]);
+    }
+
+    public function test_destroy_fails_with_error_message_when_location_has_related_lesson_session(): void
+    {
+        $location = Location::factory()->createOne();
+        LessonSession::factory()->createOne(['location_id' => $location->id]);
+
+        $response = $this->actingAs($this->admin)->delete(route('admin.locations.destroy', $location));
+
+        $response->assertRedirect(route('admin.locations.index'));
+        $response->assertSessionHas('error', fn (string $message): bool => str_contains($message, '削除できません'));
+        $this->assertDatabaseHas('locations', ['id' => $location->id]);
+    }
+
+    public function test_destroy_with_htmx_returns_error_row_when_location_has_related_lesson_session(): void
+    {
+        $location = Location::factory()->createOne();
+        LessonSession::factory()->createOne(['location_id' => $location->id]);
+
+        $response = $this->actingAs($this->admin)
+            ->withHeader('HX-Request', 'true')
+            ->delete(route('admin.locations.destroy', $location));
+
+        $response->assertOk();
+        $response->assertSeeText('削除できません');
+        $response->assertSeeText('レッスン枠・繰り返しルール');
+        $response->assertSee('id="location-row-'.$location->id.'"', false);
+        $this->assertDatabaseHas('locations', ['id' => $location->id]);
     }
 }

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('store_settings', function (Blueprint $table) {
             $table->id();
+            $table->enum('singleton_key', ['singleton'])->default('singleton')->unique();
             $table->string('program_label')->default('プログラム');
             $table->string('session_label')->default('セッション');
             $table->string('staff_label')->default('スタッフ');

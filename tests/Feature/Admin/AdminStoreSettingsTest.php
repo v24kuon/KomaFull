@@ -17,7 +17,7 @@ class AdminStoreSettingsTest extends TestCase
     {
         parent::setUp();
         /** @var User $admin */
-        $admin = User::factory()->createOne(['role' => 'admin']);
+        $admin = User::factory()->createOne(['role' => User::ROLE_ADMIN]);
         $this->admin = $admin;
     }
 
@@ -33,6 +33,14 @@ class AdminStoreSettingsTest extends TestCase
     {
         $this->assertDatabaseCount('store_settings', 0);
 
+        $this->actingAs($this->admin)->get(route('admin.store-settings.edit'));
+
+        $this->assertDatabaseCount('store_settings', 1);
+    }
+
+    public function test_edit_keeps_singleton_settings_row(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.store-settings.edit'));
         $this->actingAs($this->admin)->get(route('admin.store-settings.edit'));
 
         $this->assertDatabaseCount('store_settings', 1);

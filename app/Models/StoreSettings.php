@@ -14,6 +14,7 @@ class StoreSettings extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'singleton_key',
         'program_label',
         'session_label',
         'staff_label',

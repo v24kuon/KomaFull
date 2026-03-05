@@ -18,6 +18,142 @@
 
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（バリデーションエラー表示に role="alert" を追加）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/partials/_errors.blade.php
+  notes: スクリーンリーダーで即時に伝わるよう alert 要素に role="alert" を付与し、アクセシビリティを向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff削除時の外部キー制約エラーを利用者向けに処理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StaffController.php, resources/views/admin/staffs/_delete_error_row.blade.php, tests/Feature/Admin/AdminStaffCrudTest.php
+  notes: Staff削除でFK制約違反（lesson_sessions / program_repetition_rules）を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連LessonSessionあり時の削除失敗をFeatureテストで追加検証。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Location削除時の外部キー制約エラーを利用者向けに処理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/LocationController.php, resources/views/layouts/admin.blade.php, resources/views/admin/locations/_delete_error_row.blade.php, tests/Feature/Admin/AdminLocationCrudTest.php
+  notes: Location削除でFK制約違反（lesson_sessions / program_repetition_rules）を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連データあり時の削除失敗をFeatureテストで追加検証。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramControllerのフォーム取得共通化と主要アクションPHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/ProgramController.php
+  notes: create/edit で重複していたカテゴリ・プログラム種別取得を resolveFormMasterData() へ集約。index/create/store/edit/update/destroy に責務・前提・更新方針を示すPHPDocを追加し、規約準拠と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItemController主要アクションへPHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/AdditionalItemController.php
+  notes: index/create/store/edit/update/destroy に責務・前提・更新方針を示す短いPHPDocを追加し、コントローラの規約準拠と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff CRUDテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminStaffCrudTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Location CRUDテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminLocationCrudTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem CRUDテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminAdditionalItemCrudTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Program CRUDテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettingsテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminStoreSettingsTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性を確保。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Category CRUDテストのロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminCategoryCrudTest.php
+  notes: role の文字列リテラル（admin/member）を User::ROLE_ADMIN / User::ROLE_MEMBER へ置換し、モデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem FormRequestのstatus定数統一）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Requests/Admin/StoreAdditionalItemRequest.php, app/Http/Requests/Admin/UpdateAdditionalItemRequest.php
+  notes: status の in ルールでハードコード（active/inactive）を廃止し、AdditionalItem::STATUS_ACTIVE / STATUS_INACTIVE を使用してモデル定数と一貫化。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramType CRUDテストのロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramTypeCrudTest.php
+  notes: role の文字列リテラル（admin/member）を User::ROLE_ADMIN / User::ROLE_MEMBER へ置換し、モデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramType CRUDテストの観点拡充）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramTypeCrudTest.php
+  notes: HTMX部分レンダリング、フォーム表示、認可（guest/non-admin）、unique code と invalid status の異常系を追加し、AdminCategoryCrudTest と同水準のCRUD観点へ整合。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（additional_item_type 固定値UIの簡素化）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/additional-items/_form.blade.php
+  notes: 選択肢が1件固定の additional_item_type を select から hidden + 表示テキストへ変更し、UIノイズを削減。値は member_profile を固定送信してバリデーション意図を維持。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（programs フォーム数値入力の step 明示）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/programs/_form.blade.php
+  notes: 整数前提項目（duration_minutes / price / point_cost / ticket_cost）に step=\"1\" を追加し、UI入力制約とサーバー側 integer バリデーションの意図を一致させた。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（store_settings の単一レコード制約をDBで担保）
+  adopted: yes
+  classification: 汎用
+  targets: database/migrations/2026_03_02_080811_create_store_settings_table.php, app/Http/Controllers/Admin/StoreSettingsController.php, app/Models/StoreSettings.php, database/factories/StoreSettingsFactory.php, tests/Feature/Admin/AdminStoreSettingsTest.php
+  notes: singleton_key を単一値 enum（singleton）+ UNIQUE 制約で追加し、StoreSettings 初期化を createOrFirst（singleton_key=singleton）へ変更。設定画面の連続アクセスで常に1行に維持されることをテストで検証。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
   scope: PH6-1 マスタ系管理画面 (HTMX) + HTMXインフラ + AdditionalItem/StoreSettingsモデル新規作成
   adopted: no
   classification: none

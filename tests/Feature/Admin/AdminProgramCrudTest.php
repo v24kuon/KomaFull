@@ -19,7 +19,7 @@ class AdminProgramCrudTest extends TestCase
     {
         parent::setUp();
         /** @var User $admin */
-        $admin = User::factory()->createOne(['role' => 'admin']);
+        $admin = User::factory()->createOne(['role' => User::ROLE_ADMIN]);
         $this->admin = $admin;
     }
 

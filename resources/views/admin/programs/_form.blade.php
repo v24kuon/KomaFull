@@ -46,7 +46,7 @@
     </div>
     <div class="col-md-4">
         <label for="duration_minutes" class="form-label">時間（分） <span class="text-danger">*</span></label>
-        <input type="number" class="form-control @error('duration_minutes') is-invalid @enderror" id="duration_minutes" name="duration_minutes" value="{{ old('duration_minutes', $model?->duration_minutes ?? 60) }}" min="1" required>
+        <input type="number" class="form-control @error('duration_minutes') is-invalid @enderror" id="duration_minutes" name="duration_minutes" value="{{ old('duration_minutes', $model?->duration_minutes ?? 60) }}" min="1" step="1" required>
         @error('duration_minutes') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
@@ -62,17 +62,17 @@
 <div class="row mb-3">
     <div class="col-md-4">
         <label for="price" class="form-label">料金（円） <span class="text-danger">*</span></label>
-        <input type="number" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $model?->price ?? 0) }}" min="0" required>
+        <input type="number" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $model?->price ?? 0) }}" min="0" step="1" required>
         @error('price') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
         <label for="point_cost" class="form-label">ポイントコスト <span class="text-danger">*</span></label>
-        <input type="number" class="form-control @error('point_cost') is-invalid @enderror" id="point_cost" name="point_cost" value="{{ old('point_cost', $model?->point_cost ?? 0) }}" min="0" required>
+        <input type="number" class="form-control @error('point_cost') is-invalid @enderror" id="point_cost" name="point_cost" value="{{ old('point_cost', $model?->point_cost ?? 0) }}" min="0" step="1" required>
         @error('point_cost') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
         <label for="ticket_cost" class="form-label">回数券コスト <span class="text-danger">*</span></label>
-        <input type="number" class="form-control @error('ticket_cost') is-invalid @enderror" id="ticket_cost" name="ticket_cost" value="{{ old('ticket_cost', $model?->ticket_cost ?? 0) }}" min="0" required>
+        <input type="number" class="form-control @error('ticket_cost') is-invalid @enderror" id="ticket_cost" name="ticket_cost" value="{{ old('ticket_cost', $model?->ticket_cost ?? 0) }}" min="0" step="1" required>
         @error('ticket_cost') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
 </div>
