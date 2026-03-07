@@ -125,6 +125,20 @@ class AdminProgramTypeCrudTest extends TestCase
         $this->assertDatabaseHas('program_types', ['id' => $programType->id, 'name' => '更新後種別']);
     }
 
+    public function test_update_allows_same_code(): void
+    {
+        $programType = ProgramType::factory()->createOne(['code' => 'SAME']);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.program-types.update', $programType), [
+            'code' => 'SAME',
+            'name' => '名前変更',
+            'sort_order' => 0,
+            'status' => 'active',
+        ]);
+
+        $response->assertRedirect(route('admin.program-types.index'));
+    }
+
     public function test_destroy_deletes_program_type(): void
     {
         $programType = ProgramType::factory()->createOne();

@@ -250,6 +250,8 @@ function run_auto_promoted_checks(string $repoRoot, string $logContent): array
             foreach (run_auto_guard_admin_controller_entrypoint_phpdoc($repoRoot) as $error) {
                 $errors[] = sprintf('[%s:%d] %s', $guardKey, $triggerCount, $error);
             }
+
+            continue;
         }
     }
 
@@ -630,26 +632,7 @@ function is_rfp009_target_method(string $methodName): bool
  */
 function get_staged_php_files_in_app(string $repoRoot): array
 {
-    $output = [];
-    $cmd = sprintf(
-        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- app/',
-        escapeshellarg($repoRoot)
-    );
-    exec($cmd, $output, $code);
-
-    if ($code !== 0) {
-        return [];
-    }
-
-    $files = [];
-    foreach ($output as $line) {
-        $line = trim($line);
-        if ($line !== '' && str_ends_with($line, '.php')) {
-            $files[] = $line;
-        }
-    }
-
-    return $files;
+    return get_staged_php_files($repoRoot, ['app/']);
 }
 
 /**
@@ -657,26 +640,7 @@ function get_staged_php_files_in_app(string $repoRoot): array
  */
 function get_staged_php_files_in_jobs_and_services(string $repoRoot): array
 {
-    $output = [];
-    $cmd = sprintf(
-        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- app/Jobs/ app/Services/',
-        escapeshellarg($repoRoot)
-    );
-    exec($cmd, $output, $code);
-
-    if ($code !== 0) {
-        return [];
-    }
-
-    $files = [];
-    foreach ($output as $line) {
-        $line = trim($line);
-        if ($line !== '' && str_ends_with($line, '.php')) {
-            $files[] = $line;
-        }
-    }
-
-    return $files;
+    return get_staged_php_files($repoRoot, ['app/Jobs/', 'app/Services/']);
 }
 
 /**
@@ -684,26 +648,7 @@ function get_staged_php_files_in_jobs_and_services(string $repoRoot): array
  */
 function get_staged_php_files_in_app_and_config(string $repoRoot): array
 {
-    $output = [];
-    $cmd = sprintf(
-        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- app/ config/',
-        escapeshellarg($repoRoot)
-    );
-    exec($cmd, $output, $code);
-
-    if ($code !== 0) {
-        return [];
-    }
-
-    $files = [];
-    foreach ($output as $line) {
-        $line = trim($line);
-        if ($line !== '' && str_ends_with($line, '.php')) {
-            $files[] = $line;
-        }
-    }
-
-    return $files;
+    return get_staged_php_files($repoRoot, ['app/', 'config/']);
 }
 
 /**
@@ -711,26 +656,7 @@ function get_staged_php_files_in_app_and_config(string $repoRoot): array
  */
 function get_staged_php_files_in_admin_feature_tests(string $repoRoot): array
 {
-    $output = [];
-    $cmd = sprintf(
-        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- tests/Feature/Admin/',
-        escapeshellarg($repoRoot)
-    );
-    exec($cmd, $output, $code);
-
-    if ($code !== 0) {
-        return [];
-    }
-
-    $files = [];
-    foreach ($output as $line) {
-        $line = trim($line);
-        if ($line !== '' && str_ends_with($line, '.php')) {
-            $files[] = $line;
-        }
-    }
-
-    return $files;
+    return get_staged_php_files($repoRoot, ['tests/Feature/Admin/']);
 }
 
 /**
@@ -738,10 +664,21 @@ function get_staged_php_files_in_admin_feature_tests(string $repoRoot): array
  */
 function get_staged_php_files_in_admin_controllers(string $repoRoot): array
 {
+    return get_staged_php_files($repoRoot, ['app/Http/Controllers/Admin/'], 'Controller.php');
+}
+
+/**
+ * @param  list<string>  $paths
+ * @return list<string>
+ */
+function get_staged_php_files(string $repoRoot, array $paths, string $suffix = '.php'): array
+{
     $output = [];
+    $quotedPaths = array_map(static fn (string $path): string => escapeshellarg($path), $paths);
     $cmd = sprintf(
-        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- app/Http/Controllers/Admin/',
-        escapeshellarg($repoRoot)
+        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- %s',
+        escapeshellarg($repoRoot),
+        implode(' ', $quotedPaths)
     );
     exec($cmd, $output, $code);
 
@@ -752,7 +689,7 @@ function get_staged_php_files_in_admin_controllers(string $repoRoot): array
     $files = [];
     foreach ($output as $line) {
         $line = trim($line);
-        if ($line !== '' && str_ends_with($line, 'Controller.php')) {
+        if ($line !== '' && str_ends_with($line, $suffix)) {
             $files[] = $line;
         }
     }

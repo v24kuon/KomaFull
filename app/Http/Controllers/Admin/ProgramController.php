@@ -8,12 +8,15 @@ use App\Http\Requests\Admin\UpdateProgramRequest;
 use App\Models\Category;
 use App\Models\Program;
 use App\Models\ProgramType;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ProgramController extends Controller
 {
+    private const DELETE_CONSTRAINT_MESSAGE = '関連データが存在するためプログラムを削除できません。先にレッスン枠・繰り返しルールを削除してください。';
+
     /**
      * プログラム一覧を表示し、HTMX要求時は一覧テーブルのみ返す。
      *
@@ -96,11 +99,19 @@ class ProgramController extends Controller
      * 対象プログラムを削除し、HTMX要求時は空レスポンスを返す。
      *
      * 前提: ルートモデルバインディングで対象レコードが解決されること。
-     * 更新方針: 対象レコードを delete したうえで応答形式を分岐する。
+     * 更新方針: 対象レコードを delete したうえで応答形式を分岐する。FK制約違反時は利用者向けエラーを返す。
      */
     public function destroy(Request $request, Program $program): RedirectResponse|string
     {
-        $program->delete();
+        try {
+            $program->delete();
+        } catch (QueryException $exception) {
+            if ($this->isForeignKeyConstraintViolation($exception)) {
+                return $this->respondDeleteConstraintViolation($request, $program);
+            }
+
+            throw $exception;
+        }
 
         if ($request->header('HX-Request')) {
             return '';
@@ -108,6 +119,19 @@ class ProgramController extends Controller
 
         return redirect()->route('admin.programs.index')
             ->with('success', 'プログラムを削除しました。');
+    }
+
+    private function respondDeleteConstraintViolation(Request $request, Program $program): RedirectResponse|string
+    {
+        if ($request->header('HX-Request')) {
+            return view('admin.programs._delete_error_row', [
+                'program' => $program,
+                'message' => self::DELETE_CONSTRAINT_MESSAGE,
+            ])->render();
+        }
+
+        return redirect()->route('admin.programs.index')
+            ->with('error', self::DELETE_CONSTRAINT_MESSAGE);
     }
 
     /**

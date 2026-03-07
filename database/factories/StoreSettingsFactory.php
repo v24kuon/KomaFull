@@ -13,7 +13,16 @@ class StoreSettingsFactory extends Factory
     protected $model = StoreSettings::class;
 
     /**
-     * @return array<string, mixed>
+     * @return array{
+     *     singleton_key: 'singleton',
+     *     program_label: string,
+     *     session_label: string,
+     *     staff_label: string,
+     *     location_label: string,
+     *     reserve_deadline_minutes: int,
+     *     cancel_deadline_minutes: int,
+     *     withdrawal_deadline_days: int
+     * }
      */
     public function definition(): array
     {

@@ -28,7 +28,7 @@
                                 autofocus
                             >
                             @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
                             @enderror
                         </div>
 
@@ -43,7 +43,7 @@
                                 autocomplete="new-password"
                             >
                             @error('password')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
                             @enderror
                         </div>
 

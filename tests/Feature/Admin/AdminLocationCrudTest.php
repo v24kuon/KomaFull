@@ -57,6 +57,23 @@ class AdminLocationCrudTest extends TestCase
         $response->assertSessionHasErrors(['code', 'name', 'status']);
     }
 
+    public function test_store_validates_unique_code(): void
+    {
+        Location::factory()->createOne(['code' => 'EXISTING']);
+
+        $response = $this->actingAs($this->admin)->post(route('admin.locations.store'), [
+            'code' => 'EXISTING',
+            'name' => '重複テスト',
+            'address' => '東京都渋谷区',
+            'tel' => '03-1234-5678',
+            'email' => 'duplicate@example.com',
+            'description' => '説明文',
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+    }
+
     public function test_store_validates_email_format(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.locations.store'), [

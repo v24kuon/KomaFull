@@ -55,6 +55,24 @@ class AdminStaffCrudTest extends TestCase
         $response->assertSessionHasErrors(['code', 'name', 'status']);
     }
 
+    public function test_store_validates_unique_code(): void
+    {
+        Staff::factory()->createOne(['code' => 'EXISTING']);
+
+        $response = $this->actingAs($this->admin)->post(route('admin.staffs.store'), [
+            'code' => 'EXISTING',
+            'name' => '重複テスト',
+            'gender' => 'female',
+            'role' => 'インストラクター',
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors([
+            'code' => 'このコードは既に使用されています。',
+        ]);
+        $this->assertDatabaseCount('staffs', 1);
+    }
+
     public function test_store_validates_birth_date_format(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.staffs.store'), [
@@ -99,7 +117,10 @@ class AdminStaffCrudTest extends TestCase
         $response = $this->actingAs($this->admin)->delete(route('admin.staffs.destroy', $staff));
 
         $response->assertRedirect(route('admin.staffs.index'));
-        $response->assertSessionHas('error', fn (string $message): bool => str_contains($message, '削除できません'));
+        $response->assertSessionHas(
+            'error',
+            '関連データが存在するためスタッフを削除できません。先に関連するレッスン枠・繰り返しルール等を削除してください。'
+        );
         $this->assertDatabaseHas('staffs', ['id' => $staff->id]);
     }
 
@@ -114,7 +135,7 @@ class AdminStaffCrudTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeText('削除できません');
-        $response->assertSeeText('レッスン枠・繰り返しルール');
+        $response->assertSeeText('関連するレッスン枠・繰り返しルール等');
         $response->assertSee('id="staff-row-'.$staff->id.'"', false);
         $this->assertDatabaseHas('staffs', ['id' => $staff->id]);
     }

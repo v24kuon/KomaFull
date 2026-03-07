@@ -6,12 +6,12 @@
     <div class="col-md-6">
         <label for="code" class="form-label">コード <span class="text-danger">*</span></label>
         <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code', $model?->code) }}" required>
-        @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('code') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-6">
         <label for="label_name" class="form-label">ラベル名 <span class="text-danger">*</span></label>
         <input type="text" class="form-control @error('label_name') is-invalid @enderror" id="label_name" name="label_name" value="{{ old('label_name', $model?->label_name) }}" required>
-        @error('label_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('label_name') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
 </div>
 
@@ -30,12 +30,12 @@
             <option value="select" @selected(old('input_type', $model?->input_type) === 'select')>セレクト</option>
             <option value="checkbox" @selected(old('input_type', $model?->input_type) === 'checkbox')>チェックボックス</option>
         </select>
-        @error('input_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('input_type') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
         <label for="digits" class="form-label">桁数</label>
         <input type="number" class="form-control @error('digits') is-invalid @enderror" id="digits" name="digits" value="{{ old('digits', $model?->digits) }}" min="1">
-        @error('digits') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('digits') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
 </div>
 
@@ -45,5 +45,5 @@
         <option value="active" @selected(old('status', $model?->status) === 'active')>有効</option>
         <option value="inactive" @selected(old('status', $model?->status) === 'inactive')>無効</option>
     </select>
-    @error('status') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    @error('status') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
 </div>

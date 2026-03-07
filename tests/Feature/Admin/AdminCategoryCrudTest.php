@@ -73,6 +73,17 @@ class AdminCategoryCrudTest extends TestCase
         $response->assertSessionHasErrors(['code', 'name', 'sort_order', 'status']);
     }
 
+    public function test_validation_errors_are_rendered_with_alert_role(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->from(route('admin.categories.create'))
+            ->followingRedirects()
+            ->post(route('admin.categories.store'), []);
+
+        $response->assertOk();
+        $response->assertSee('class="invalid-feedback" role="alert"', false);
+    }
+
     public function test_store_validates_unique_code(): void
     {
         Category::factory()->createOne(['code' => 'EXISTING']);

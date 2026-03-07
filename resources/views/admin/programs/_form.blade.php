@@ -6,12 +6,12 @@
     <div class="col-md-6">
         <label for="code" class="form-label">コード <span class="text-danger">*</span></label>
         <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code', $model?->code) }}" required>
-        @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('code') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-6">
         <label for="name" class="form-label">名前 <span class="text-danger">*</span></label>
         <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $model?->name) }}" required>
-        @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('name') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
 </div>
 
@@ -24,7 +24,7 @@
                 <option value="{{ $category->id }}" @selected(old('category_id', $model?->category_id) == $category->id)>{{ $category->name }}</option>
             @endforeach
         </select>
-        @error('category_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('category_id') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-6">
         <label for="program_type_id" class="form-label">プログラム種別 <span class="text-danger">*</span></label>
@@ -34,7 +34,7 @@
                 <option value="{{ $programType->id }}" @selected(old('program_type_id', $model?->program_type_id) == $programType->id)>{{ $programType->name }}</option>
             @endforeach
         </select>
-        @error('program_type_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('program_type_id') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
 </div>
 
@@ -42,12 +42,12 @@
     <div class="col-md-4">
         <label for="level" class="form-label">レベル</label>
         <input type="text" class="form-control @error('level') is-invalid @enderror" id="level" name="level" value="{{ old('level', $model?->level) }}">
-        @error('level') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('level') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
         <label for="duration_minutes" class="form-label">時間（分） <span class="text-danger">*</span></label>
         <input type="number" class="form-control @error('duration_minutes') is-invalid @enderror" id="duration_minutes" name="duration_minutes" value="{{ old('duration_minutes', $model?->duration_minutes ?? 60) }}" min="1" step="1" required>
-        @error('duration_minutes') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('duration_minutes') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
         <label for="status" class="form-label">ステータス <span class="text-danger">*</span></label>
@@ -55,7 +55,7 @@
             <option value="active" @selected(old('status', $model?->status) === 'active')>有効</option>
             <option value="inactive" @selected(old('status', $model?->status) === 'inactive')>無効</option>
         </select>
-        @error('status') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('status') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
 </div>
 
@@ -63,28 +63,28 @@
     <div class="col-md-4">
         <label for="price" class="form-label">料金（円） <span class="text-danger">*</span></label>
         <input type="number" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $model?->price ?? 0) }}" min="0" step="1" required>
-        @error('price') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('price') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
         <label for="point_cost" class="form-label">ポイントコスト <span class="text-danger">*</span></label>
         <input type="number" class="form-control @error('point_cost') is-invalid @enderror" id="point_cost" name="point_cost" value="{{ old('point_cost', $model?->point_cost ?? 0) }}" min="0" step="1" required>
-        @error('point_cost') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('point_cost') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
         <label for="ticket_cost" class="form-label">回数券コスト <span class="text-danger">*</span></label>
         <input type="number" class="form-control @error('ticket_cost') is-invalid @enderror" id="ticket_cost" name="ticket_cost" value="{{ old('ticket_cost', $model?->ticket_cost ?? 0) }}" min="0" step="1" required>
-        @error('ticket_cost') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('ticket_cost') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
     </div>
 </div>
 
 <div class="mb-3">
     <label for="overview" class="form-label">概要</label>
     <textarea class="form-control @error('overview') is-invalid @enderror" id="overview" name="overview" rows="3">{{ old('overview', $model?->overview) }}</textarea>
-    @error('overview') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    @error('overview') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
 </div>
 
 <div class="mb-4">
     <label for="detail" class="form-label">詳細</label>
     <textarea class="form-control @error('detail') is-invalid @enderror" id="detail" name="detail" rows="5">{{ old('detail', $model?->detail) }}</textarea>
-    @error('detail') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    @error('detail') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
 </div>

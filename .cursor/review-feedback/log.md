@@ -18,6 +18,110 @@
 
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff の重複code投稿時の回帰テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminStaffCrudTest.php
+  notes: staffs.code の unique 制約衝突時に code フィールドへ専用メッセージが返り、重複レコードが作成されないことを feature test で明示。既存の StoreStaffRequest の unique ルールに対する回帰防止を追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Location の重複code投稿時の回帰テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminLocationCrudTest.php
+  notes: locations.code の unique 制約衝突時に code エラーとなることを feature test で明示。既存の StoreLocationRequest の unique ルールに対する回帰防止を追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff削除制約エラーメッセージを包括表現へ調整）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StaffController.php, tests/Feature/Admin/AdminStaffCrudTest.php
+  notes: Staff の FK 制約違反メッセージは実データ参照先を狭めず、関連データ全体を含意する包括表現へ変更。通常削除と HTMX 削除の両方で新文言が返ることを feature test で確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettingsFactory definition のPHPDocを配列形状型へ更新）
+  adopted: yes
+  classification: 汎用
+  targets: database/factories/StoreSettingsFactory.php
+  notes: StoreSettingsFactory の definition() は固定キーの設定配列を返すため、array<string, mixed> から array{singleton_key, ...} の配列形状型へ更新。項目追加・削除時の差分検知と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettings の resolveSettings に責務PHPDocを追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StoreSettingsController.php
+  notes: StoreSettings の主要 private helper である resolveSettings() に、責務・前提・更新方針を示す PHPDoc を追加。singleton 行の確保メソッドである意図を明示し、レビュー時の解釈ずれを防止。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettings の unique衝突経路を回帰テストで明示）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminStoreSettingsTest.php
+  notes: createOrFirst 前提の既存 singleton 行再利用を明示するため、update 実行後も件数が1件のままで既存IDが再利用されることを検証する回帰テストを追加。unique 制約衝突時の復帰経路を feature test で直接確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（FK制約違反の判定ロジックをControllerへ共通化）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Controller.php, app/Http/Controllers/Admin/LocationController.php, app/Http/Controllers/Admin/StaffController.php, app/Http/Controllers/Admin/ProgramController.php
+  notes: Location/Staff/Program で重複していた isForeignKeyConstraintViolation() をベース Controller の protected helper へ集約し、削除失敗時の応答ロジックは各コントローラに維持。既存 feature test で通常削除・通常失敗・HTMX失敗の回帰を確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-feedback validator の staged PHP 取得処理を共通化）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php, tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: auto-promoted guard 分岐の最後のケースにも明示 continue を追加し、5つの get_staged_php_files_in_* 関数で重複していた git diff + PHP サフィックス判定を共通ヘルパーへ集約。temp git repo を使う tooling テストを追加し、admin feature test / admin controller の auto-promoted guard が共通化後も動作することを確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Program削除時の外部キー制約エラーを利用者向けに処理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/ProgramController.php, resources/views/admin/programs/_delete_error_row.blade.php, tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: Program削除でFK制約違反（lesson_sessions / program_repetition_rules）を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連LessonSessionあり時の削除失敗をFeatureテストで追加検証。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（残りのinvalid-feedbackへ role="alert" を横展開）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/partials/_master_code_name_sort_status_fields.blade.php, resources/views/admin/additional-items/_form.blade.php, resources/views/admin/locations/_form.blade.php, resources/views/admin/staffs/_form.blade.php, resources/views/admin/store-settings/edit.blade.php, resources/views/auth/login.blade.php, resources/views/auth/register.blade.php, resources/views/auth/forgot-password.blade.php, resources/views/auth/reset-password.blade.php, tests/Feature/Admin/AdminCategoryCrudTest.php, tests/Feature/Admin/AdminStoreSettingsTest.php, tests/Feature/AuthViewsTest.php
+  notes: programs と汎用エラーパーシャル以外に残っていた invalid-feedback へ role="alert" を追加し、admin/auth の主要入力画面でスクリーンリーダー通知を一貫化。共有 partial・単独管理画面・認証画面の回帰テストを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Programフォームのinvalid-feedbackへ role="alert" 追加）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/programs/_form.blade.php, tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: programs フォームの各 invalid-feedback に role="alert" を付与し、スクリーンリーダーでの即時通知を改善。必須項目エラー表示で role 属性が描画される回帰テストを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramType更新で同一code許可の回帰テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramTypeCrudTest.php
+  notes: UpdateProgramTypeRequest が unique:program_types,code,$id で同一レコードを除外する挙動に合わせ、test_update_allows_same_code を追加して Category CRUD テストとの整合性を確保。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettings更新経路をトランザクション+行ロック化）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StoreSettingsController.php, tests/Feature/Admin/AdminStoreSettingsTest.php
+  notes: StoreSettings 更新時に ConnectionInterface の transaction 内で createOrFirst 後の単一行を lockForUpdate で再取得し、RFP-003 の競合耐性パターンへ整合。設定未作成状態からの update 回帰テストを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
   scope: PR指摘対応（バリデーションエラー表示に role="alert" を追加）
   adopted: yes
   classification: 汎用

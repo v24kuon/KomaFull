@@ -13,7 +13,7 @@ use Illuminate\View\View;
 
 class StaffController extends Controller
 {
-    private const DELETE_CONSTRAINT_MESSAGE = '関連データが存在するためスタッフを削除できません。先にレッスン枠・繰り返しルールを削除してください。';
+    private const DELETE_CONSTRAINT_MESSAGE = '関連データが存在するためスタッフを削除できません。先に関連するレッスン枠・繰り返しルール等を削除してください。';
 
     /**
      * スタッフ一覧を表示し、HTMX要求時は一覧テーブルのみ返す。
@@ -119,16 +119,5 @@ class StaffController extends Controller
 
         return redirect()->route('admin.staffs.index')
             ->with('error', self::DELETE_CONSTRAINT_MESSAGE);
-    }
-
-    private function isForeignKeyConstraintViolation(QueryException $exception): bool
-    {
-        $sqlState = (string) ($exception->errorInfo[0] ?? $exception->getCode());
-        $driverCode = (int) ($exception->errorInfo[1] ?? 0);
-        $message = strtolower($exception->getMessage());
-
-        return $sqlState === '23503'
-            || $driverCode === 1451
-            || ($sqlState === '23000' && str_contains($message, 'foreign key'));
     }
 }

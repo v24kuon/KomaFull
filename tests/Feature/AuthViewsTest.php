@@ -128,6 +128,19 @@ class AuthViewsTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
+    public function test_login_validation_errors_are_rendered_with_alert_role(): void
+    {
+        $response = $this->from('/login')
+            ->followingRedirects()
+            ->post('/login', [
+                'email' => '',
+                'password' => 'password',
+            ]);
+
+        $response->assertOk();
+        $response->assertSee('class="invalid-feedback" role="alert"', false);
+    }
+
     /**
      * TC-A-02: ログイン - password空
      */
@@ -176,6 +189,21 @@ class AuthViewsTest extends TestCase
 
         $this->assertGuest();
         $response->assertSessionHasErrors('name');
+    }
+
+    public function test_register_validation_errors_are_rendered_with_alert_role(): void
+    {
+        $response = $this->from('/register')
+            ->followingRedirects()
+            ->post('/register', [
+                'name' => '',
+                'email' => 'test@example.com',
+                'password' => 'Password123!',
+                'password_confirmation' => 'Password123!',
+            ]);
+
+        $response->assertOk();
+        $response->assertSee('class="invalid-feedback" role="alert"', false);
     }
 
     /**
@@ -257,6 +285,18 @@ class AuthViewsTest extends TestCase
         $response->assertSee('パスワード再設定');
     }
 
+    public function test_forgot_password_validation_errors_are_rendered_with_alert_role(): void
+    {
+        $response = $this->from('/forgot-password')
+            ->followingRedirects()
+            ->post('/forgot-password', [
+                'email' => '',
+            ]);
+
+        $response->assertOk();
+        $response->assertSee('class="invalid-feedback" role="alert"', false);
+    }
+
     /**
      * TC-N-09: パスワード再設定フォーム表示
      */
@@ -268,6 +308,21 @@ class AuthViewsTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('新しいパスワードの設定');
+    }
+
+    public function test_reset_password_validation_errors_are_rendered_with_alert_role(): void
+    {
+        $response = $this->from('/reset-password/test-reset-token?email=test@example.com')
+            ->followingRedirects()
+            ->post('/reset-password', [
+                'token' => 'test-reset-token',
+                'email' => '',
+                'password' => '',
+                'password_confirmation' => '',
+            ]);
+
+        $response->assertOk();
+        $response->assertSee('class="invalid-feedback" role="alert"', false);
     }
 
     /**

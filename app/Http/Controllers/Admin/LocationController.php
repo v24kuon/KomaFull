@@ -120,15 +120,4 @@ class LocationController extends Controller
         return redirect()->route('admin.locations.index')
             ->with('error', self::DELETE_CONSTRAINT_MESSAGE);
     }
-
-    private function isForeignKeyConstraintViolation(QueryException $exception): bool
-    {
-        $sqlState = (string) ($exception->errorInfo[0] ?? $exception->getCode());
-        $driverCode = (int) ($exception->errorInfo[1] ?? 0);
-        $message = strtolower($exception->getMessage());
-
-        return $sqlState === '23503'
-            || $driverCode === 1451
-            || ($sqlState === '23000' && str_contains($message, 'foreign key'));
-    }
 }

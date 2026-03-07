@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Category;
+use App\Models\LessonSession;
 use App\Models\Program;
 use App\Models\ProgramType;
 use App\Models\User;
@@ -76,6 +77,17 @@ class AdminProgramCrudTest extends TestCase
         $response->assertSessionHasErrors(['code', 'category_id', 'program_type_id', 'name', 'duration_minutes', 'price', 'point_cost', 'ticket_cost', 'status']);
     }
 
+    public function test_validation_errors_are_rendered_with_alert_role(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->from(route('admin.programs.create'))
+            ->followingRedirects()
+            ->post(route('admin.programs.store'), []);
+
+        $response->assertOk();
+        $response->assertSee('class="invalid-feedback" role="alert"', false);
+    }
+
     public function test_store_validates_foreign_keys(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.programs.store'), [
@@ -121,5 +133,33 @@ class AdminProgramCrudTest extends TestCase
 
         $response->assertRedirect(route('admin.programs.index'));
         $this->assertDatabaseMissing('programs', ['id' => $program->id]);
+    }
+
+    public function test_destroy_fails_with_error_message_when_program_has_related_lesson_session(): void
+    {
+        $program = Program::factory()->createOne();
+        LessonSession::factory()->createOne(['program_id' => $program->id]);
+
+        $response = $this->actingAs($this->admin)->delete(route('admin.programs.destroy', $program));
+
+        $response->assertRedirect(route('admin.programs.index'));
+        $response->assertSessionHas('error', fn (string $message): bool => str_contains($message, '削除できません'));
+        $this->assertDatabaseHas('programs', ['id' => $program->id]);
+    }
+
+    public function test_destroy_with_htmx_returns_error_row_when_program_has_related_lesson_session(): void
+    {
+        $program = Program::factory()->createOne();
+        LessonSession::factory()->createOne(['program_id' => $program->id]);
+
+        $response = $this->actingAs($this->admin)
+            ->withHeader('HX-Request', 'true')
+            ->delete(route('admin.programs.destroy', $program));
+
+        $response->assertOk();
+        $response->assertSeeText('削除できません');
+        $response->assertSeeText('レッスン枠・繰り返しルール');
+        $response->assertSee('id="program-row-'.$program->id.'"', false);
+        $this->assertDatabaseHas('programs', ['id' => $program->id]);
     }
 }
