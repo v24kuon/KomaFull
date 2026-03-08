@@ -90,6 +90,28 @@ PHP
     }
 
     #[Test]
+    public function auto_promoted_role_guard_allows_staged_feature_test_using_role_constants(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'tests/Feature/Admin/DummyCrudTest.php', <<<'PHP'
+<?php
+
+use App\Models\User;
+
+return [
+    'admin_role' => User::ROLE_ADMIN,
+    'member_role' => User::ROLE_MEMBER,
+];
+PHP
+        );
+
+        $result = $this->runValidator($this->autoPromotedRoleLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(0, $result['exitCode'], $result['output']);
+        $this->assertStringNotContainsString('AUTO-RULE', $result['output']);
+    }
+
+    #[Test]
     public function auto_promoted_controller_phpdoc_guard_detects_staged_admin_controller_without_phpdoc(): void
     {
         $repository = $this->createTemporaryGitRepository();
@@ -112,6 +134,31 @@ PHP
         $this->assertStringContainsString('index() requires PHPDoc', $result['output']);
     }
 
+    #[Test]
+    public function auto_promoted_controller_phpdoc_guard_allows_staged_admin_controller_with_adjacent_phpdoc(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'app/Http/Controllers/Admin/DummyController.php', <<<'PHP'
+<?php
+
+class DummyController
+{
+    /**
+     * Display the resource listing.
+     */
+    public function index(): void
+    {
+    }
+}
+PHP
+        );
+
+        $result = $this->runValidator($this->autoPromotedPhpDocLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(0, $result['exitCode'], $result['output']);
+        $this->assertStringNotContainsString('AUTO-RULE', $result['output']);
+    }
+
     protected function tearDown(): void
     {
         foreach ($this->temporaryRepositories as $repository) {
@@ -122,7 +169,21 @@ PHP
     }
 
     /**
-     * @param  array<string, string>  $overrides
+     * Build a minimally valid log entry for validation-focused tests.
+     *
+     * Defaults intentionally model a non-adopted entry (`adopted=no`,
+     * `classification=none`) so each phase-1 validation test can opt in to the
+     * specific field under test without inheriting auto-promoted guard defaults.
+     *
+     * @param  array{
+     *     date?: string,
+     *     branch?: string,
+     *     scope?: string,
+     *     adopted?: string,
+     *     classification?: string,
+     *     targets?: string,
+     *     notes?: string
+     * }  $overrides
      */
     private function validLogEntry(
         string $date = '2026-02-23',
@@ -134,6 +195,7 @@ PHP
         string $notes = 'test',
         array $overrides = []
     ): string {
+        /** @var array{date: string, branch: string, scope: string, adopted: string, classification: string, targets: string, notes: string} $entry */
         $entry = array_merge(
             [
                 'date' => $date,
@@ -183,13 +245,29 @@ PHP
     }
 
     /**
-     * @param  list<array<string, string>>  $entries
+     * Build review feedback log content from partial entry definitions.
+     *
+     * Defaults intentionally model adopted generic feedback
+     * (`adopted=yes`, `classification=汎用`) because the auto-promoted guard
+     * helpers only need to specify recurring scope/notes pairs. Validation
+     * tests that need different defaults should go through validLogEntry().
+     *
+     * @param  list<array{
+     *     date?: string,
+     *     branch?: string,
+     *     scope?: string,
+     *     adopted?: string,
+     *     classification?: string,
+     *     targets?: string,
+     *     notes?: string
+     * }>  $entries
      */
     private function buildLogContent(array $entries): string
     {
         $lines = ["## Entries\n", "\n"];
 
         foreach ($entries as $entry) {
+            /** @var array{date: string, branch: string, scope: string, adopted: string, classification: string, targets: string, notes: string} $merged */
             $merged = array_merge(
                 [
                     'date' => '2026-02-23',

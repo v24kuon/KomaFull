@@ -18,6 +18,110 @@
 
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest に auto-promoted guard の正常系を追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: auto-promoted role guard と controller PHPDoc guard は違反検知だけでなく false positive 防止の正常系も必要なため、`User::ROLE_ADMIN` / `User::ROLE_MEMBER` を使う staged feature test と、隣接 PHPDoc を持つ staged admin controller が通過する happy path を追加。既存の失敗系と合わせて tooling validator の回帰網羅を補強。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff の gender 許容値をフォーム選択肢へ整合）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Requests/Admin/StoreStaffRequest.php, app/Http/Requests/Admin/UpdateStaffRequest.php, tests/Feature/Admin/AdminStaffCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: Staff フォームの gender は male / female / other の3択だが、store / update の FormRequest が広い string 許容になっていたため、両方を `in:male,female,other` へ統一。細工した未定義値の store / update を feature test で拒否し、固定選択 UI とサーバー側許容値を揃える汎用ルールを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem の hidden 項目エラー表示へ role="alert" を追加）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/additional-items/_form.blade.php, tests/Feature/Admin/AdminAdditionalItemCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: fixed hidden 値で表示している additional_item_type のエラー表示だけ `role="alert"` が漏れていたため追加。対象フィールド単位で alert role を確認する feature test を追加し、custom error markup でも即時通知アクセシビリティを揃える汎用ルールを追記。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Locationフォームのstatus値をモデル定数参照へ統一）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/locations/_form.blade.php
+  notes: Location フォームの status 選択肢で `'active'` / `'inactive'` を直書きしていたため、Location::STATUS_ACTIVE / STATUS_INACTIVE に置換。UI と FormRequest / モデル定義の single source of truth を揃え、将来の定数変更時の不整合を防止。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest のログ entry PHPDoc を配列形状型へ厳密化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: validLogEntry() の overrides と buildLogContent() の entries を固定キーの配列形状型へ更新し、defaults マージ後の entry / merged も required key shape として注釈。RFP-002 に沿って typo やキー欠落を静的に拾いやすくした。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramType削除時の外部キー制約エラーを利用者向けに処理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/ProgramTypeController.php, resources/views/admin/program-types/_delete_error_row.blade.php, tests/Feature/Admin/AdminProgramTypeCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: ProgramType削除でFK制約違反（programs.program_type_id）を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連Programあり時の削除失敗をFeatureテストで追加検証し、マスタ系CRUDの削除失敗パターンを汎用ルールへ昇格。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（HTMX部分描画テストのDOCTYPE検証 false positive を修正）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminCategoryCrudTest.php, tests/Feature/Admin/AdminProgramTypeCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: `assertDontSee()` の既定値では検索文字列がHTMLエスケープされるため、`<!DOCTYPE html>` の不在確認が false positive になっていた。Category / ProgramType の HTMX 部分描画テストを `assertDontSee('<!DOCTYPE html>', false)` へ修正し、再発防止ルールを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Program CRUD のアクセス制御テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: admin.programs.index に対する guest / non-admin のアクセス制御を Program CRUD テストへ追加し、Category / ProgramType と同水準の認可回帰を確保。HTMXヘッダー指定の指摘は、このファイル自体は withHeader() を使用済みのため見送り。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（LocationController の削除制約違反 helper に責務PHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/LocationController.php
+  notes: respondDeleteConstraintViolation() に責務・前提・更新方針を示す PHPDoc を追加し、HTMX と通常リクエストで応答を分岐する意図を読み取りやすくした。挙動変更はなし。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StaffController の削除制約違反 helper に責務PHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StaffController.php
+  notes: respondDeleteConstraintViolation() に責務・前提・更新方針を示す PHPDoc を追加し、HTMX と通常リクエストで応答を分岐する意図を読み取りやすくした。挙動変更はなし。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest の helper デフォルト意図を PHPDoc で明示）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: validLogEntry は phase-1 検証向けに adopted=no / classification=none を既定値とし、buildLogContent は auto-promoted guard 用に adopted=yes / classification=汎用 を既定値とする意図を PHPDoc で明示。両 helper の責務差をコメントで読み取りやすくした。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-feedback validator の閾値定数化と staged PHP helper の PHPDoc 補強）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php
+  notes: auto-promoted guard の threshold を意図が分かる定数へ置換し、再発回数の意味をコメントで明示。get_staged_php_files() の PHPDoc に $repoRoot / $paths / $suffix の役割を追記し、suffix フィルタの意図を文書化。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Program削除失敗パーシャルへ role="alert" を追加）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/programs/_delete_error_row.blade.php, tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: HTMX で動的挿入される Program 削除失敗メッセージに role="alert" を追加し、スクリーンリーダーへの即時通知を改善。削除失敗時のエラー行に role 属性が含まれることを feature test で確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
   scope: PR指摘対応（Staff の重複code投稿時の回帰テスト追加）
   adopted: yes
   classification: 汎用
@@ -134,7 +238,7 @@
   adopted: yes
   classification: 汎用
   targets: app/Http/Controllers/Admin/StaffController.php, resources/views/admin/staffs/_delete_error_row.blade.php, tests/Feature/Admin/AdminStaffCrudTest.php
-  notes: Staff削除でFK制約違反（lesson_sessions / program_repetition_rules）を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連LessonSessionあり時の削除失敗をFeatureテストで追加検証。
+  notes: Staff削除でFK制約違反を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連LessonSessionあり時の削除失敗をFeatureテストで追加検証。
 
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud

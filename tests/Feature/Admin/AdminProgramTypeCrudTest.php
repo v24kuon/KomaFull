@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Program;
 use App\Models\ProgramType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,7 +41,7 @@ class AdminProgramTypeCrudTest extends TestCase
             ->get(route('admin.program-types.index'), ['HX-Request' => 'true']);
 
         $response->assertOk();
-        $response->assertDontSee('<!DOCTYPE html>');
+        $response->assertDontSee('<!DOCTYPE html>', false);
     }
 
     public function test_create_form_is_displayed(): void
@@ -147,6 +148,36 @@ class AdminProgramTypeCrudTest extends TestCase
 
         $response->assertRedirect(route('admin.program-types.index'));
         $this->assertDatabaseMissing('program_types', ['id' => $programType->id]);
+    }
+
+    public function test_destroy_fails_with_error_message_when_program_type_has_related_programs(): void
+    {
+        $programType = ProgramType::factory()->createOne();
+        Program::factory()->createOne(['program_type_id' => $programType->id]);
+
+        $response = $this->actingAs($this->admin)->delete(route('admin.program-types.destroy', $programType));
+
+        $response->assertRedirect(route('admin.program-types.index'));
+        $response->assertSessionHas('error', fn (string $message): bool => str_contains($message, '削除できません'));
+        $response->assertSessionHas('error', fn (string $message): bool => str_contains($message, '関連プログラム'));
+        $this->assertDatabaseHas('program_types', ['id' => $programType->id]);
+    }
+
+    public function test_destroy_with_htmx_returns_error_row_when_program_type_has_related_programs(): void
+    {
+        $programType = ProgramType::factory()->createOne();
+        Program::factory()->createOne(['program_type_id' => $programType->id]);
+
+        $response = $this->actingAs($this->admin)
+            ->withHeader('HX-Request', 'true')
+            ->delete(route('admin.program-types.destroy', $programType));
+
+        $response->assertOk();
+        $response->assertSeeText('削除できません');
+        $response->assertSeeText('関連プログラム');
+        $response->assertSee('role="alert"', false);
+        $response->assertSee('id="program-type-row-'.$programType->id.'"', false);
+        $this->assertDatabaseHas('program_types', ['id' => $programType->id]);
     }
 
     public function test_destroy_with_htmx_returns_empty(): void

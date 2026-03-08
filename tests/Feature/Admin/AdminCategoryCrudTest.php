@@ -40,7 +40,7 @@ class AdminCategoryCrudTest extends TestCase
             ->get(route('admin.categories.index'), ['HX-Request' => 'true']);
 
         $response->assertOk();
-        $response->assertDontSee('<!DOCTYPE html>');
+        $response->assertDontSee('<!DOCTYPE html>', false);
     }
 
     public function test_create_form_is_displayed(): void

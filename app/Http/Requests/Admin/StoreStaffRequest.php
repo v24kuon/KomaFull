@@ -20,7 +20,7 @@ class StoreStaffRequest extends FormRequest
         return [
             'code' => ['required', 'string', 'max:255', 'unique:staffs,code'],
             'name' => ['required', 'string', 'max:255'],
-            'gender' => ['nullable', 'string', 'max:20'],
+            'gender' => ['nullable', 'string', 'in:male,female,other'],
             'birth_date' => ['nullable', 'date'],
             'licence_skill' => ['nullable', 'string', 'max:255'],
             'main_expertise' => ['nullable', 'string', 'max:255'],
@@ -39,6 +39,7 @@ class StoreStaffRequest extends FormRequest
             'code.required' => 'コードは必須です。',
             'code.unique' => 'このコードは既に使用されています。',
             'name.required' => '名前は必須です。',
+            'gender.in' => '性別の値が不正です。',
             'status.required' => 'ステータスは必須です。',
         ];
     }

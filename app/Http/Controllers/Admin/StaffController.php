@@ -108,6 +108,12 @@ class StaffController extends Controller
             ->with('success', 'スタッフを削除しました。');
     }
 
+    /**
+     * FK制約違反時の削除失敗レスポンスを要求種別に応じて返す。
+     *
+     * 前提: destroy() から外部キー制約違反として判定された場合のみ呼び出されること。
+     * 更新方針: HTMX要求では対象行のエラー表示HTMLを返し、通常要求では一覧画面へリダイレクトしてエラーフラッシュを設定する。
+     */
     private function respondDeleteConstraintViolation(Request $request, Staff $staff): RedirectResponse|string
     {
         if ($request->header('HX-Request')) {

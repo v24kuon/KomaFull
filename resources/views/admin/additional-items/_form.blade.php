@@ -20,7 +20,7 @@
         <label class="form-label">項目種別 <span class="text-danger">*</span></label>
         <p class="form-control-plaintext mb-0">会員プロフィール</p>
         <input type="hidden" name="additional_item_type" value="member_profile">
-        @error('additional_item_type') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+        @error('additional_item_type') <div class="text-danger small mt-1" role="alert">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
         <label for="input_type" class="form-label">入力形式 <span class="text-danger">*</span></label>

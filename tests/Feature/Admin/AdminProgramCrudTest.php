@@ -159,7 +159,25 @@ class AdminProgramCrudTest extends TestCase
         $response->assertOk();
         $response->assertSeeText('削除できません');
         $response->assertSeeText('レッスン枠・繰り返しルール');
+        $response->assertSee('role="alert"', false);
         $response->assertSee('id="program-row-'.$program->id.'"', false);
         $this->assertDatabaseHas('programs', ['id' => $program->id]);
+    }
+
+    public function test_guest_cannot_access_programs(): void
+    {
+        $response = $this->get(route('admin.programs.index'));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_non_admin_cannot_access_programs(): void
+    {
+        /** @var User $member */
+        $member = User::factory()->createOne(['role' => User::ROLE_MEMBER]);
+
+        $response = $this->actingAs($member)->get(route('admin.programs.index'));
+
+        $response->assertForbidden();
     }
 }

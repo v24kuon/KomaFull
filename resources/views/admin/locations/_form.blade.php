@@ -43,8 +43,8 @@
 <div class="mb-4">
     <label for="status" class="form-label">ステータス <span class="text-danger">*</span></label>
     <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
-        <option value="active" @selected(old('status', $model?->status) === 'active')>有効</option>
-        <option value="inactive" @selected(old('status', $model?->status) === 'inactive')>無効</option>
+        <option value="{{ \App\Models\Location::STATUS_ACTIVE }}" @selected(old('status', $model?->status) === \App\Models\Location::STATUS_ACTIVE)>有効</option>
+        <option value="{{ \App\Models\Location::STATUS_INACTIVE }}" @selected(old('status', $model?->status) === \App\Models\Location::STATUS_INACTIVE)>無効</option>
     </select>
     @error('status') <div class="invalid-feedback" role="alert">{{ $message }}</div> @enderror
 </div>

@@ -85,6 +85,19 @@ class AdminStaffCrudTest extends TestCase
         $response->assertSessionHasErrors(['birth_date']);
     }
 
+    public function test_store_rejects_unsupported_gender(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('admin.staffs.store'), [
+            'code' => 'STF-INVALID',
+            'name' => '不正性別スタッフ',
+            'gender' => 'invalid',
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors(['gender']);
+        $this->assertDatabaseMissing('staffs', ['code' => 'STF-INVALID']);
+    }
+
     public function test_update_modifies_staff(): void
     {
         $staff = Staff::factory()->createOne();
@@ -97,6 +110,28 @@ class AdminStaffCrudTest extends TestCase
 
         $response->assertRedirect(route('admin.staffs.index'));
         $this->assertDatabaseHas('staffs', ['id' => $staff->id, 'name' => '更新スタッフ']);
+    }
+
+    public function test_update_rejects_unsupported_gender(): void
+    {
+        $staff = Staff::factory()->createOne([
+            'gender' => 'female',
+            'name' => '更新前スタッフ',
+        ]);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.staffs.update', $staff), [
+            'code' => $staff->code,
+            'name' => '更新後スタッフ',
+            'gender' => 'invalid',
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors(['gender']);
+        $this->assertDatabaseHas('staffs', [
+            'id' => $staff->id,
+            'name' => '更新前スタッフ',
+            'gender' => 'female',
+        ]);
     }
 
     public function test_destroy_deletes_staff(): void

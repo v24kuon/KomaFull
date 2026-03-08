@@ -55,6 +55,22 @@ class AdminAdditionalItemCrudTest extends TestCase
         $response->assertSessionHasErrors(['code', 'additional_item_type', 'label_name', 'input_type', 'status']);
     }
 
+    public function test_additional_item_type_validation_error_is_rendered_with_alert_role(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->from(route('admin.additional-items.create'))
+            ->followingRedirects()
+            ->post(route('admin.additional-items.store'), [
+                'code' => 'AI-NEW',
+                'label_name' => 'テスト項目',
+                'input_type' => 'text',
+                'status' => 'active',
+            ]);
+
+        $response->assertOk();
+        $response->assertSee('<div class="text-danger small mt-1" role="alert">項目種別は必須です。</div>', false);
+    }
+
     public function test_store_validates_input_type(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.additional-items.store'), [

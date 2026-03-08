@@ -4,6 +4,18 @@
 declare(strict_types=1);
 
 /**
+ * Promote the test-role guard only after the same review theme has recurred
+ * across multiple admin CRUD test files.
+ */
+const AUTO_PROMOTED_ADMIN_ROLE_CONSTANT_IN_TESTS_THRESHOLD = 3;
+
+/**
+ * Promote the controller PHPDoc guard after two adoptions because the pattern
+ * is narrower and should be standardized earlier once it repeats.
+ */
+const AUTO_PROMOTED_ADMIN_CONTROLLER_ENTRYPOINT_PHPDOC_THRESHOLD = 2;
+
+/**
  * Validates .cursor/review-feedback/log.md entries.
  *
  * Phase 1: Required keys, classification enum, adopted enum, date format, targets non-empty.
@@ -264,15 +276,16 @@ function run_auto_promoted_checks(string $repoRoot, string $logContent): array
  */
 function determine_auto_promoted_guards(array $entries): array
 {
+    /** @var list<array{key: string, threshold: int, pattern: string}> $definitions */
     $definitions = [
         [
             'key' => 'admin-role-constant-in-tests',
-            'threshold' => 3,
+            'threshold' => AUTO_PROMOTED_ADMIN_ROLE_CONSTANT_IN_TESTS_THRESHOLD,
             'pattern' => '/(管理者ロール指定を定数化|ロール指定を定数化|User::ROLE_ADMIN|User::ROLE_MEMBER)/u',
         ],
         [
             'key' => 'admin-controller-entrypoint-phpdoc',
-            'threshold' => 2,
+            'threshold' => AUTO_PROMOTED_ADMIN_CONTROLLER_ENTRYPOINT_PHPDOC_THRESHOLD,
             'pattern' => '/(主要アクション.*PHPDoc|エントリポイント.*PHPDoc|PHPDoc追加)/u',
         ],
     ];
@@ -668,7 +681,11 @@ function get_staged_php_files_in_admin_controllers(string $repoRoot): array
 }
 
 /**
- * @param  list<string>  $paths
+ * Collect staged file paths under the given prefixes and suffix.
+ *
+ * @param  string  $repoRoot  Absolute path to the repository root used for `git -C`.
+ * @param  list<string>  $paths  Repository-relative paths forwarded to `git diff --cached --`.
+ * @param  string  $suffix  File name suffix used to keep only matching staged paths. Defaults to `.php`.
  * @return list<string>
  */
 function get_staged_php_files(string $repoRoot, array $paths, string $suffix = '.php'): array
