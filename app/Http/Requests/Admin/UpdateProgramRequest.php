@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\Program;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProgramRequest extends FormRequest
 {
@@ -13,14 +14,12 @@ class UpdateProgramRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, \Illuminate\Validation\Rules\Unique|string>>
      */
     public function rules(): array
     {
-        $id = $this->route('program')?->id;
-
         return [
-            'code' => ['required', 'string', 'max:255', 'unique:programs,code,'.$id],
+            'code' => ['required', 'string', 'max:255', Rule::unique('programs', 'code')->ignore($this->route('program'))],
             'category_id' => ['required', 'exists:categories,id'],
             'program_type_id' => ['required', 'exists:program_types,id'],
             'name' => ['required', 'string', 'max:255'],

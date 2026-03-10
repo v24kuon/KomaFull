@@ -100,6 +100,30 @@ class AdminLocationCrudTest extends TestCase
         $this->assertDatabaseHas('locations', ['id' => $location->id, 'name' => '更新店舗']);
     }
 
+    public function test_update_rejects_duplicate_code(): void
+    {
+        $location = Location::factory()->createOne([
+            'code' => 'LOC-001',
+            'name' => '更新前店舗',
+            'status' => 'active',
+        ]);
+        Location::factory()->createOne(['code' => 'LOC-002']);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.locations.update', $location), [
+            'code' => 'LOC-002',
+            'name' => '更新後店舗',
+            'status' => 'inactive',
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+        $this->assertDatabaseHas('locations', [
+            'id' => $location->id,
+            'code' => 'LOC-001',
+            'name' => '更新前店舗',
+            'status' => 'active',
+        ]);
+    }
+
     public function test_destroy_deletes_location(): void
     {
         $location = Location::factory()->createOne();

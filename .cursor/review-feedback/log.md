@@ -18,6 +18,62 @@
 
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem CRUDテストに update 側 validation 回帰を追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminAdditionalItemCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: 指摘は一部有効で、`UpdateAdditionalItemRequest` の `input_type` 失敗系は未カバーだったため update 側の invalid payload 回帰テストを追加した。一方で `code` の unique は既存の `test_update_rejects_duplicate_code` と同一 code 維持の update 成功ケースですでに検知可能だったため追加修正は見送った。store / update で FormRequest を分離する CRUD は代表的な失敗系を両経路で持つ汎用ルールを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-feedback validator の auto-promoted guard 誤昇格を防止）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php, tests/Tooling/ReviewFeedbackValidateTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: auto-promoted guard のテーマ判定が `User::ROLE_*` や `PHPDoc追加` の単独マッチで広すぎ、`adopted: no` / `classification: none` のログまで閾値集計していたため、対象パスと文脈語の両方でテーマを絞り込み、採用済みログだけを集計対象へ修正した。tooling test には別テーマの類似トークンでは昇格しないケースと、未採用・none ログが閾値へ加算されないケースを追加した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Update*Request の unique 除外を Rule::unique()->ignore() へ統一）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Requests/Admin/UpdateCategoryRequest.php, app/Http/Requests/Admin/UpdateProgramTypeRequest.php, app/Http/Requests/Admin/UpdateProgramRequest.php, app/Http/Requests/Admin/UpdateLocationRequest.php, app/Http/Requests/Admin/UpdateAdditionalItemRequest.php, app/Http/Requests/Admin/UpdateStaffRequest.php, tests/Feature/Admin/AdminCategoryCrudTest.php, tests/Feature/Admin/AdminProgramTypeCrudTest.php, tests/Feature/Admin/AdminProgramCrudTest.php, tests/Feature/Admin/AdminLocationCrudTest.php, tests/Feature/Admin/AdminAdditionalItemCrudTest.php, tests/Feature/Admin/AdminStaffCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: `Staff` だけを局所修正すると同系 Update FormRequest 間で記法が分岐するため、admin 配下の更新系 `unique` ルールを一括で `Rule::unique(...)->ignore($this->route(...))` へ統一した。Laravel docs の `ignore($model)` 推奨と route model binding 前提に合わせ、文字列連結より主キー名変更や条件拡張に追従しやすい形へ寄せた。あわせて 6 CRUD スイートへ「自分自身の code は更新可 / 他レコードの code は更新不可」の回帰テストを追加し、同一値除外と重複拒否の両方を明示した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem CRUDテストの status 定数化と alert 検証を保守しやすく調整）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/Admin/AdminAdditionalItemCrudTest.php
+  notes: status 直書き `'active'` / `'inactive'` は AdditionalItem::STATUS_ACTIVE / STATUS_INACTIVE へ寄せてモデル定義との追従性を改善。additional_item_type の alert 回帰テストは full HTML 固定ではなく、エラーメッセージ表示と `role=\"alert\"` の契約に絞った分割アサートへ変更し、view 整形差分だけで壊れにくくした。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest の一時Git/外部プロセス helper に責務PHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: createTemporaryGitRepository / stageFile / runCommand / deleteDirectory / runValidator は一時Gitリポジトリ作成、相対パス前提、外部プロセス実行、再帰削除など副作用が強く、既存の PHPDoc 方針に沿って責務・前提・更新方針を追記した。既存ルールでカバー済みのため再発防止ルールファイルの追加更新は不要。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-fix コマンドの log 更新条件を強制運用ゲートへ明示化）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/commands/review-fix.md
+  notes: `必要条件を満たす場合` だけでは `.cursor/review-feedback/log.md` 更新トリガーが不明確だったため、`.cursor/rules/review-feedback-prevention.mdc` の「6) 強制運用ゲート」を参照しつつ、`app/` `tests/` `database/` `routes/` `config/` `bootstrap/` `resources/` を含む場合と `classification: none` 記録義務を明示した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest の ROLE_MEMBER 正常系を単独ケース化し、review-fix 判定根拠を明文化）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php, .cursor/commands/review-fix.md
+  notes: 指摘の問題意識は一部妥当で、mixed fixture 自体よりも guard が実際に見る `'role' => ...` 形を happy path が再現していない点が弱かったため、`User::ROLE_ADMIN` / `User::ROLE_MEMBER` をそれぞれ単独ケース化。あわせて `/review-fix` コマンドへ「有効 / 一部有効 / 無効」の根拠付き判定を必須化し、`妥当そう` のような推測表現を禁止した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
   scope: PR指摘対応（ReviewFeedbackValidateTest に auto-promoted guard の正常系を追加）
   adopted: yes
   classification: 汎用

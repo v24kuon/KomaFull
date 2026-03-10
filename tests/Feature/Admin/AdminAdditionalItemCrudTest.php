@@ -39,7 +39,7 @@ class AdminAdditionalItemCrudTest extends TestCase
             'label_name' => 'テスト項目',
             'input_type' => 'text',
             'digits' => 5,
-            'status' => 'active',
+            'status' => AdditionalItem::STATUS_ACTIVE,
         ];
 
         $response = $this->actingAs($this->admin)->post(route('admin.additional-items.store'), $data);
@@ -64,11 +64,12 @@ class AdminAdditionalItemCrudTest extends TestCase
                 'code' => 'AI-NEW',
                 'label_name' => 'テスト項目',
                 'input_type' => 'text',
-                'status' => 'active',
+                'status' => AdditionalItem::STATUS_ACTIVE,
             ]);
 
         $response->assertOk();
-        $response->assertSee('<div class="text-danger small mt-1" role="alert">項目種別は必須です。</div>', false);
+        $response->assertSeeText('項目種別は必須です。');
+        $response->assertSee('role="alert"', false);
     }
 
     public function test_store_validates_input_type(): void
@@ -78,7 +79,7 @@ class AdminAdditionalItemCrudTest extends TestCase
             'additional_item_type' => 'member_profile',
             'label_name' => 'テスト',
             'input_type' => 'invalid',
-            'status' => 'active',
+            'status' => AdditionalItem::STATUS_ACTIVE,
         ]);
 
         $response->assertSessionHasErrors(['input_type']);
@@ -93,11 +94,64 @@ class AdminAdditionalItemCrudTest extends TestCase
             'additional_item_type' => 'member_profile',
             'label_name' => '更新項目',
             'input_type' => 'number',
-            'status' => 'inactive',
+            'status' => AdditionalItem::STATUS_INACTIVE,
         ]);
 
         $response->assertRedirect(route('admin.additional-items.index'));
         $this->assertDatabaseHas('additional_items', ['id' => $item->id, 'label_name' => '更新項目']);
+    }
+
+    public function test_update_validates_input_type(): void
+    {
+        $item = AdditionalItem::factory()->createOne([
+            'code' => 'AI-INPUT-01',
+            'label_name' => '更新前項目',
+            'input_type' => 'text',
+            'status' => AdditionalItem::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.additional-items.update', $item), [
+            'code' => $item->code,
+            'additional_item_type' => 'member_profile',
+            'label_name' => '更新後項目',
+            'input_type' => 'invalid',
+            'status' => AdditionalItem::STATUS_INACTIVE,
+        ]);
+
+        $response->assertSessionHasErrors(['input_type']);
+        $this->assertDatabaseHas('additional_items', [
+            'id' => $item->id,
+            'code' => 'AI-INPUT-01',
+            'label_name' => '更新前項目',
+            'input_type' => 'text',
+            'status' => AdditionalItem::STATUS_ACTIVE,
+        ]);
+    }
+
+    public function test_update_rejects_duplicate_code(): void
+    {
+        $item = AdditionalItem::factory()->createOne([
+            'code' => 'AI-001',
+            'label_name' => '更新前項目',
+            'status' => AdditionalItem::STATUS_ACTIVE,
+        ]);
+        AdditionalItem::factory()->createOne(['code' => 'AI-002']);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.additional-items.update', $item), [
+            'code' => 'AI-002',
+            'additional_item_type' => 'member_profile',
+            'label_name' => '更新後項目',
+            'input_type' => 'number',
+            'status' => AdditionalItem::STATUS_INACTIVE,
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+        $this->assertDatabaseHas('additional_items', [
+            'id' => $item->id,
+            'code' => 'AI-001',
+            'label_name' => '更新前項目',
+            'status' => AdditionalItem::STATUS_ACTIVE,
+        ]);
     }
 
     public function test_destroy_deletes_additional_item(): void

@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\Location;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateLocationRequest extends FormRequest
 {
@@ -13,14 +14,12 @@ class UpdateLocationRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, \Illuminate\Validation\Rules\Unique|string>>
      */
     public function rules(): array
     {
-        $id = $this->route('location')?->id;
-
         return [
-            'code' => ['required', 'string', 'max:255', 'unique:locations,code,'.$id],
+            'code' => ['required', 'string', 'max:255', Rule::unique('locations', 'code')->ignore($this->route('location'))],
             'name' => ['required', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'tel' => ['nullable', 'string', 'max:20'],

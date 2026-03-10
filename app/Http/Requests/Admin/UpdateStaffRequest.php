@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\Staff;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateStaffRequest extends FormRequest
 {
@@ -13,14 +14,12 @@ class UpdateStaffRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, \Illuminate\Validation\Rules\Unique|string>>
      */
     public function rules(): array
     {
-        $id = $this->route('staff')?->id;
-
         return [
-            'code' => ['required', 'string', 'max:255', 'unique:staffs,code,'.$id],
+            'code' => ['required', 'string', 'max:255', Rule::unique('staffs', 'code')->ignore($this->route('staff'))],
             'name' => ['required', 'string', 'max:255'],
             'gender' => ['nullable', 'string', 'in:male,female,other'],
             'birth_date' => ['nullable', 'date'],

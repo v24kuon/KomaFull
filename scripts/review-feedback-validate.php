@@ -276,23 +276,25 @@ function run_auto_promoted_checks(string $repoRoot, string $logContent): array
  */
 function determine_auto_promoted_guards(array $entries): array
 {
-    /** @var list<array{key: string, threshold: int, pattern: string}> $definitions */
+    /** @var list<array{key: string, threshold: int, pattern: string, target_fragment: string}> $definitions */
     $definitions = [
         [
             'key' => 'admin-role-constant-in-tests',
             'threshold' => AUTO_PROMOTED_ADMIN_ROLE_CONSTANT_IN_TESTS_THRESHOLD,
-            'pattern' => '/(管理者ロール指定を定数化|ロール指定を定数化|User::ROLE_ADMIN|User::ROLE_MEMBER)/u',
+            'pattern' => '/ロール指定を定数化/u',
+            'target_fragment' => 'tests/Feature/Admin/',
         ],
         [
             'key' => 'admin-controller-entrypoint-phpdoc',
             'threshold' => AUTO_PROMOTED_ADMIN_CONTROLLER_ENTRYPOINT_PHPDOC_THRESHOLD,
-            'pattern' => '/(主要アクション.*PHPDoc|エントリポイント.*PHPDoc|PHPDoc追加)/u',
+            'pattern' => '/((主要アクション|エントリポイント).{0,40}PHPDoc|PHPDoc.{0,40}(主要アクション|エントリポイント))/u',
+            'target_fragment' => 'app/Http/Controllers/Admin/',
         ],
     ];
 
     $enabled = [];
     foreach ($definitions as $definition) {
-        $count = count_matching_feedback_entries($entries, $definition['pattern']);
+        $count = count_matching_feedback_entries($entries, $definition['pattern'], $definition['target_fragment']);
         if ($count >= $definition['threshold']) {
             $enabled[$definition['key']] = $count;
         }
@@ -304,17 +306,48 @@ function determine_auto_promoted_guards(array $entries): array
 /**
  * @param  list<array<string, string>>  $entries
  */
-function count_matching_feedback_entries(array $entries, string $pattern): int
+function count_matching_feedback_entries(array $entries, string $pattern, string $targetFragment): int
 {
     $count = 0;
     foreach ($entries as $entry) {
+        if (! is_adopted_feedback_entry($entry)) {
+            continue;
+        }
+
         $targetText = trim(($entry['scope'] ?? '').' '.($entry['notes'] ?? ''));
-        if ($targetText !== '' && preg_match($pattern, $targetText) === 1) {
+        $targets = trim($entry['targets'] ?? '');
+
+        if ($targetText === '' || $targets === '') {
+            continue;
+        }
+
+        if (! str_contains($targets, $targetFragment)) {
+            continue;
+        }
+
+        if (preg_match($pattern, $targetText) === 1) {
             $count++;
         }
     }
 
     return $count;
+}
+
+/**
+ * Count only adopted recurring feedback as auto-promotion candidates.
+ *
+ * Non-adopted entries and `classification: none` fact logs must not contribute
+ * to auto-promoted guard thresholds.
+ *
+ * @param  array<string, string>  $entry
+ */
+function is_adopted_feedback_entry(array $entry): bool
+{
+    if (trim($entry['adopted'] ?? '') !== 'yes') {
+        return false;
+    }
+
+    return trim($entry['classification'] ?? '') !== 'none';
 }
 
 /**

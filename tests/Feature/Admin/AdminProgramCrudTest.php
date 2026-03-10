@@ -125,6 +125,34 @@ class AdminProgramCrudTest extends TestCase
         $this->assertDatabaseHas('programs', ['id' => $program->id, 'name' => '更新プログラム']);
     }
 
+    public function test_update_rejects_duplicate_code(): void
+    {
+        $program = Program::factory()->createOne([
+            'code' => 'PRG-001',
+            'name' => '更新前プログラム',
+        ]);
+        Program::factory()->createOne(['code' => 'PRG-002']);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.programs.update', $program), [
+            'code' => 'PRG-002',
+            'category_id' => $program->category_id,
+            'program_type_id' => $program->program_type_id,
+            'name' => '更新後プログラム',
+            'duration_minutes' => 90,
+            'price' => 5000,
+            'point_cost' => 2,
+            'ticket_cost' => 2,
+            'status' => 'inactive',
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+        $this->assertDatabaseHas('programs', [
+            'id' => $program->id,
+            'code' => 'PRG-001',
+            'name' => '更新前プログラム',
+        ]);
+    }
+
     public function test_destroy_deletes_program(): void
     {
         $program = Program::factory()->createOne();

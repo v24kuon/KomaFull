@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\ProgramType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProgramTypeRequest extends FormRequest
 {
@@ -13,14 +14,12 @@ class UpdateProgramTypeRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, \Illuminate\Validation\Rules\Unique|string>>
      */
     public function rules(): array
     {
-        $id = $this->route('program_type')?->id;
-
         return [
-            'code' => ['required', 'string', 'max:255', 'unique:program_types,code,'.$id],
+            'code' => ['required', 'string', 'max:255', Rule::unique('program_types', 'code')->ignore($this->route('program_type'))],
             'name' => ['required', 'string', 'max:255'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'string', 'in:'.ProgramType::STATUS_ACTIVE.','.ProgramType::STATUS_INACTIVE],

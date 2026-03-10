@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\AdditionalItem;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateAdditionalItemRequest extends FormRequest
 {
@@ -13,14 +14,12 @@ class UpdateAdditionalItemRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, \Illuminate\Validation\Rules\Unique|string>>
      */
     public function rules(): array
     {
-        $id = $this->route('additional_item')?->id;
-
         return [
-            'code' => ['required', 'string', 'max:255', 'unique:additional_items,code,'.$id],
+            'code' => ['required', 'string', 'max:255', Rule::unique('additional_items', 'code')->ignore($this->route('additional_item'))],
             'additional_item_type' => ['required', 'string', 'in:member_profile'],
             'label_name' => ['required', 'string', 'max:255'],
             'input_type' => ['required', 'string', 'in:text,number,select,checkbox'],

@@ -140,6 +140,33 @@ class AdminProgramTypeCrudTest extends TestCase
         $response->assertRedirect(route('admin.program-types.index'));
     }
 
+    public function test_update_rejects_duplicate_code(): void
+    {
+        $programType = ProgramType::factory()->createOne([
+            'code' => 'PT-001',
+            'name' => '更新前種別',
+            'sort_order' => 1,
+            'status' => 'active',
+        ]);
+        ProgramType::factory()->createOne(['code' => 'PT-002']);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.program-types.update', $programType), [
+            'code' => 'PT-002',
+            'name' => '更新後種別',
+            'sort_order' => 99,
+            'status' => 'inactive',
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+        $this->assertDatabaseHas('program_types', [
+            'id' => $programType->id,
+            'code' => 'PT-001',
+            'name' => '更新前種別',
+            'sort_order' => 1,
+            'status' => 'active',
+        ]);
+    }
+
     public function test_destroy_deletes_program_type(): void
     {
         $programType = ProgramType::factory()->createOne();

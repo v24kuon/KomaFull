@@ -112,6 +112,30 @@ class AdminStaffCrudTest extends TestCase
         $this->assertDatabaseHas('staffs', ['id' => $staff->id, 'name' => '更新スタッフ']);
     }
 
+    public function test_update_rejects_duplicate_code(): void
+    {
+        $staff = Staff::factory()->createOne([
+            'code' => 'STF-001',
+            'name' => '更新前スタッフ',
+            'status' => 'active',
+        ]);
+        Staff::factory()->createOne(['code' => 'STF-002']);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.staffs.update', $staff), [
+            'code' => 'STF-002',
+            'name' => '更新後スタッフ',
+            'status' => 'inactive',
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+        $this->assertDatabaseHas('staffs', [
+            'id' => $staff->id,
+            'code' => 'STF-001',
+            'name' => '更新前スタッフ',
+            'status' => 'active',
+        ]);
+    }
+
     public function test_update_rejects_unsupported_gender(): void
     {
         $staff = Staff::factory()->createOne([

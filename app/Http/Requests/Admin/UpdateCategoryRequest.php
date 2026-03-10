@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateCategoryRequest extends FormRequest
 {
@@ -13,14 +14,12 @@ class UpdateCategoryRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, \Illuminate\Validation\Rules\Unique|string>>
      */
     public function rules(): array
     {
-        $categoryId = $this->route('category')?->id;
-
         return [
-            'code' => ['required', 'string', 'max:255', 'unique:categories,code,'.$categoryId],
+            'code' => ['required', 'string', 'max:255', Rule::unique('categories', 'code')->ignore($this->route('category'))],
             'name' => ['required', 'string', 'max:255'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'string', 'in:'.Category::STATUS_ACTIVE.','.Category::STATUS_INACTIVE],

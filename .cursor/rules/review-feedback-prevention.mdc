@@ -195,3 +195,21 @@ alwaysApply: true
 - **再発防止ルール**: `select` / `radio` / hidden 固定値など、UI が有限の選択肢を提示する項目は、FormRequest 側でも同じ許容値集合を `in:` などで明示的に検証する。`nullable|string|max:...` のような広い文字列許容だけで済ませない。
 - **最低限の検証観点**: 細工したリクエストで未定義値を送った代表ケースについて、store / update の少なくとも影響経路ごとにバリデーションエラーとなり、対象レコードが作成・更新されないことを feature test で確認する。
 - **分類根拠**: フォーム表示とサーバー側検証の整合性に関する横断的観点であり、Staff に限らず固定選択 UI を持つ全入力項目へ再利用できる（汎用）。
+
+### RFP-014
+
+- **再発防止ルール**: 更新系 FormRequest で既存レコードを `unique` ルールから除外する場合は、`'unique:table,column,'.$id` の文字列連結ではなく `Rule::unique('table', 'column')->ignore($this->route('resource'))` を使用する。`ignore()` にはユーザー入力ではなく、ルートモデルバインディングで解決されたモデルまたはシステム生成IDのみを渡す。
+- **最低限の検証観点**: 同一レコードを同じ一意項目値のまま更新できることと、別レコードの一意項目値へ更新しようとした場合に対象フィールドでバリデーションエラーとなることを確認する。
+- **分類根拠**: Laravel の更新フォーム検証で横断的に再利用できる一意制約除外パターンであり、複数の `Update*Request` に共通して適用される（汎用）。
+
+### RFP-015
+
+- **再発防止ルール**: `scripts/review-feedback-validate.php` の auto-promoted guard は、`adopted: yes` かつ `classification != none` のログだけを閾値集計対象にし、scope/notes の単語単独一致ではなく対象パスと文脈語の両方でテーマを識別する。`User::ROLE_*` や `PHPDoc追加` の単独出現だけで昇格させない。
+- **最低限の検証観点**: 類似トークンを含むが別テーマのログでは guard が有効化されず、採用済みの代表ログでは guard が有効化されることを tooling test で確認する。あわせて `adopted: no` または `classification: none` のログが閾値に加算されないことを確認する。
+- **分類根拠**: review-feedback validator の将来の auto-promoted guard 全般に再利用される判定方針であり、特定機能ではなく横断的な品質ゲートの観点に当たる（汎用）。
+
+### RFP-016
+
+- **再発防止ルール**: `Store*Request` と `Update*Request` が別クラスの CRUD では、validation の代表的な失敗系を store/create だけでなく update 側にも持つ。`unique` 除外、`in:` など update 時に分岐し得るルールは、store 側の失敗テストだけで代用しない。
+- **最低限の検証観点**: update で不正 payload を送った代表ケースについて、対象フィールドでバリデーションエラーとなり、既存レコードが更新されていないことを feature test で確認する。既存の unique 回帰がある場合は、別ルール（例: `in:`）の update 側失敗系も少なくとも 1 件持つ。
+- **分類根拠**: FormRequest を store / update で分離する CRUD 全般に再利用できるテスト観点であり、特定リソースに依存しない（汎用）。

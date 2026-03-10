@@ -150,6 +150,33 @@ class AdminCategoryCrudTest extends TestCase
         $response->assertRedirect(route('admin.categories.index'));
     }
 
+    public function test_update_rejects_duplicate_code(): void
+    {
+        $category = Category::factory()->createOne([
+            'code' => 'CAT-001',
+            'name' => '更新前カテゴリ',
+            'sort_order' => 1,
+            'status' => 'active',
+        ]);
+        Category::factory()->createOne(['code' => 'CAT-002']);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.categories.update', $category), [
+            'code' => 'CAT-002',
+            'name' => '更新後カテゴリ',
+            'sort_order' => 10,
+            'status' => 'inactive',
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+        $this->assertDatabaseHas('categories', [
+            'id' => $category->id,
+            'code' => 'CAT-001',
+            'name' => '更新前カテゴリ',
+            'sort_order' => 1,
+            'status' => 'active',
+        ]);
+    }
+
     public function test_destroy_deletes_category(): void
     {
         $category = Category::factory()->createOne();
