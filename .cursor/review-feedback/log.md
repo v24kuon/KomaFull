@@ -18,6 +18,22 @@
 
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-fix コマンドの章番号依存参照を解消）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/commands/review-fix.md
+  notes: 指摘は有効で、`.cursor/rules/review-feedback-prevention.mdc` の「6) 強制運用ゲート」のような章番号付き参照は、将来の見出し再編で古くなる余地があった。意味は変えずに「強制運用ゲート」セクション参照へ置き換え、構成変更に強い文面へ調整した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem CRUDテストに store 側 unique 回帰を追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminAdditionalItemCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: 指摘は有効で、`StoreAdditionalItemRequest` の `unique:additional_items,code` を直接通す失敗系が未カバーだった。兄弟 CRUD に合わせて store 側の重複 code 投稿を拒否する回帰テストを追加し、store / update で FormRequest を分離する CRUD は経路ごとの unique 失敗系を当該経路で直接持つよう RFP-016 を拡張した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
   scope: PR指摘対応（AdditionalItem CRUDテストに update 側 validation 回帰を追加）
   adopted: yes
   classification: 汎用

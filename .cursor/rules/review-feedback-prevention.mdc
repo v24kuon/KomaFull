@@ -210,6 +210,6 @@ alwaysApply: true
 
 ### RFP-016
 
-- **再発防止ルール**: `Store*Request` と `Update*Request` が別クラスの CRUD では、validation の代表的な失敗系を store/create だけでなく update 側にも持つ。`unique` 除外、`in:` など update 時に分岐し得るルールは、store 側の失敗テストだけで代用しない。
-- **最低限の検証観点**: update で不正 payload を送った代表ケースについて、対象フィールドでバリデーションエラーとなり、既存レコードが更新されていないことを feature test で確認する。既存の unique 回帰がある場合は、別ルール（例: `in:`）の update 側失敗系も少なくとも 1 件持つ。
+- **再発防止ルール**: `Store*Request` と `Update*Request` が別クラスの CRUD では、validation の代表的な失敗系を store/create と update の両経路で持つ。create 側の `unique` や update 側の `unique` 除外・`in:` など、経路ごとに分岐し得るルールは、そのルールを実際に持つ経路の失敗テストで直接検証し、片側の失敗テストだけで代用しない。
+- **最低限の検証観点**: store/create で一意項目の重複値を送った代表ケースについて、対象フィールドでバリデーションエラーとなり重複レコードが作成されないことを確認する。あわせて update で不正 payload を送った代表ケースについて、対象フィールドでバリデーションエラーとなり既存レコードが更新されていないことを feature test で確認する。
 - **分類根拠**: FormRequest を store / update で分離する CRUD 全般に再利用できるテスト観点であり、特定リソースに依存しない（汎用）。

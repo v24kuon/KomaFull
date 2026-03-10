@@ -85,6 +85,22 @@ class AdminAdditionalItemCrudTest extends TestCase
         $response->assertSessionHasErrors(['input_type']);
     }
 
+    public function test_store_validates_unique_code(): void
+    {
+        AdditionalItem::factory()->createOne(['code' => 'EXISTING']);
+
+        $response = $this->actingAs($this->admin)->post(route('admin.additional-items.store'), [
+            'code' => 'EXISTING',
+            'additional_item_type' => 'member_profile',
+            'label_name' => '重複テスト',
+            'input_type' => 'text',
+            'status' => AdditionalItem::STATUS_ACTIVE,
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+        $this->assertDatabaseCount('additional_items', 1);
+    }
+
     public function test_update_modifies_additional_item(): void
     {
         $item = AdditionalItem::factory()->createOne();
