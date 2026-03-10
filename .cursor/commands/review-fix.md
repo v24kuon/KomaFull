@@ -45,7 +45,7 @@ PR やコードレビューで指摘された内容を受け取り、項目ご�
 
 4. 修正後の仕上げを行う
    - `vendor/bin/pint --dirty` で整形する
-  - `.cursor/rules/review-feedback-prevention.mdc` の「強制運用ゲート」セクションに該当する場合、つまりコミット対象に `app/` `tests/` `database/` `routes/` `config/` `bootstrap/` `resources/` のいずれかが含まれる場合は、`.cursor/review-feedback/log.md` を更新する
+   - `.cursor/rules/review-feedback-prevention.mdc` の「強制運用ゲート」セクションに該当する場合、つまりコミット対象に `app/` `tests/` `database/` `routes/` `config/` `bootstrap/` `resources/` のいずれかが含まれる場合は、`.cursor/review-feedback/log.md` を更新する
    - 上記条件に該当する場合は、採用指摘がないケースでも `classification: none` として「判定した事実」を残す
 
 ## 結果報告

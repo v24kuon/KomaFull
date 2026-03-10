@@ -18,6 +18,30 @@
 
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettings ログの unique 衝突表現を緩和）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/review-feedback/log.md
+  notes: 指摘は有効で、既存 entry の notes は unique 制約衝突を feature test で直接確認したように読め、実際の検証内容である「既存 singleton 行の再利用と件数維持」より強い表現だった。該当 notes を singleton 再利用経路の確認へ言い換え、ログの説明強度を実測事実に揃えた。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-fix の箇条書きインデント不整合を修正）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/commands/review-fix.md
+  notes: 指摘は一部有効で、問題の本質は markdownlint 方針そのものよりも同階層の箇条書きインデントが1行だけ他行と不一致だった点にあった。該当行を周囲の箇条書きと同じインデントへ揃え、文書全体の一貫性を回復した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（RFP-011 の分類根拠から機能固有名を除去）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/rules/review-feedback-prevention.mdc
+  notes: 指摘は有効で、RFP-011 の分類根拠に Category / ProgramType / Program / Location / Staff といった具体的な画面・モデル名が含まれており、本ファイル先頭の「汎用ルールのみ」という方針と緊張関係があった。分類根拠を「外部キー制約で削除失敗し得る CRUD 全般」に一般化し、スコープ定義と整合する表現へ調整した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
   scope: PR指摘対応（review-fix コマンドの章番号依存参照を解消）
   adopted: yes
   classification: PR限定
@@ -238,7 +262,7 @@
   adopted: yes
   classification: 汎用
   targets: tests/Feature/Admin/AdminStoreSettingsTest.php
-  notes: createOrFirst 前提の既存 singleton 行再利用を明示するため、update 実行後も件数が1件のままで既存IDが再利用されることを検証する回帰テストを追加。unique 制約衝突時の復帰経路を feature test で直接確認。
+  notes: createOrFirst 前提の既存 singleton 行再利用を明示するため、update 実行後も件数が1件のままで既存IDが再利用されることを検証する回帰テストを追加。singleton 再利用経路を feature test で確認。
 
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud
