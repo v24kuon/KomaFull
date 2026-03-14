@@ -4,16 +4,29 @@
 declare(strict_types=1);
 
 /**
+ * Promote the test-role guard only after the same review theme has recurred
+ * across multiple admin CRUD test files.
+ */
+const AUTO_PROMOTED_ADMIN_ROLE_CONSTANT_IN_TESTS_THRESHOLD = 3;
+
+/**
+ * Promote the controller PHPDoc guard after two adoptions because the pattern
+ * is narrower and should be standardized earlier once it repeats.
+ */
+const AUTO_PROMOTED_ADMIN_CONTROLLER_ENTRYPOINT_PHPDOC_THRESHOLD = 2;
+
+/**
  * Validates .cursor/review-feedback/log.md entries.
  *
  * Phase 1: Required keys, classification enum, adopted enum, date format, targets non-empty.
  * Phase 2: RFP-001 checker for staged app/ PHP files (->refresh() / ->fresh() after write).
  * Phase 3: RFP-008 checker for staged app/config PHP files (commented-out import, Supported inline comment).
  * Phase 4: RFP-009 checker for staged app/Jobs and app/Services PHP files (required PHPDoc on key methods).
+ * Phase 5: Auto-promoted recurring review checks driven by log.md history.
  *
  * Usage: php scripts/review-feedback-validate.php [--log-path=PATH] [--skip-rfp]
  *   --log-path: Path to log.md (default: .cursor/review-feedback/log.md from repo root)
- *   --skip-rfp: Skip Phase 2+4 RFP code checks (for CI or legacy mode)
+ *   --skip-rfp: Skip Phase 2-5 code checks (for CI or legacy mode)
  */
 $repoRoot = get_repo_root();
 $logPath = $repoRoot.'/.cursor/review-feedback/log.md';
@@ -76,6 +89,20 @@ if (! $skipRfp && $exitCode === 0) {
         $exitCode = 1;
         foreach ($rfpErrors as $err) {
             echo "[review-feedback-validate] RFP-009: {$err}\n";
+        }
+    }
+}
+
+/** Phase 5: Auto-promoted recurring feedback checks (staged files only). */
+if (! $skipRfp && $exitCode === 0) {
+    $autoErrors = run_auto_promoted_checks(
+        $repoRoot,
+        resolve_log_content($logPath, $logContent)
+    );
+    if ($autoErrors !== []) {
+        $exitCode = 1;
+        foreach ($autoErrors as $err) {
+            echo "[review-feedback-validate] AUTO-RULE: {$err}\n";
         }
     }
 }
@@ -193,6 +220,200 @@ function parse_entries(string $content): array
     }
 
     return $entries;
+}
+
+function resolve_log_content(?string $logPath, ?string $logContent): string
+{
+    if ($logContent !== null) {
+        return $logContent;
+    }
+
+    if ($logPath === null || ! is_readable($logPath)) {
+        return '';
+    }
+
+    $resolved = file_get_contents($logPath);
+
+    return is_string($resolved) ? $resolved : '';
+}
+
+/**
+ * @return list<string>
+ */
+function run_auto_promoted_checks(string $repoRoot, string $logContent): array
+{
+    if (trim($logContent) === '') {
+        return [];
+    }
+
+    $enabledGuards = determine_auto_promoted_guards(parse_entries($logContent));
+    $errors = [];
+
+    foreach ($enabledGuards as $guardKey => $triggerCount) {
+        if ($guardKey === 'admin-role-constant-in-tests') {
+            foreach (run_auto_guard_admin_role_constant_in_tests($repoRoot) as $error) {
+                $errors[] = sprintf('[%s:%d] %s', $guardKey, $triggerCount, $error);
+            }
+
+            continue;
+        }
+
+        if ($guardKey === 'admin-controller-entrypoint-phpdoc') {
+            foreach (run_auto_guard_admin_controller_entrypoint_phpdoc($repoRoot) as $error) {
+                $errors[] = sprintf('[%s:%d] %s', $guardKey, $triggerCount, $error);
+            }
+
+            continue;
+        }
+    }
+
+    return $errors;
+}
+
+/**
+ * @param  list<array<string, string>>  $entries
+ * @return array<string, int>
+ */
+function determine_auto_promoted_guards(array $entries): array
+{
+    /** @var list<array{key: string, threshold: int, pattern: string, target_fragment: string}> $definitions */
+    $definitions = [
+        [
+            'key' => 'admin-role-constant-in-tests',
+            'threshold' => AUTO_PROMOTED_ADMIN_ROLE_CONSTANT_IN_TESTS_THRESHOLD,
+            'pattern' => '/ロール指定を定数化/u',
+            'target_fragment' => 'tests/Feature/Admin/',
+        ],
+        [
+            'key' => 'admin-controller-entrypoint-phpdoc',
+            'threshold' => AUTO_PROMOTED_ADMIN_CONTROLLER_ENTRYPOINT_PHPDOC_THRESHOLD,
+            'pattern' => '/((主要アクション|エントリポイント).{0,40}PHPDoc|PHPDoc.{0,40}(主要アクション|エントリポイント))/u',
+            'target_fragment' => 'app/Http/Controllers/Admin/',
+        ],
+    ];
+
+    $enabled = [];
+    foreach ($definitions as $definition) {
+        $count = count_matching_feedback_entries($entries, $definition['pattern'], $definition['target_fragment']);
+        if ($count >= $definition['threshold']) {
+            $enabled[$definition['key']] = $count;
+        }
+    }
+
+    return $enabled;
+}
+
+/**
+ * @param  list<array<string, string>>  $entries
+ */
+function count_matching_feedback_entries(array $entries, string $pattern, string $targetFragment): int
+{
+    $count = 0;
+    foreach ($entries as $entry) {
+        if (! is_adopted_feedback_entry($entry)) {
+            continue;
+        }
+
+        $targetText = trim(($entry['scope'] ?? '').' '.($entry['notes'] ?? ''));
+        $targets = trim($entry['targets'] ?? '');
+
+        if ($targetText === '' || $targets === '') {
+            continue;
+        }
+
+        if (! str_contains($targets, $targetFragment)) {
+            continue;
+        }
+
+        if (preg_match($pattern, $targetText) === 1) {
+            $count++;
+        }
+    }
+
+    return $count;
+}
+
+/**
+ * Count only adopted recurring feedback as auto-promotion candidates.
+ *
+ * Non-adopted entries and `classification: none` fact logs must not contribute
+ * to auto-promoted guard thresholds.
+ *
+ * @param  array<string, string>  $entry
+ */
+function is_adopted_feedback_entry(array $entry): bool
+{
+    if (trim($entry['adopted'] ?? '') !== 'yes') {
+        return false;
+    }
+
+    return trim($entry['classification'] ?? '') !== 'none';
+}
+
+/**
+ * @return list<string>
+ */
+function run_auto_guard_admin_role_constant_in_tests(string $repoRoot): array
+{
+    $errors = [];
+    $stagedFiles = get_staged_php_files_in_admin_feature_tests($repoRoot);
+
+    foreach ($stagedFiles as $file) {
+        $path = $repoRoot.'/'.$file;
+        if (! is_readable($path)) {
+            continue;
+        }
+
+        $lines = explode("\n", file_get_contents($path));
+        foreach ($lines as $num => $line) {
+            $lineNum = $num + 1;
+
+            if (preg_match('/[\'"]role[\'"]\s*=>\s*[\'"]admin[\'"]/', $line) === 1) {
+                $errors[] = "{$file}:{$lineNum}: Use User::ROLE_ADMIN instead of hardcoded 'admin' for test user role.";
+            }
+
+            if (preg_match('/[\'"]role[\'"]\s*=>\s*[\'"]member[\'"]/', $line) === 1) {
+                $errors[] = "{$file}:{$lineNum}: Use User::ROLE_MEMBER instead of hardcoded 'member' for test user role.";
+            }
+        }
+    }
+
+    return $errors;
+}
+
+/**
+ * @return list<string>
+ */
+function run_auto_guard_admin_controller_entrypoint_phpdoc(string $repoRoot): array
+{
+    $errors = [];
+    $stagedFiles = get_staged_php_files_in_admin_controllers($repoRoot);
+
+    foreach ($stagedFiles as $file) {
+        $path = $repoRoot.'/'.$file;
+        if (! is_readable($path)) {
+            continue;
+        }
+
+        $lines = explode("\n", file_get_contents($path));
+        foreach ($lines as $num => $line) {
+            $lineNum = $num + 1;
+            if (! preg_match('/^\s*public function (index|create|store|edit|update|destroy)\s*\(/', $line, $matches)) {
+                continue;
+            }
+
+            if (! has_adjacent_phpdoc($lines, $num)) {
+                $errors[] = sprintf(
+                    '%s:%d: %s() requires PHPDoc because this review pattern is auto-promoted from log.md.',
+                    $file,
+                    $lineNum,
+                    $matches[1]
+                );
+            }
+        }
+    }
+
+    return $errors;
 }
 
 /**
@@ -457,26 +678,7 @@ function is_rfp009_target_method(string $methodName): bool
  */
 function get_staged_php_files_in_app(string $repoRoot): array
 {
-    $output = [];
-    $cmd = sprintf(
-        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- app/',
-        escapeshellarg($repoRoot)
-    );
-    exec($cmd, $output, $code);
-
-    if ($code !== 0) {
-        return [];
-    }
-
-    $files = [];
-    foreach ($output as $line) {
-        $line = trim($line);
-        if ($line !== '' && str_ends_with($line, '.php')) {
-            $files[] = $line;
-        }
-    }
-
-    return $files;
+    return get_staged_php_files($repoRoot, ['app/']);
 }
 
 /**
@@ -484,26 +686,7 @@ function get_staged_php_files_in_app(string $repoRoot): array
  */
 function get_staged_php_files_in_jobs_and_services(string $repoRoot): array
 {
-    $output = [];
-    $cmd = sprintf(
-        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- app/Jobs/ app/Services/',
-        escapeshellarg($repoRoot)
-    );
-    exec($cmd, $output, $code);
-
-    if ($code !== 0) {
-        return [];
-    }
-
-    $files = [];
-    foreach ($output as $line) {
-        $line = trim($line);
-        if ($line !== '' && str_ends_with($line, '.php')) {
-            $files[] = $line;
-        }
-    }
-
-    return $files;
+    return get_staged_php_files($repoRoot, ['app/Jobs/', 'app/Services/']);
 }
 
 /**
@@ -511,10 +694,41 @@ function get_staged_php_files_in_jobs_and_services(string $repoRoot): array
  */
 function get_staged_php_files_in_app_and_config(string $repoRoot): array
 {
+    return get_staged_php_files($repoRoot, ['app/', 'config/']);
+}
+
+/**
+ * @return list<string>
+ */
+function get_staged_php_files_in_admin_feature_tests(string $repoRoot): array
+{
+    return get_staged_php_files($repoRoot, ['tests/Feature/Admin/']);
+}
+
+/**
+ * @return list<string>
+ */
+function get_staged_php_files_in_admin_controllers(string $repoRoot): array
+{
+    return get_staged_php_files($repoRoot, ['app/Http/Controllers/Admin/'], 'Controller.php');
+}
+
+/**
+ * Collect staged file paths under the given prefixes and suffix.
+ *
+ * @param  string  $repoRoot  Absolute path to the repository root used for `git -C`.
+ * @param  list<string>  $paths  Repository-relative paths forwarded to `git diff --cached --`.
+ * @param  string  $suffix  File name suffix used to keep only matching staged paths. Defaults to `.php`.
+ * @return list<string>
+ */
+function get_staged_php_files(string $repoRoot, array $paths, string $suffix = '.php'): array
+{
     $output = [];
+    $quotedPaths = array_map(static fn (string $path): string => escapeshellarg($path), $paths);
     $cmd = sprintf(
-        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- app/ config/',
-        escapeshellarg($repoRoot)
+        'git -C %s diff --cached --name-only --diff-filter=ACMRTUXB -- %s',
+        escapeshellarg($repoRoot),
+        implode(' ', $quotedPaths)
     );
     exec($cmd, $output, $code);
 
@@ -525,7 +739,7 @@ function get_staged_php_files_in_app_and_config(string $repoRoot): array
     $files = [];
     foreach ($output as $line) {
         $line = trim($line);
-        if ($line !== '' && str_ends_with($line, '.php')) {
+        if ($line !== '' && str_ends_with($line, $suffix)) {
             $files[] = $line;
         }
     }

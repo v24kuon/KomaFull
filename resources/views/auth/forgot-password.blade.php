@@ -36,7 +36,7 @@
                                 autofocus
                             >
                             @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
                             @enderror
                         </div>
 

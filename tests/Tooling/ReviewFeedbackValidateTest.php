@@ -3,11 +3,16 @@
 namespace Tests\Tooling;
 
 use PHPUnit\Framework\Attributes\Test;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use Tests\TestCase;
 
 class ReviewFeedbackValidateTest extends TestCase
 {
     private const SCRIPT = __DIR__.'/../../scripts/review-feedback-validate.php';
+
+    /** @var list<string> */
+    private array $temporaryRepositories = [];
 
     #[Test]
     public function valid_log_entry_passes_phase1(): void
@@ -64,8 +69,201 @@ class ReviewFeedbackValidateTest extends TestCase
         $this->assertStringContainsString('notes', $result['output']);
     }
 
+    #[Test]
+    public function auto_promoted_role_guard_detects_hardcoded_admin_in_staged_feature_test(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'tests/Feature/Admin/DummyCrudTest.php', <<<'PHP'
+<?php
+
+return [
+    'role' => 'admin',
+];
+PHP
+        );
+
+        $result = $this->runValidator($this->autoPromotedRoleLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(1, $result['exitCode'], $result['output']);
+        $this->assertStringContainsString('AUTO-RULE', $result['output']);
+        $this->assertStringContainsString('Use User::ROLE_ADMIN', $result['output']);
+    }
+
+    #[Test]
+    public function auto_promoted_role_guard_allows_staged_feature_test_using_admin_role_constant(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'tests/Feature/Admin/DummyCrudTest.php', <<<'PHP'
+<?php
+
+use App\Models\User;
+
+return [
+    'role' => User::ROLE_ADMIN,
+];
+PHP
+        );
+
+        $result = $this->runValidator($this->autoPromotedRoleLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(0, $result['exitCode'], $result['output']);
+        $this->assertStringNotContainsString('AUTO-RULE', $result['output']);
+    }
+
+    #[Test]
+    public function auto_promoted_role_guard_allows_staged_feature_test_using_member_role_constant(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'tests/Feature/Admin/DummyCrudTest.php', <<<'PHP'
+<?php
+
+use App\Models\User;
+
+return [
+    'role' => User::ROLE_MEMBER,
+];
+PHP
+        );
+
+        $result = $this->runValidator($this->autoPromotedRoleLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(0, $result['exitCode'], $result['output']);
+        $this->assertStringNotContainsString('AUTO-RULE', $result['output']);
+    }
+
+    #[Test]
+    public function auto_promoted_role_guard_does_not_enable_for_unrelated_role_constant_logs(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'tests/Feature/Admin/DummyCrudTest.php', <<<'PHP'
+<?php
+
+return [
+    'role' => 'admin',
+];
+PHP
+        );
+
+        $result = $this->runValidator($this->unrelatedRoleConstantLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(0, $result['exitCode'], $result['output']);
+        $this->assertStringNotContainsString('AUTO-RULE', $result['output']);
+    }
+
+    #[Test]
+    public function auto_promoted_controller_phpdoc_guard_detects_staged_admin_controller_without_phpdoc(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'app/Http/Controllers/Admin/DummyController.php', <<<'PHP'
+<?php
+
+class DummyController
+{
+    public function index(): void
+    {
+    }
+}
+PHP
+        );
+
+        $result = $this->runValidator($this->autoPromotedPhpDocLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(1, $result['exitCode'], $result['output']);
+        $this->assertStringContainsString('AUTO-RULE', $result['output']);
+        $this->assertStringContainsString('index() requires PHPDoc', $result['output']);
+    }
+
+    #[Test]
+    public function auto_promoted_controller_phpdoc_guard_allows_staged_admin_controller_with_adjacent_phpdoc(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'app/Http/Controllers/Admin/DummyController.php', <<<'PHP'
+<?php
+
+class DummyController
+{
     /**
-     * @param  array<string, string>  $overrides
+     * Display the resource listing.
+     */
+    public function index(): void
+    {
+    }
+}
+PHP
+        );
+
+        $result = $this->runValidator($this->autoPromotedPhpDocLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(0, $result['exitCode'], $result['output']);
+        $this->assertStringNotContainsString('AUTO-RULE', $result['output']);
+    }
+
+    #[Test]
+    public function auto_promoted_controller_phpdoc_guard_does_not_enable_for_non_entrypoint_phpdoc_logs(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'app/Http/Controllers/Admin/DummyController.php', <<<'PHP'
+<?php
+
+class DummyController
+{
+    public function index(): void
+    {
+    }
+}
+PHP
+        );
+
+        $result = $this->runValidator($this->nonEntrypointPhpDocLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(0, $result['exitCode'], $result['output']);
+        $this->assertStringNotContainsString('AUTO-RULE', $result['output']);
+    }
+
+    #[Test]
+    public function auto_promoted_role_guard_ignores_non_adopted_or_none_entries(): void
+    {
+        $repository = $this->createTemporaryGitRepository();
+        $this->stageFile($repository, 'tests/Feature/Admin/DummyCrudTest.php', <<<'PHP'
+<?php
+
+return [
+    'role' => 'admin',
+];
+PHP
+        );
+
+        $result = $this->runValidator($this->nonAdoptedRoleLogEntries(), workingDirectory: $repository);
+
+        $this->assertSame(0, $result['exitCode'], $result['output']);
+        $this->assertStringNotContainsString('AUTO-RULE', $result['output']);
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->temporaryRepositories as $repository) {
+            $this->deleteDirectory($repository);
+        }
+
+        parent::tearDown();
+    }
+
+    /**
+     * Build a minimally valid log entry for validation-focused tests.
+     *
+     * Defaults intentionally model a non-adopted entry (`adopted=no`,
+     * `classification=none`) so each phase-1 validation test can opt in to the
+     * specific field under test without inheriting auto-promoted guard defaults.
+     *
+     * @param  array{
+     *     date?: string,
+     *     branch?: string,
+     *     scope?: string,
+     *     adopted?: string,
+     *     classification?: string,
+     *     targets?: string,
+     *     notes?: string
+     * }  $overrides
      */
     private function validLogEntry(
         string $date = '2026-02-23',
@@ -77,6 +275,7 @@ class ReviewFeedbackValidateTest extends TestCase
         string $notes = 'test',
         array $overrides = []
     ): string {
+        /** @var array{date: string, branch: string, scope: string, adopted: string, classification: string, targets: string, notes: string} $entry */
         $entry = array_merge(
             [
                 'date' => $date,
@@ -90,19 +289,282 @@ class ReviewFeedbackValidateTest extends TestCase
             $overrides
         );
 
+        return $this->buildLogContent([$entry]);
+    }
+
+    private function autoPromotedRoleLogEntries(): string
+    {
+        return $this->buildLogContent([
+            [
+                'scope' => 'PR指摘対応（Category CRUDテストのロール指定を定数化）',
+                'targets' => 'tests/Feature/Admin/AdminCategoryCrudTest.php',
+                'notes' => 'User::ROLE_ADMIN を使用',
+            ],
+            [
+                'scope' => 'PR指摘対応（Location CRUDテストの管理者ロール指定を定数化）',
+                'targets' => 'tests/Feature/Admin/AdminLocationCrudTest.php',
+                'notes' => 'User::ROLE_ADMIN へ置換',
+            ],
+            [
+                'scope' => 'PR指摘対応（ProgramType CRUDテストのロール指定を定数化）',
+                'targets' => 'tests/Feature/Admin/AdminProgramTypeCrudTest.php',
+                'notes' => 'User::ROLE_MEMBER へ置換',
+            ],
+        ]);
+    }
+
+    private function unrelatedRoleConstantLogEntries(): string
+    {
+        return $this->buildLogContent([
+            [
+                'scope' => 'PR指摘対応（ReviewFeedbackValidateTest に auto-promoted guard の正常系を追加）',
+                'targets' => 'tests/Tooling/ReviewFeedbackValidateTest.php',
+                'notes' => 'User::ROLE_ADMIN を使う staged feature test を追加',
+            ],
+            [
+                'scope' => 'PR指摘対応（ReviewFeedbackValidateTest の ROLE_MEMBER 正常系を単独ケース化）',
+                'targets' => 'tests/Tooling/ReviewFeedbackValidateTest.php',
+                'notes' => 'User::ROLE_MEMBER を使う staged feature test を単独ケース化',
+            ],
+            [
+                'scope' => 'PR指摘対応（Tooling validator の false positive 回帰を補強）',
+                'targets' => 'tests/Tooling/ReviewFeedbackValidateTest.php',
+                'notes' => 'User::ROLE_ADMIN / User::ROLE_MEMBER を利用する正常系を追加',
+            ],
+        ]);
+    }
+
+    private function autoPromotedPhpDocLogEntries(): string
+    {
+        return $this->buildLogContent([
+            [
+                'scope' => 'PR指摘対応（AdditionalItemController主要アクションへPHPDoc追加）',
+                'targets' => 'app/Http/Controllers/Admin/AdditionalItemController.php',
+                'notes' => '主要アクションにPHPDoc追加',
+            ],
+            [
+                'scope' => 'PR指摘対応（ProgramControllerのフォーム取得共通化と主要アクションPHPDoc追加）',
+                'targets' => 'app/Http/Controllers/Admin/ProgramController.php',
+                'notes' => 'エントリポイントへPHPDoc追加',
+            ],
+        ]);
+    }
+
+    private function nonEntrypointPhpDocLogEntries(): string
+    {
+        return $this->buildLogContent([
+            [
+                'scope' => 'PR指摘対応（LocationController の削除制約違反 helper に責務PHPDoc追加）',
+                'targets' => 'app/Http/Controllers/Admin/LocationController.php',
+                'notes' => 'respondDeleteConstraintViolation() に責務PHPDocを追加',
+            ],
+            [
+                'scope' => 'PR指摘対応（StaffController の削除制約違反 helper に責務PHPDoc追加）',
+                'targets' => 'app/Http/Controllers/Admin/StaffController.php',
+                'notes' => 'respondDeleteConstraintViolation() に責務PHPDocを追加',
+            ],
+        ]);
+    }
+
+    private function nonAdoptedRoleLogEntries(): string
+    {
+        return $this->buildLogContent([
+            [
+                'scope' => 'PR指摘対応（Category CRUDテストのロール指定を定数化）',
+                'adopted' => 'no',
+                'classification' => '汎用',
+                'targets' => 'tests/Feature/Admin/AdminCategoryCrudTest.php',
+                'notes' => 'User::ROLE_ADMIN / User::ROLE_MEMBER へ置換',
+            ],
+            [
+                'scope' => 'PR指摘対応（Location CRUDテストの管理者ロール指定を定数化）',
+                'adopted' => 'yes',
+                'classification' => 'none',
+                'targets' => 'tests/Feature/Admin/AdminLocationCrudTest.php',
+                'notes' => 'User::ROLE_ADMIN へ置換',
+            ],
+            [
+                'scope' => 'PR指摘対応（ProgramType CRUDテストのロール指定を定数化）',
+                'adopted' => 'no',
+                'classification' => 'none',
+                'targets' => 'tests/Feature/Admin/AdminProgramTypeCrudTest.php',
+                'notes' => 'User::ROLE_MEMBER へ置換',
+            ],
+        ]);
+    }
+
+    /**
+     * Build review feedback log content from partial entry definitions.
+     *
+     * Defaults intentionally model adopted generic feedback
+     * (`adopted=yes`, `classification=汎用`) because the auto-promoted guard
+     * helpers only need to specify recurring scope/notes pairs. Validation
+     * tests that need different defaults should go through validLogEntry().
+     *
+     * @param  list<array{
+     *     date?: string,
+     *     branch?: string,
+     *     scope?: string,
+     *     adopted?: string,
+     *     classification?: string,
+     *     targets?: string,
+     *     notes?: string
+     * }>  $entries
+     */
+    private function buildLogContent(array $entries): string
+    {
         $lines = ["## Entries\n", "\n"];
-        $lines[] = "- date: {$entry['date']}\n";
-        foreach (['branch', 'scope', 'adopted', 'classification', 'targets', 'notes'] as $key) {
-            $lines[] = "  {$key}: {$entry[$key]}\n";
+
+        foreach ($entries as $entry) {
+            /** @var array{date: string, branch: string, scope: string, adopted: string, classification: string, targets: string, notes: string} $merged */
+            $merged = array_merge(
+                [
+                    'date' => '2026-02-23',
+                    'branch' => 'feat/test',
+                    'scope' => 'test scope',
+                    'adopted' => 'yes',
+                    'classification' => '汎用',
+                    'targets' => 'app/Foo.php',
+                    'notes' => 'test',
+                ],
+                $entry
+            );
+
+            $lines[] = "- date: {$merged['date']}\n";
+            foreach (['branch', 'scope', 'adopted', 'classification', 'targets', 'notes'] as $key) {
+                $lines[] = "  {$key}: {$merged[$key]}\n";
+            }
+            $lines[] = "\n";
         }
 
         return implode('', $lines);
     }
 
     /**
+     * Create an isolated temporary Git repository for validator scenarios.
+     *
+     * Preconditions: the system temporary directory must be writable and the
+     * `git` command must be available in the current environment.
+     * Update policy: creates a unique disposable directory, registers it for
+     * tearDown cleanup, and initializes an empty repository for staged-file
+     * based assertions.
+     */
+    private function createTemporaryGitRepository(): string
+    {
+        $repository = sys_get_temp_dir().'/review-feedback-validate-'.bin2hex(random_bytes(8));
+        mkdir($repository, 0777, true);
+        $this->temporaryRepositories[] = $repository;
+
+        $this->runCommand('git init -q', $repository);
+
+        return $repository;
+    }
+
+    /**
+     * Write a file into the temporary repository and stage it for inspection.
+     *
+     * Preconditions: $repository must be a repository created by
+     * createTemporaryGitRepository(), and $relativePath must be repository-
+     * relative rather than an absolute filesystem path.
+     * Update policy: creates missing parent directories, writes the requested
+     * contents to disk, and stages only the target path with `git add`.
+     */
+    private function stageFile(string $repository, string $relativePath, string $content): void
+    {
+        $path = $repository.'/'.$relativePath;
+        $directory = dirname($path);
+        if (! is_dir($directory)) {
+            mkdir($directory, 0777, true);
+        }
+
+        file_put_contents($path, $content);
+
+        $this->runCommand(sprintf('git add %s', escapeshellarg($relativePath)), $repository);
+    }
+
+    /**
+     * Execute a shell command in the given working directory and require success.
+     *
+     * Preconditions: $workingDirectory must exist and be accessible to the
+     * current PHP process.
+     * Update policy: spawns an external process, captures stdout/stderr, and
+     * fails the test immediately if the command exits non-zero so setup helpers
+     * remain deterministic.
+     */
+    private function runCommand(string $command, string $workingDirectory): string
+    {
+        $proc = proc_open(
+            $command,
+            [
+                0 => ['pipe', 'r'],
+                1 => ['pipe', 'w'],
+                2 => ['pipe', 'w'],
+            ],
+            $pipes,
+            $workingDirectory
+        );
+
+        if (! is_resource($proc)) {
+            $this->fail(sprintf('Failed to run command: %s', $command));
+        }
+
+        fclose($pipes[0]);
+        $output = stream_get_contents($pipes[1]).stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $exitCode = proc_close($proc);
+        $this->assertSame(0, $exitCode, sprintf("Command failed: %s\n%s", $command, $output));
+
+        return $output;
+    }
+
+    /**
+     * Recursively delete a disposable directory created for validator tests.
+     *
+     * Preconditions: $path should point only to temporary test-owned
+     * filesystem state; missing paths are treated as already cleaned up.
+     * Update policy: removes children first and is used exclusively from
+     * tearDown() to avoid leaving temporary repositories behind.
+     */
+    private function deleteDirectory(string $path): void
+    {
+        if (! is_dir($path)) {
+            return;
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            if ($item->isDir()) {
+                rmdir($item->getPathname());
+
+                continue;
+            }
+
+            unlink($item->getPathname());
+        }
+
+        rmdir($path);
+    }
+
+    /**
+     * Execute the validator script with review-feedback log content over STDIN.
+     *
+     * Preconditions: self::SCRIPT must exist, and $workingDirectory must point
+     * to the repository root whose staged files should be inspected when
+     * provided. The caller is responsible for deciding whether a non-zero
+     * result is expected.
+     * Update policy: spawns an external PHP process, pipes $stdin into the
+     * validator, and returns the exit code/output pair without asserting on the
+     * outcome so each test can verify success or failure explicitly.
+     *
      * @return array{exitCode: int, output: string}
      */
-    private function runValidator(string $stdin, bool $skipRfp = false): array
+    private function runValidator(string $stdin, bool $skipRfp = false, ?string $workingDirectory = null): array
     {
         $cmd = sprintf(
             'php %s --log-path=- %s 2>&1',
@@ -118,7 +580,7 @@ class ReviewFeedbackValidateTest extends TestCase
                 2 => ['pipe', 'w'],
             ],
             $pipes,
-            getcwd()
+            $workingDirectory ?? getcwd()
         );
 
         if (! is_resource($proc)) {

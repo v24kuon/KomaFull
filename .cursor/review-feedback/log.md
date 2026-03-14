@@ -17,6 +17,454 @@
 ## Entries
 
 - date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettings ログの unique 衝突表現を緩和）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/review-feedback/log.md
+  notes: 指摘は有効で、既存 entry の notes は unique 制約衝突を feature test で直接確認したように読め、実際の検証内容である「既存 singleton 行の再利用と件数維持」より強い表現だった。該当 notes を singleton 再利用経路の確認へ言い換え、ログの説明強度を実測事実に揃えた。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-fix の箇条書きインデント不整合を修正）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/commands/review-fix.md
+  notes: 指摘は一部有効で、問題の本質は markdownlint 方針そのものよりも同階層の箇条書きインデントが1行だけ他行と不一致だった点にあった。該当行を周囲の箇条書きと同じインデントへ揃え、文書全体の一貫性を回復した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（RFP-011 の分類根拠から機能固有名を除去）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/rules/review-feedback-prevention.mdc
+  notes: 指摘は有効で、RFP-011 の分類根拠に Category / ProgramType / Program / Location / Staff といった具体的な画面・モデル名が含まれており、本ファイル先頭の「汎用ルールのみ」という方針と緊張関係があった。分類根拠を「外部キー制約で削除失敗し得る CRUD 全般」に一般化し、スコープ定義と整合する表現へ調整した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-fix コマンドの章番号依存参照を解消）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/commands/review-fix.md
+  notes: 指摘は有効で、`.cursor/rules/review-feedback-prevention.mdc` の「6) 強制運用ゲート」のような章番号付き参照は、将来の見出し再編で古くなる余地があった。意味は変えずに「強制運用ゲート」セクション参照へ置き換え、構成変更に強い文面へ調整した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem CRUDテストに store 側 unique 回帰を追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminAdditionalItemCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: 指摘は有効で、`StoreAdditionalItemRequest` の `unique:additional_items,code` を直接通す失敗系が未カバーだった。兄弟 CRUD に合わせて store 側の重複 code 投稿を拒否する回帰テストを追加し、store / update で FormRequest を分離する CRUD は経路ごとの unique 失敗系を当該経路で直接持つよう RFP-016 を拡張した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem CRUDテストに update 側 validation 回帰を追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminAdditionalItemCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: 指摘は一部有効で、`UpdateAdditionalItemRequest` の `input_type` 失敗系は未カバーだったため update 側の invalid payload 回帰テストを追加した。一方で `code` の unique は既存の `test_update_rejects_duplicate_code` と同一 code 維持の update 成功ケースですでに検知可能だったため追加修正は見送った。store / update で FormRequest を分離する CRUD は代表的な失敗系を両経路で持つ汎用ルールを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-feedback validator の auto-promoted guard 誤昇格を防止）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php, tests/Tooling/ReviewFeedbackValidateTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: auto-promoted guard のテーマ判定が `User::ROLE_*` や `PHPDoc追加` の単独マッチで広すぎ、`adopted: no` / `classification: none` のログまで閾値集計していたため、対象パスと文脈語の両方でテーマを絞り込み、採用済みログだけを集計対象へ修正した。tooling test には別テーマの類似トークンでは昇格しないケースと、未採用・none ログが閾値へ加算されないケースを追加した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Update*Request の unique 除外を Rule::unique()->ignore() へ統一）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Requests/Admin/UpdateCategoryRequest.php, app/Http/Requests/Admin/UpdateProgramTypeRequest.php, app/Http/Requests/Admin/UpdateProgramRequest.php, app/Http/Requests/Admin/UpdateLocationRequest.php, app/Http/Requests/Admin/UpdateAdditionalItemRequest.php, app/Http/Requests/Admin/UpdateStaffRequest.php, tests/Feature/Admin/AdminCategoryCrudTest.php, tests/Feature/Admin/AdminProgramTypeCrudTest.php, tests/Feature/Admin/AdminProgramCrudTest.php, tests/Feature/Admin/AdminLocationCrudTest.php, tests/Feature/Admin/AdminAdditionalItemCrudTest.php, tests/Feature/Admin/AdminStaffCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: `Staff` だけを局所修正すると同系 Update FormRequest 間で記法が分岐するため、admin 配下の更新系 `unique` ルールを一括で `Rule::unique(...)->ignore($this->route(...))` へ統一した。Laravel docs の `ignore($model)` 推奨と route model binding 前提に合わせ、文字列連結より主キー名変更や条件拡張に追従しやすい形へ寄せた。あわせて 6 CRUD スイートへ「自分自身の code は更新可 / 他レコードの code は更新不可」の回帰テストを追加し、同一値除外と重複拒否の両方を明示した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem CRUDテストの status 定数化と alert 検証を保守しやすく調整）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/Admin/AdminAdditionalItemCrudTest.php
+  notes: status 直書き `'active'` / `'inactive'` は AdditionalItem::STATUS_ACTIVE / STATUS_INACTIVE へ寄せてモデル定義との追従性を改善。additional_item_type の alert 回帰テストは full HTML 固定ではなく、エラーメッセージ表示と `role=\"alert\"` の契約に絞った分割アサートへ変更し、view 整形差分だけで壊れにくくした。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest の一時Git/外部プロセス helper に責務PHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: createTemporaryGitRepository / stageFile / runCommand / deleteDirectory / runValidator は一時Gitリポジトリ作成、相対パス前提、外部プロセス実行、再帰削除など副作用が強く、既存の PHPDoc 方針に沿って責務・前提・更新方針を追記した。既存ルールでカバー済みのため再発防止ルールファイルの追加更新は不要。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-fix コマンドの log 更新条件を強制運用ゲートへ明示化）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/commands/review-fix.md
+  notes: `必要条件を満たす場合` だけでは `.cursor/review-feedback/log.md` 更新トリガーが不明確だったため、`.cursor/rules/review-feedback-prevention.mdc` の「6) 強制運用ゲート」を参照しつつ、`app/` `tests/` `database/` `routes/` `config/` `bootstrap/` `resources/` を含む場合と `classification: none` 記録義務を明示した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest の ROLE_MEMBER 正常系を単独ケース化し、review-fix 判定根拠を明文化）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php, .cursor/commands/review-fix.md
+  notes: 指摘の問題意識は一部妥当で、mixed fixture 自体よりも guard が実際に見る `'role' => ...` 形を happy path が再現していない点が弱かったため、`User::ROLE_ADMIN` / `User::ROLE_MEMBER` をそれぞれ単独ケース化。あわせて `/review-fix` コマンドへ「有効 / 一部有効 / 無効」の根拠付き判定を必須化し、`妥当そう` のような推測表現を禁止した。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest に auto-promoted guard の正常系を追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: auto-promoted role guard と controller PHPDoc guard は違反検知だけでなく false positive 防止の正常系も必要なため、`User::ROLE_ADMIN` / `User::ROLE_MEMBER` を使う staged feature test と、隣接 PHPDoc を持つ staged admin controller が通過する happy path を追加。既存の失敗系と合わせて tooling validator の回帰網羅を補強。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff の gender 許容値をフォーム選択肢へ整合）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Requests/Admin/StoreStaffRequest.php, app/Http/Requests/Admin/UpdateStaffRequest.php, tests/Feature/Admin/AdminStaffCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: Staff フォームの gender は male / female / other の3択だが、store / update の FormRequest が広い string 許容になっていたため、両方を `in:male,female,other` へ統一。細工した未定義値の store / update を feature test で拒否し、固定選択 UI とサーバー側許容値を揃える汎用ルールを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem の hidden 項目エラー表示へ role="alert" を追加）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/additional-items/_form.blade.php, tests/Feature/Admin/AdminAdditionalItemCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: fixed hidden 値で表示している additional_item_type のエラー表示だけ `role="alert"` が漏れていたため追加。対象フィールド単位で alert role を確認する feature test を追加し、custom error markup でも即時通知アクセシビリティを揃える汎用ルールを追記。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Locationフォームのstatus値をモデル定数参照へ統一）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/locations/_form.blade.php
+  notes: Location フォームの status 選択肢で `'active'` / `'inactive'` を直書きしていたため、Location::STATUS_ACTIVE / STATUS_INACTIVE に置換。UI と FormRequest / モデル定義の single source of truth を揃え、将来の定数変更時の不整合を防止。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest のログ entry PHPDoc を配列形状型へ厳密化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: validLogEntry() の overrides と buildLogContent() の entries を固定キーの配列形状型へ更新し、defaults マージ後の entry / merged も required key shape として注釈。RFP-002 に沿って typo やキー欠落を静的に拾いやすくした。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramType削除時の外部キー制約エラーを利用者向けに処理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/ProgramTypeController.php, resources/views/admin/program-types/_delete_error_row.blade.php, tests/Feature/Admin/AdminProgramTypeCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: ProgramType削除でFK制約違反（programs.program_type_id）を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連Programあり時の削除失敗をFeatureテストで追加検証し、マスタ系CRUDの削除失敗パターンを汎用ルールへ昇格。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（HTMX部分描画テストのDOCTYPE検証 false positive を修正）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminCategoryCrudTest.php, tests/Feature/Admin/AdminProgramTypeCrudTest.php, .cursor/rules/review-feedback-prevention.mdc
+  notes: `assertDontSee()` の既定値では検索文字列がHTMLエスケープされるため、`<!DOCTYPE html>` の不在確認が false positive になっていた。Category / ProgramType の HTMX 部分描画テストを `assertDontSee('<!DOCTYPE html>', false)` へ修正し、再発防止ルールを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Program CRUD のアクセス制御テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: admin.programs.index に対する guest / non-admin のアクセス制御を Program CRUD テストへ追加し、Category / ProgramType と同水準の認可回帰を確保。HTMXヘッダー指定の指摘は、このファイル自体は withHeader() を使用済みのため見送り。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（LocationController の削除制約違反 helper に責務PHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/LocationController.php
+  notes: respondDeleteConstraintViolation() に責務・前提・更新方針を示す PHPDoc を追加し、HTMX と通常リクエストで応答を分岐する意図を読み取りやすくした。挙動変更はなし。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StaffController の削除制約違反 helper に責務PHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StaffController.php
+  notes: respondDeleteConstraintViolation() に責務・前提・更新方針を示す PHPDoc を追加し、HTMX と通常リクエストで応答を分岐する意図を読み取りやすくした。挙動変更はなし。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ReviewFeedbackValidateTest の helper デフォルト意図を PHPDoc で明示）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: validLogEntry は phase-1 検証向けに adopted=no / classification=none を既定値とし、buildLogContent は auto-promoted guard 用に adopted=yes / classification=汎用 を既定値とする意図を PHPDoc で明示。両 helper の責務差をコメントで読み取りやすくした。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-feedback validator の閾値定数化と staged PHP helper の PHPDoc 補強）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php
+  notes: auto-promoted guard の threshold を意図が分かる定数へ置換し、再発回数の意味をコメントで明示。get_staged_php_files() の PHPDoc に $repoRoot / $paths / $suffix の役割を追記し、suffix フィルタの意図を文書化。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Program削除失敗パーシャルへ role="alert" を追加）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/programs/_delete_error_row.blade.php, tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: HTMX で動的挿入される Program 削除失敗メッセージに role="alert" を追加し、スクリーンリーダーへの即時通知を改善。削除失敗時のエラー行に role 属性が含まれることを feature test で確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff の重複code投稿時の回帰テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminStaffCrudTest.php
+  notes: staffs.code の unique 制約衝突時に code フィールドへ専用メッセージが返り、重複レコードが作成されないことを feature test で明示。既存の StoreStaffRequest の unique ルールに対する回帰防止を追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Location の重複code投稿時の回帰テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminLocationCrudTest.php
+  notes: locations.code の unique 制約衝突時に code エラーとなることを feature test で明示。既存の StoreLocationRequest の unique ルールに対する回帰防止を追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff削除制約エラーメッセージを包括表現へ調整）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StaffController.php, tests/Feature/Admin/AdminStaffCrudTest.php
+  notes: Staff の FK 制約違反メッセージは実データ参照先を狭めず、関連データ全体を含意する包括表現へ変更。通常削除と HTMX 削除の両方で新文言が返ることを feature test で確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettingsFactory definition のPHPDocを配列形状型へ更新）
+  adopted: yes
+  classification: 汎用
+  targets: database/factories/StoreSettingsFactory.php
+  notes: StoreSettingsFactory の definition() は固定キーの設定配列を返すため、array<string, mixed> から array{singleton_key, ...} の配列形状型へ更新。項目追加・削除時の差分検知と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettings の resolveSettings に責務PHPDocを追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StoreSettingsController.php
+  notes: StoreSettings の主要 private helper である resolveSettings() に、責務・前提・更新方針を示す PHPDoc を追加。singleton 行の確保メソッドである意図を明示し、レビュー時の解釈ずれを防止。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettings の unique衝突経路を回帰テストで明示）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminStoreSettingsTest.php
+  notes: createOrFirst 前提の既存 singleton 行再利用を明示するため、update 実行後も件数が1件のままで既存IDが再利用されることを検証する回帰テストを追加。singleton 再利用経路を feature test で確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（FK制約違反の判定ロジックをControllerへ共通化）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Controller.php, app/Http/Controllers/Admin/LocationController.php, app/Http/Controllers/Admin/StaffController.php, app/Http/Controllers/Admin/ProgramController.php
+  notes: Location/Staff/Program で重複していた isForeignKeyConstraintViolation() をベース Controller の protected helper へ集約し、削除失敗時の応答ロジックは各コントローラに維持。既存 feature test で通常削除・通常失敗・HTMX失敗の回帰を確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（review-feedback validator の staged PHP 取得処理を共通化）
+  adopted: yes
+  classification: 汎用
+  targets: scripts/review-feedback-validate.php, tests/Tooling/ReviewFeedbackValidateTest.php
+  notes: auto-promoted guard 分岐の最後のケースにも明示 continue を追加し、5つの get_staged_php_files_in_* 関数で重複していた git diff + PHP サフィックス判定を共通ヘルパーへ集約。temp git repo を使う tooling テストを追加し、admin feature test / admin controller の auto-promoted guard が共通化後も動作することを確認。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Program削除時の外部キー制約エラーを利用者向けに処理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/ProgramController.php, resources/views/admin/programs/_delete_error_row.blade.php, tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: Program削除でFK制約違反（lesson_sessions / program_repetition_rules）を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連LessonSessionあり時の削除失敗をFeatureテストで追加検証。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（残りのinvalid-feedbackへ role="alert" を横展開）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/partials/_master_code_name_sort_status_fields.blade.php, resources/views/admin/additional-items/_form.blade.php, resources/views/admin/locations/_form.blade.php, resources/views/admin/staffs/_form.blade.php, resources/views/admin/store-settings/edit.blade.php, resources/views/auth/login.blade.php, resources/views/auth/register.blade.php, resources/views/auth/forgot-password.blade.php, resources/views/auth/reset-password.blade.php, tests/Feature/Admin/AdminCategoryCrudTest.php, tests/Feature/Admin/AdminStoreSettingsTest.php, tests/Feature/AuthViewsTest.php
+  notes: programs と汎用エラーパーシャル以外に残っていた invalid-feedback へ role="alert" を追加し、admin/auth の主要入力画面でスクリーンリーダー通知を一貫化。共有 partial・単独管理画面・認証画面の回帰テストを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Programフォームのinvalid-feedbackへ role="alert" 追加）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/programs/_form.blade.php, tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: programs フォームの各 invalid-feedback に role="alert" を付与し、スクリーンリーダーでの即時通知を改善。必須項目エラー表示で role 属性が描画される回帰テストを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramType更新で同一code許可の回帰テスト追加）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramTypeCrudTest.php
+  notes: UpdateProgramTypeRequest が unique:program_types,code,$id で同一レコードを除外する挙動に合わせ、test_update_allows_same_code を追加して Category CRUD テストとの整合性を確保。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettings更新経路をトランザクション+行ロック化）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StoreSettingsController.php, tests/Feature/Admin/AdminStoreSettingsTest.php
+  notes: StoreSettings 更新時に ConnectionInterface の transaction 内で createOrFirst 後の単一行を lockForUpdate で再取得し、RFP-003 の競合耐性パターンへ整合。設定未作成状態からの update 回帰テストを追加。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（バリデーションエラー表示に role="alert" を追加）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/partials/_errors.blade.php
+  notes: スクリーンリーダーで即時に伝わるよう alert 要素に role="alert" を付与し、アクセシビリティを向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff削除時の外部キー制約エラーを利用者向けに処理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/StaffController.php, resources/views/admin/staffs/_delete_error_row.blade.php, tests/Feature/Admin/AdminStaffCrudTest.php
+  notes: Staff削除でFK制約違反を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連LessonSessionあり時の削除失敗をFeatureテストで追加検証。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Location削除時の外部キー制約エラーを利用者向けに処理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/LocationController.php, resources/views/layouts/admin.blade.php, resources/views/admin/locations/_delete_error_row.blade.php, tests/Feature/Admin/AdminLocationCrudTest.php
+  notes: Location削除でFK制約違反（lesson_sessions / program_repetition_rules）を捕捉し、通常リクエストはセッションerror、HTMXは対象行のエラー表示へ分岐。関連データあり時の削除失敗をFeatureテストで追加検証。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramControllerのフォーム取得共通化と主要アクションPHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/ProgramController.php
+  notes: create/edit で重複していたカテゴリ・プログラム種別取得を resolveFormMasterData() へ集約。index/create/store/edit/update/destroy に責務・前提・更新方針を示すPHPDocを追加し、規約準拠と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItemController主要アクションへPHPDoc追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Controllers/Admin/AdditionalItemController.php
+  notes: index/create/store/edit/update/destroy に責務・前提・更新方針を示す短いPHPDocを追加し、コントローラの規約準拠と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Staff CRUDテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminStaffCrudTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Location CRUDテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminLocationCrudTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem CRUDテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminAdditionalItemCrudTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Program CRUDテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramCrudTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（StoreSettingsテストの管理者ロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminStoreSettingsTest.php
+  notes: setUp の role 文字列リテラル（admin）を User::ROLE_ADMIN へ置換し、Userモデル定数との整合性を確保。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（Category CRUDテストのロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminCategoryCrudTest.php
+  notes: role の文字列リテラル（admin/member）を User::ROLE_ADMIN / User::ROLE_MEMBER へ置換し、モデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（AdditionalItem FormRequestのstatus定数統一）
+  adopted: yes
+  classification: 汎用
+  targets: app/Http/Requests/Admin/StoreAdditionalItemRequest.php, app/Http/Requests/Admin/UpdateAdditionalItemRequest.php
+  notes: status の in ルールでハードコード（active/inactive）を廃止し、AdditionalItem::STATUS_ACTIVE / STATUS_INACTIVE を使用してモデル定数と一貫化。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramType CRUDテストのロール指定を定数化）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramTypeCrudTest.php
+  notes: role の文字列リテラル（admin/member）を User::ROLE_ADMIN / User::ROLE_MEMBER へ置換し、モデル定数との整合性と保守性を向上。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（ProgramType CRUDテストの観点拡充）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/Admin/AdminProgramTypeCrudTest.php
+  notes: HTMX部分レンダリング、フォーム表示、認可（guest/non-admin）、unique code と invalid status の異常系を追加し、AdminCategoryCrudTest と同水準のCRUD観点へ整合。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（additional_item_type 固定値UIの簡素化）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/additional-items/_form.blade.php
+  notes: 選択肢が1件固定の additional_item_type を select から hidden + 表示テキストへ変更し、UIノイズを削減。値は member_profile を固定送信してバリデーション意図を維持。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（programs フォーム数値入力の step 明示）
+  adopted: yes
+  classification: 汎用
+  targets: resources/views/admin/programs/_form.blade.php
+  notes: 整数前提項目（duration_minutes / price / point_cost / ticket_cost）に step=\"1\" を追加し、UI入力制約とサーバー側 integer バリデーションの意図を一致させた。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PR指摘対応（store_settings の単一レコード制約をDBで担保）
+  adopted: yes
+  classification: 汎用
+  targets: database/migrations/2026_03_02_080811_create_store_settings_table.php, app/Http/Controllers/Admin/StoreSettingsController.php, app/Models/StoreSettings.php, database/factories/StoreSettingsFactory.php, tests/Feature/Admin/AdminStoreSettingsTest.php
+  notes: singleton_key を単一値 enum（singleton）+ UNIQUE 制約で追加し、StoreSettings 初期化を createOrFirst（singleton_key=singleton）へ変更。設定画面の連続アクセスで常に1行に維持されることをテストで検証。
+
+- date: 2026-03-02
+  branch: feat/ph6-1-master-crud
+  scope: PH6-1 マスタ系管理画面 (HTMX) + HTMXインフラ + AdditionalItem/StoreSettingsモデル新規作成
+  adopted: no
+  classification: none
+  targets: routes/web.php, resources/views/layouts/admin.blade.php, public/assets/vendor/htmx/htmx.min.js, app/Http/Controllers/Admin/*.php, app/Http/Requests/Admin/*.php, app/Models/AdditionalItem.php, app/Models/StoreSettings.php, database/factories/AdditionalItemFactory.php, database/factories/StoreSettingsFactory.php, database/migrations/2026_03_02_080811_create_store_settings_table.php, resources/views/admin/**/*.blade.php, tests/Feature/Admin/*.php
+  notes: HTMX自己ホスト配置とCSRF自動付与。Category/ProgramType/Program/Location/Staff/AdditionalItem の6リソースCRUDとStoreSettings単行編集。全7コントローラ・14 FormRequest・全ビュー（index/_table/create/edit/_form）。AdditionalItem/StoreSettingsモデル+Factory新規作成。store_settingsマイグレーション追加。49テスト（認可・CRUD・バリデーション・HTMX部分更新）追加、全176テスト通過。
+
+- date: 2026-03-02
   branch: feat/ph13-2-1-admin-layout
   scope: PR指摘対応（管理画面CSS規約準拠とカード描画の重複解消）
   adopted: yes
