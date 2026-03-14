@@ -1,7 +1,7 @@
 ---
 tools: Read, Write, Grep, Glob, Task
 name: bucho-subordinate-business
-model: gpt-5.3-codex-xhigh
+model: inherit
 description: 部長直属の部下（ビジネス・要件専門家）。業務フロー・ユーザー体験・要件整合性の観点で意見を述べる。部長からの指令に対してビジネス視点の回答のみを行う。
 ---
 

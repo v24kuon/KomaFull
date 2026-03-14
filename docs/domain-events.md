@@ -119,3 +119,25 @@
   - 対象 `webhook_logs` / `trial_applications` / `prepaid_purchases` を再処理キューへ投入
   - 監査メモ（`resolution_notes` 等）必須
 
+---
+
+## 6. セッション生成（Admin Session Generation）
+
+### LessonSessionGenerationRequested
+
+- **起点**: 管理画面で 1 件の `program_repetition_rules` に対して生成を手動実行した
+- **責務**:
+  - PH6-2 では `cycle_type=daily` または `weekly` のみを受け付ける
+  - `weekly` は 1 設定 = 1 曜日とし、`day_of_week` を用いて候補日を決定する
+  - `start_date` / `end_date` を繰り返し設定そのものの有効期間として扱い、生成実行時に別の終了日は持たない
+  - `end_date` は必須とし、有限期間のルールだけを対象にする
+
+### LessonSessionsGeneratedFromRule
+
+- **起点**: `LessonSessionGenerationRequested` の処理が実行された
+- **責務**:
+  - ルール期間内の候補日時を列挙する
+  - 既存 `lesson_sessions` と重複する候補は `skip` する
+  - 既存 `lesson_sessions` は一切更新しない
+  - 新規 `lesson_sessions` 作成時に `capacity` / `trial_capacity` などのテンプレート値を反映し、対応する `reservation_management` を初期化する
+

@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: PH6-2-1 ProgramRepetitionRule 基盤整備（daily/weekly限定、weekly=1曜日、end_date必須）
+  adopted: no
+  classification: none
+  targets: app/Models/ProgramRepetitionRule.php, app/Models/Program.php, app/Models/Location.php, app/Models/Staff.php, database/factories/ProgramRepetitionRuleFactory.php, database/migrations/2026_03_14_161547_enforce_program_repetition_rule_foundation_constraints_on_program_repetition_rules_table.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php, tests/Unit/ProgramRepetitionRuleModelTest.php
+  notes: ProgramRepetitionRule モデル・Factory・migration・テスト追加。cycle_type daily/weekly 限定、end_date 必須、weekly 時 day_of_week 必須、week_of_month 禁止を DB 制約とモデルガードで担保。親モデルに programRepetitionRules() リレーション追加。
+
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud
   scope: PR指摘対応（StoreSettings ログの unique 衝突表現を緩和）

@@ -65,4 +65,9 @@ class Program extends Model
     {
         return $this->hasMany(LessonSession::class);
     }
+
+    public function programRepetitionRules(): HasMany
+    {
+        return $this->hasMany(ProgramRepetitionRule::class);
+    }
 }
