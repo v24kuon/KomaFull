@@ -55,6 +55,11 @@ class ProgramRepetitionRuleSessionCandidateService
     }
 
     /**
+     * Build daily candidate datetimes across the inclusive effective date range.
+     *
+     * Preconditions: `$startDate` and `$endDate` are normalized boundaries, and daily rules must not carry `day_of_week`.
+     * Update policy: Returns derived datetimes only and does not mutate the rule or persisted state.
+     *
      * @return Collection<int, CarbonImmutable>
      */
     private function enumerateDaily(
@@ -79,6 +84,11 @@ class ProgramRepetitionRuleSessionCandidateService
     }
 
     /**
+     * Build weekly candidate datetimes that match the validated weekday within the inclusive effective date range.
+     *
+     * Preconditions: `$startDate` and `$endDate` are normalized boundaries, and `$dayOfWeek` is already validated to 0-6.
+     * Update policy: Returns derived datetimes only and does not mutate application state.
+     *
      * @return Collection<int, CarbonImmutable>
      */
     private function enumerateWeekly(
@@ -100,6 +110,12 @@ class ProgramRepetitionRuleSessionCandidateService
         return collect($candidates);
     }
 
+    /**
+     * Normalize a rule boundary date to an immutable start-of-day value.
+     *
+     * Preconditions: `$value` must already be available as a `CarbonInterface` from the rule attribute.
+     * Update policy: Returns a normalized copy only and does not mutate the source value or rule state.
+     */
     private function resolveBoundaryDate(mixed $value, string $field): CarbonImmutable
     {
         if (! $value instanceof CarbonInterface) {
@@ -109,6 +125,12 @@ class ProgramRepetitionRuleSessionCandidateService
         return $value->toImmutable()->startOfDay();
     }
 
+    /**
+     * Validate the raw weekly weekday input and convert it to the canonical integer value.
+     *
+     * Preconditions: The caller is handling a weekly rule, and raw attributes may still contain uncast input.
+     * Update policy: Reads the rule attributes without mutating the rule or any persisted state.
+     */
     private function resolveWeeklyDayOfWeek(ProgramRepetitionRule $rule): int
     {
         $rawValue = $rule->getAttributes()['day_of_week'] ?? $rule->day_of_week;
@@ -131,6 +153,11 @@ class ProgramRepetitionRuleSessionCandidateService
     }
 
     /**
+     * Validate the configured start time and split it into hour, minute, and second components.
+     *
+     * Preconditions: `$value` must be the raw `start_time` input for the rule.
+     * Update policy: Returns parsed scalar components only and does not mutate application state.
+     *
      * @return array{0: int, 1: int, 2: int}
      */
     private function parseStartTime(mixed $value): array

@@ -863,3 +863,11 @@
   classification: none
   targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php, tests/Unit/ProgramRepetitionRuleSessionCandidateServiceTest.php
   notes: daily/weekly の候補日時列挙サービスを追加。start_date/end_date/start_time/day_of_week の不正値を fail fast で拒否し、境界値と異常系の unit test を追加。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-candidate
+  scope: PRレビュー指摘対応（private helper PHPDoc 追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
+  notes: private helper に責務・前提・更新方針の PHPDoc を追加し、review-feedback-prevention 2.5 の既存方針に合わせた。
