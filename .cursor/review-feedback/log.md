@@ -18,6 +18,30 @@
 
 - date: 2026-03-15
   branch: feat/ph6-2-session-gen
+  scope: DROP 制約処理の対応ドライバー範囲を PHPDoc で明文化（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: database/migrations/2026_03_14_161547_enforce_program_repetition_rule_foundation_constraints_on_program_repetition_rules_table.php
+  notes: 指摘は有効。DROP 構文の分岐自体は正しかったが、`sqlite` はテーブル再構築、`mysql` は `DROP CHECK`、`pgsql` / `sqlsrv` は `DROP CONSTRAINT` を使う前提がメソッド宣言だけでは伝わりにくかった。挙動は変更せず、対応ドライバー範囲と `sqlite` の扱いを PHPDoc で明文化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: booted() のライフサイクル責務を PHPDoc で明文化（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php
+  notes: 指摘は有効。booted() は saving フックを登録して永続化前にスケジュール制約を検証するエントリーポイントだが、メソッド宣言だけでは責務が伝わりにくかった。挙動は変更せず、ライフサイクルフックの目的を PHPDoc で簡潔に明文化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: end_date 必須をモデル側でも検証して DB 依存を解消（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は有効。end_date 必須は migration と業務要件で担保されていたが、モデルの saving 検証では未確認だったため、通常保存時は QueryException まで到達していた。ensureSupportedScheduleConfiguration() に end_date の null ガードを追加し、通常保存は InvalidArgumentException、withoutEvents() は引き続き QueryException になることを feature test で確認した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
   scope: ensureSupportedScheduleConfiguration の責務を PHPDoc で明文化（PR指摘対応）
   adopted: yes
   classification: PR限定

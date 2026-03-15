@@ -58,6 +58,10 @@ return new class extends Migration
         ));
     }
 
+    /**
+     * Drop the schedule check constraint using the syntax required by each
+     * supported driver. `sqlite` is handled by table rebuilds in `up()` / `down()`.
+     */
     private function dropScheduleCheckConstraint(): void
     {
         $driver = Schema::getConnection()->getDriverName();

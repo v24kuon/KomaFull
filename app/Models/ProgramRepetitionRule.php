@@ -57,6 +57,10 @@ class ProgramRepetitionRule extends Model
         ];
     }
 
+    /**
+     * Register the lifecycle hook that validates supported schedule constraints
+     * before the rule is persisted.
+     */
     protected static function booted(): void
     {
         static::saving(function (self $rule): void {
@@ -82,13 +86,18 @@ class ProgramRepetitionRule extends Model
     /**
      * Validate that the repetition rule matches the PH6-2-1 supported schedule constraints.
      *
-     * `week_of_month` is not supported, `daily` rules must not have `day_of_week`,
-     * and `weekly` rules must provide `day_of_week` within the 0-6 range.
+     * `end_date` is required, `week_of_month` is not supported, `daily` rules
+     * must not have `day_of_week`, and `weekly` rules must provide `day_of_week`
+     * within the 0-6 range.
      *
      * @throws InvalidArgumentException
      */
     private function ensureSupportedScheduleConfiguration(): void
     {
+        if ($this->end_date === null) {
+            throw new InvalidArgumentException('end_date is required.');
+        }
+
         if ($this->week_of_month !== null) {
             throw new InvalidArgumentException('week_of_month is not supported in PH6-2-1.');
         }

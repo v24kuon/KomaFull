@@ -157,9 +157,16 @@ class ProgramRepetitionRuleFoundationTest extends TestCase
 
     public function test_end_date_is_required(): void
     {
-        $this->expectException(QueryException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $this->createRule(['end_date' => null]);
+    }
+
+    public function test_end_date_requirement_is_enforced_even_when_model_events_are_disabled(): void
+    {
+        $this->expectException(QueryException::class);
+
+        $this->createRuleWithoutEvents(['end_date' => null]);
     }
 
     public function test_weekday_invariant_is_enforced_even_when_model_events_are_disabled(): void
