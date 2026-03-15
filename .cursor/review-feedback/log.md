@@ -855,3 +855,43 @@
   classification: 汎用
   targets: .cursor/commands/commit-push.md
   notes: Bセクションの git add -A に || exit 1 を追加し、Aセクションと整合。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-candidate
+  scope: PH6-2-2 生成候補列挙サービス実装
+  adopted: no
+  classification: none
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php, tests/Unit/ProgramRepetitionRuleSessionCandidateServiceTest.php
+  notes: daily/weekly の候補日時列挙サービスを追加。start_date/end_date/start_time/day_of_week の不正値を fail fast で拒否し、境界値と異常系の unit test を追加。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-candidate
+  scope: PRレビュー指摘対応（private helper PHPDoc 追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
+  notes: private helper に責務・前提・更新方針の PHPDoc を追加し、review-feedback-prevention 2.5 の既存方針に合わせた。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-candidate
+  scope: PRレビュー指摘対応（enumerate エントリポイント PHPDoc 追加）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
+  notes: エントリポイント enumerate() に責務・前提・更新方針の PHPDoc を追加し、review-feedback-prevention 2.5 に合わせた。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-candidate
+  scope: PRレビュー指摘対応（enumerateDaily の $rule パラメータ整理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
+  notes: day_of_week 検証を enumerate() に移動し、enumerateDaily() から $rule を削除。enumerateWeekly() とシグネチャを揃えた。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-candidate
+  scope: PRレビュー指摘対応（lock/transaction/idempotency PHPDoc 明示）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
+  notes: エントリポイント PHPDoc に Lock/Transaction/Idempotent を明示し、RFP-009 に合わせた。
