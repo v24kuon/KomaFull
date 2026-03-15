@@ -52,14 +52,14 @@ class ProgramRepetitionRuleSessionGenerationService
                 ];
             }
 
-            $existingCandidateKeys = $this->existingCandidateKeys($lockedRule, $candidates);
+            $existingScopedStartsAtKeys = $this->existingScopedStartsAtKeys($lockedRule, $candidates);
             $createdCount = 0;
             $skippedCount = 0;
 
             foreach ($candidates as $candidate) {
-                $candidateKey = $this->buildCandidateKey($candidate);
+                $startsAtKey = $this->buildScopedStartsAtKey($candidate);
 
-                if ($existingCandidateKeys->has($candidateKey)) {
+                if ($existingScopedStartsAtKeys->has($startsAtKey)) {
                     $skippedCount++;
 
                     continue;
@@ -72,7 +72,7 @@ class ProgramRepetitionRuleSessionGenerationService
                     'reserved_trial_count' => 0,
                 ]);
 
-                $existingCandidateKeys->put($candidateKey, true);
+                $existingScopedStartsAtKeys->put($startsAtKey, true);
                 $createdCount++;
             }
 
@@ -118,15 +118,16 @@ class ProgramRepetitionRuleSessionGenerationService
     }
 
     /**
-     * Resolve the already persisted candidate keys that must be skipped for this rule execution.
+     * Resolve the already persisted starts_at keys inside this rule scope that must be skipped.
      *
-     * Preconditions: `$candidates` contains the concrete datetimes returned by the PH6-2-2 enumeration service.
+     * Preconditions: `$candidates` contains the concrete datetimes returned by the PH6-2-2 enumeration service, and
+     * the caller treats (`program_id`, `location_id`, `staff_id`) as fixed by `$rule`.
      * Update policy: Read-only query; this method does not mutate sessions or counters.
      *
      * @param  Collection<int, CarbonImmutable>  $candidates
      * @return Collection<string, true>
      */
-    private function existingCandidateKeys(
+    private function existingScopedStartsAtKeys(
         ProgramRepetitionRule $rule,
         Collection $candidates
     ): Collection {
@@ -142,11 +143,11 @@ class ProgramRepetitionRuleSessionGenerationService
             ->where('staff_id', $rule->staff_id)
             ->whereIn('starts_at', $candidateDateTimes)
             ->pluck('starts_at')
-            ->mapWithKeys(
-                static fn ($startsAt): array => [
-                    CarbonImmutable::parse((string) $startsAt)->format('Y-m-d H:i:s') => true,
-                ]
-            );
+            ->mapWithKeys(fn ($startsAt): array => [
+                $this->buildScopedStartsAtKey(
+                    CarbonImmutable::parse((string) $startsAt)
+                ) => true,
+            ]);
     }
 
     /**
@@ -175,12 +176,13 @@ class ProgramRepetitionRuleSessionGenerationService
     }
 
     /**
-     * Build the duplicate-detection key for one concrete candidate slot.
+     * Build the scoped starts_at key for one concrete candidate slot.
      *
-     * Preconditions: `$candidate` is the final concrete session start datetime.
+     * Preconditions: `$candidate` is the final concrete session start datetime, and the surrounding duplicate check has
+     * already fixed (`program_id`, `location_id`, `staff_id`) via the rule scope.
      * Update policy: Pure helper with no side effects.
      */
-    private function buildCandidateKey(CarbonImmutable $candidate): string
+    private function buildScopedStartsAtKey(CarbonImmutable $candidate): string
     {
         return $candidate->format('Y-m-d H:i:s');
     }

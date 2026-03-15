@@ -919,3 +919,19 @@
   classification: PR限定
   targets: tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。従来の生成テストは relation()->value(...) の戻り値を int キャストしており、関連行が未作成でも null が 0 になって assertion を通過し得た。daily/weekly の正常系テストで reservationManagement を eager load し、関連が ReservationManagement インスタンスとして存在することを先に検証したうえでカウンタ値を読む形へ修正した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（重複判定 helper 名を starts_at スコープへ明確化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/ProgramRepetitionRuleSessionGenerationService.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。現状実装は `program_id` / `location_id` / `staff_id` で絞り込んだ既存セッション集合に対して `starts_at` をキー化しているため、現在の挙動としては誤判定しない。一方で `buildCandidateKey()` と `existingCandidateKeys()` という名前だと 4 項目の複合キーを返しているように読めて、将来の流用や検索条件変更時に前提を誤読しやすかった。重複判定ロジック自体は変えず、`buildScopedStartsAtKey()` / `existingScopedStartsAtKeys()` へ改名し、PHPDoc と変数名でも「rule scope 内の starts_at キー」であることを明示した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（lesson_sessions の concrete slot 複合 UNIQUE を追加）
+  adopted: yes
+  classification: PR限定
+  targets: database/migrations/2026_03_15_164314_add_concrete_slot_unique_to_lesson_sessions_table.php, tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`ProgramRepetitionRuleSessionGenerationService` は `program_id` / `location_id` / `staff_id` / `starts_at` を concrete slot identity として重複 skip していたが、`lesson_sessions` の DB スキーマには `code` の UNIQUE しかなく、この4項目の一意性を物理保証していなかった。Laravel docs の複合 unique index 方針に合わせて `lesson_sessions_concrete_slot_unique` を追加し、同一 slot の 2 件目 insert が `QueryException` で拒否される回帰テストを追加した。現行 DB には同一4項目の重複行がないことも事前確認済み。

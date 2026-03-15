@@ -7,6 +7,7 @@ use App\Models\ProgramRepetitionRule;
 use App\Models\ReservationManagement;
 use App\Services\ProgramRepetitionRuleSessionGenerationService;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\TestCase;
@@ -247,5 +248,40 @@ class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
         $this->assertSame(0, $result['skipped_count']);
         $this->assertSame(0, LessonSession::query()->count());
         $this->assertSame(0, ReservationManagement::query()->count());
+    }
+
+    public function test_lesson_sessions_table_rejects_duplicate_concrete_slot_identity(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2026-03-01',
+            'end_date' => '2026-03-03',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        LessonSession::factory()
+            ->forRelationIds($rule->program_id, $rule->location_id, $rule->staff_id)
+            ->create([
+                'starts_at' => '2026-03-01 10:15:30',
+            ]);
+
+        try {
+            LessonSession::factory()
+                ->forRelationIds($rule->program_id, $rule->location_id, $rule->staff_id)
+                ->create([
+                    'starts_at' => '2026-03-01 10:15:30',
+                ]);
+
+            $this->fail('Expected QueryException was not thrown.');
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString(
+                'UNIQUE constraint failed',
+                $exception->getMessage()
+            );
+        }
     }
 }
