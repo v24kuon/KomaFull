@@ -18,6 +18,22 @@
 
 - date: 2026-03-15
   branch: feat/ph6-2-session-gen
+  scope: PR指摘対応（weekly の day_of_week 空文字をモデル側で先に拒否）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は一部有効。`day_of_week=''` は accessor 参照時に integer cast で 0 として読めるため、weekly のモデル検証は空文字を必須チェックで弾けていなかった。一方で今回の SQLite 実行では保存時の raw 値は空文字のままで、最終的には日曜として保存成功するのではなく DB の CHECK 制約で QueryException になっていた。weekly 分岐で raw attribute の空文字を先に検知して InvalidArgumentException を投げるよう補強し、回帰テストを追加した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: PR指摘対応（採用済み review-feedback entry の分類を PR限定へ補正）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`classification: none` 自体は許容値だが、`adopted: yes` の entry に使うと蓄積・再利用対象から外れて意味が弱くなる。`addScheduleCheckConstraint` の採用済み entry はこのPR固有の是正内容だったため、分類を PR限定 へ補正した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
   scope: cycle_type の許容値外入力をモデル側でも拒否（PR指摘対応）
   adopted: yes
   classification: PR限定
@@ -76,7 +92,7 @@
   branch: feat/ph6-2-session-gen
   scope: addScheduleCheckConstraint 内の重複コード統合（PR指摘対応）
   adopted: yes
-  classification: none
+  classification: PR限定
   targets: database/migrations/2026_03_14_161547_enforce_program_repetition_rule_foundation_constraints_on_program_repetition_rules_table.php
   notes: 指摘は有効。MySQL / pgsql / sqlsrv の ADD CONSTRAINT CHECK 構文が同一のため、条件分岐を統合し重複を削除した。addScheduleCheckConstraint は up() で sqlite 以外のときのみ呼ばれるため、ドライバーチェック自体も不要と判断し単一の DB::statement に簡略化した。
 

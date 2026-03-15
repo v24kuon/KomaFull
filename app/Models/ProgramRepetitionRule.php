@@ -88,8 +88,8 @@ class ProgramRepetitionRule extends Model
      *
      * `cycle_type` must be `daily` or `weekly`, `end_date` is required,
      * `week_of_month` is not supported, `daily` rules must not have
-     * `day_of_week`, and `weekly` rules must provide `day_of_week` within
-     * the 0-6 range.
+     * `day_of_week`, and `weekly` rules must provide a non-empty
+     * `day_of_week` within the 0-6 range.
      *
      * @throws InvalidArgumentException
      */
@@ -113,6 +113,10 @@ class ProgramRepetitionRule extends Model
 
         if ($this->cycle_type !== self::CYCLE_TYPE_WEEKLY) {
             return;
+        }
+
+        if (($this->getAttributes()['day_of_week'] ?? null) === '') {
+            throw new InvalidArgumentException('day_of_week is required when cycle_type is weekly.');
         }
 
         if ($this->day_of_week === null) {

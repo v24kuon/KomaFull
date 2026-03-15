@@ -121,6 +121,16 @@ class ProgramRepetitionRuleFoundationTest extends TestCase
         ]);
     }
 
+    public function test_weekly_rule_rejects_empty_string_day_of_week(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->createRule([
+            'cycle_type' => 'weekly',
+            'day_of_week' => '',
+        ]);
+    }
+
     public function test_daily_rule_prohibits_day_of_week(): void
     {
         $this->expectException(InvalidArgumentException::class);
