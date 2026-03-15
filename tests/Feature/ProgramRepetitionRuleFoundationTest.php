@@ -70,6 +70,19 @@ class ProgramRepetitionRuleFoundationTest extends TestCase
         ]);
     }
 
+    public function test_weekly_rule_accepts_numeric_string_day_of_week(): void
+    {
+        $rule = $this->createRule([
+            'cycle_type' => 'weekly',
+            'day_of_week' => '0',
+        ]);
+
+        $this->assertDatabaseHas('program_repetition_rules', [
+            'id' => $rule->id,
+            'day_of_week' => 0,
+        ]);
+    }
+
     public function test_weekly_rule_accepts_day_of_week_six(): void
     {
         $rule = $this->createRule([
@@ -128,6 +141,26 @@ class ProgramRepetitionRuleFoundationTest extends TestCase
         $this->createRule([
             'cycle_type' => 'weekly',
             'day_of_week' => '',
+        ]);
+    }
+
+    public function test_weekly_rule_rejects_non_numeric_string_day_of_week(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->createRule([
+            'cycle_type' => 'weekly',
+            'day_of_week' => 'abc',
+        ]);
+    }
+
+    public function test_weekly_rule_rejects_whitespace_only_day_of_week(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->createRule([
+            'cycle_type' => 'weekly',
+            'day_of_week' => '   ',
         ]);
     }
 

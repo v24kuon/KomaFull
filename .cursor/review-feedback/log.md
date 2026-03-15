@@ -18,6 +18,22 @@
 
 - date: 2026-03-15
   branch: feat/ph6-2-session-gen
+  scope: PR指摘対応（weekly の day_of_week 非数値文字列をモデル側で拒否）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は有効。weekly 分岐は raw の `''` だけを必須チェックした後、cast 後の `$this->day_of_week` を 0-6 判定に使っていたため、`abc` や空白文字列はモデル層で 0 として扱われてしまい、非数値入力を早期拒否できていなかった。raw 値に対して空白・整数形式を先に検証し、非数値文字列を InvalidArgumentException で拒否するよう補強した。あわせて `abc`・空白文字列の失敗系と、数値文字列 `0` の正常系を feature test に追加した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: PR指摘対応（旧 MySQL での CHECK 制約 migration を fail fast 化）
+  adopted: yes
+  classification: PR限定
+  targets: database/migrations/2026_03_14_161547_enforce_program_repetition_rule_foundation_constraints_on_program_repetition_rules_table.php, tests/Unit/ProgramRepetitionRuleFoundationMigrationTest.php
+  notes: 指摘は一部有効。現行 migration は non-sqlite で `ALTER TABLE ... ADD CONSTRAINT ... CHECK` を無条件に実行しており、modern MySQL 相当の CHECK 制約サポートを暗黙前提にしていた。一方で MySQL 8.0.16 未満が必ず構文エラーで migration failure になるという指摘文は強すぎ、公式資料では旧版 MySQL の CHECK 制約定義は parse されても無視されるとされている。DB変更を半端に進めないよう、`up()` 冒頭で MySQL バージョンを確認し、8.0.16 未満では明示例外で fail fast するよう補強し、unit test を追加した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
   scope: PR指摘対応（weekly の day_of_week 空文字をモデル側で先に拒否）
   adopted: yes
   classification: PR限定

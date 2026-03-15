@@ -16,11 +16,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+        $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver === 'sqlite') {
             $this->rebuildSqliteTable(constrainFoundation: true);
 
             return;
         }
+
+        $this->ensureCheckConstraintSupport($driver);
 
         Schema::table('program_repetition_rules', function (Blueprint $table) {
             $table->enum('cycle_type', ['daily', 'weekly'])->change();
@@ -28,6 +32,28 @@ return new class extends Migration
         });
 
         $this->addScheduleCheckConstraint();
+    }
+
+    private function ensureCheckConstraintSupport(string $driver): void
+    {
+        if ($driver !== 'mysql') {
+            return;
+        }
+
+        if (version_compare($this->databaseServerVersion(), '8.0.16', '<')) {
+            throw new \RuntimeException('MySQL 8.0.16+ is required to add enforced CHECK constraints in this migration.');
+        }
+    }
+
+    private function databaseServerVersion(): string
+    {
+        $version = (string) (DB::selectOne('select version() as version')->version ?? '');
+
+        if (preg_match('/\d+\.\d+\.\d+/', $version, $matches) !== 1) {
+            throw new \RuntimeException('Unable to determine the database server version for CHECK constraint support.');
+        }
+
+        return $matches[0];
     }
 
     /**

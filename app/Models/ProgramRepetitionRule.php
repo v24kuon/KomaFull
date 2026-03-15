@@ -88,7 +88,7 @@ class ProgramRepetitionRule extends Model
      *
      * `cycle_type` must be `daily` or `weekly`, `end_date` is required,
      * `week_of_month` is not supported, `daily` rules must not have
-     * `day_of_week`, and `weekly` rules must provide a non-empty
+     * `day_of_week`, and `weekly` rules must provide a non-empty integer-form
      * `day_of_week` within the 0-6 range.
      *
      * @throws InvalidArgumentException
@@ -115,15 +115,19 @@ class ProgramRepetitionRule extends Model
             return;
         }
 
-        if (($this->getAttributes()['day_of_week'] ?? null) === '') {
+        $rawDayOfWeek = $this->getAttributes()['day_of_week'] ?? null;
+
+        if ($rawDayOfWeek === null || (is_string($rawDayOfWeek) && trim($rawDayOfWeek) === '')) {
             throw new InvalidArgumentException('day_of_week is required when cycle_type is weekly.');
         }
 
-        if ($this->day_of_week === null) {
-            throw new InvalidArgumentException('day_of_week is required when cycle_type is weekly.');
+        if (! is_int($rawDayOfWeek) && ! (is_string($rawDayOfWeek) && preg_match('/^-?\d+$/', $rawDayOfWeek) === 1)) {
+            throw new InvalidArgumentException('day_of_week must be an integer when cycle_type is weekly.');
         }
 
-        if ($this->day_of_week < 0 || $this->day_of_week > 6) {
+        $dayOfWeek = (int) $rawDayOfWeek;
+
+        if ($dayOfWeek < 0 || $dayOfWeek > 6) {
             throw new InvalidArgumentException('day_of_week must be between 0 and 6 when cycle_type is weekly.');
         }
     }
