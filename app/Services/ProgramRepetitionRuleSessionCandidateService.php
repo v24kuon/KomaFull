@@ -13,6 +13,10 @@ class ProgramRepetitionRuleSessionCandidateService
     /**
      * Enumerate PH6-2-2 candidate session start datetimes from a repetition rule.
      *
+     * Preconditions: `$rule` must be a PH6-2-2 supported rule (cycle_type daily or weekly, end_date required,
+     * week_of_month null, daily without day_of_week, weekly with valid day_of_week 0-6).
+     * Update policy: Returns derived datetimes only and does not mutate the rule or any persisted state.
+     *
      * @return Collection<int, CarbonImmutable>
      */
     public function enumerate(ProgramRepetitionRule $rule): Collection
