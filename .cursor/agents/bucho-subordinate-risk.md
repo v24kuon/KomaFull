@@ -1,7 +1,7 @@
 ---
 tools: Read, Write, Grep, Glob, Task
 name: bucho-subordinate-risk
-model: gpt-5.3-codex-xhigh
+model: inherit
 description: 部長直属の部下（リスク・品質専門家）。セキュリティ・テスト・運用リスク・品質の観点で意見を述べる。部長からの指令に対してリスク視点の回答のみを行う。
 ---
 

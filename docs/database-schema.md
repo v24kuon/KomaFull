@@ -246,17 +246,22 @@
 - `program_id`
 - `location_id`
 - `staff_id`
-- `cycle_type`（例: `daily`, `weekly`, `monthly`）
-- `day_of_week`（週次）
-- `week_of_month`（月次）
-- `start_date`
-- `end_date`
-- `start_time`
-- `capacity`
-- `trial_capacity`
+- `cycle_type`（例: `daily`, `weekly`, `monthly`。PH6-2 は `daily` / `weekly` をサポート）
+- `day_of_week`（週次で使用。PH6-2 は 1 設定 = 1 曜日）
+- `week_of_month`（月次で使用。PH6-2 では未使用）
+- `start_date`（繰り返し設定の有効開始日）
+- `end_date`（繰り返し設定の有効終了日。PH6-2 では必須）
+- `start_time`（各開催日の開始時刻）
+- `capacity`（生成先 `lesson_sessions.capacity` にコピーするテンプレート値）
+- `trial_capacity`（生成先 `lesson_sessions.trial_capacity` にコピーするテンプレート値）
 - `status`
 - `created_at`
 - `updated_at`
+
+> PH6-2 の運用ルール
+> - 管理画面から 1 ルールごとに手動実行する
+> - 生成範囲は `start_date` から `end_date` までで、実行時に別の終了日は持たない
+> - 既存 `lesson_sessions` と重複する候補は `skip` し、既存セッションは更新しない
 
 ---
 

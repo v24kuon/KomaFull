@@ -16,6 +16,110 @@
 
 ## Entries
 
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: PR指摘対応（weekly の day_of_week 非数値文字列をモデル側で拒否）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は有効。weekly 分岐は raw の `''` だけを必須チェックした後、cast 後の `$this->day_of_week` を 0-6 判定に使っていたため、`abc` や空白文字列はモデル層で 0 として扱われてしまい、非数値入力を早期拒否できていなかった。raw 値に対して空白・整数形式を先に検証し、非数値文字列を InvalidArgumentException で拒否するよう補強した。あわせて `abc`・空白文字列の失敗系と、数値文字列 `0` の正常系を feature test に追加した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: PR指摘対応（旧 MySQL での CHECK 制約 migration を fail fast 化）
+  adopted: yes
+  classification: PR限定
+  targets: database/migrations/2026_03_14_161547_enforce_program_repetition_rule_foundation_constraints_on_program_repetition_rules_table.php, tests/Unit/ProgramRepetitionRuleFoundationMigrationTest.php
+  notes: 指摘は一部有効。現行 migration は non-sqlite で `ALTER TABLE ... ADD CONSTRAINT ... CHECK` を無条件に実行しており、modern MySQL 相当の CHECK 制約サポートを暗黙前提にしていた。一方で MySQL 8.0.16 未満が必ず構文エラーで migration failure になるという指摘文は強すぎ、公式資料では旧版 MySQL の CHECK 制約定義は parse されても無視されるとされている。DB変更を半端に進めないよう、`up()` 冒頭で MySQL バージョンを確認し、8.0.16 未満では明示例外で fail fast するよう補強し、unit test を追加した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: PR指摘対応（weekly の day_of_week 空文字をモデル側で先に拒否）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は一部有効。`day_of_week=''` は accessor 参照時に integer cast で 0 として読めるため、weekly のモデル検証は空文字を必須チェックで弾けていなかった。一方で今回の SQLite 実行では保存時の raw 値は空文字のままで、最終的には日曜として保存成功するのではなく DB の CHECK 制約で QueryException になっていた。weekly 分岐で raw attribute の空文字を先に検知して InvalidArgumentException を投げるよう補強し、回帰テストを追加した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: PR指摘対応（採用済み review-feedback entry の分類を PR限定へ補正）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`classification: none` 自体は許容値だが、`adopted: yes` の entry に使うと蓄積・再利用対象から外れて意味が弱くなる。`addScheduleCheckConstraint` の採用済み entry はこのPR固有の是正内容だったため、分類を PR限定 へ補正した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: cycle_type の許容値外入力をモデル側でも拒否（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は有効。従来の ensureSupportedScheduleConfiguration() は daily の day_of_week 条件だけを確認した後、weekly 以外を早期 return していたため、monthly・空文字・null の cycle_type はモデル層を素通りして DB 制約へ依存していた。cycle_type の strict な許容値チェックを先頭に追加し、通常保存では InvalidArgumentException、withoutEvents() では引き続き QueryException になることを feature test で確認した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: ProgramRepetitionRuleFoundationTest の作成ヘルパーを Factory ベースへ統一（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は有効。query()->create() 直書きでは ProgramRepetitionRuleFactory の生成経路から外れており、将来の defaults や state 拡張との整合が弱かった。テスト本文は変えず、createRule() / createRuleWithoutEvents() の内部だけを factory()->createOne() ベースに置き換えて Factory 経由へ統一した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: DROP 制約処理の対応ドライバー範囲を PHPDoc で明文化（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: database/migrations/2026_03_14_161547_enforce_program_repetition_rule_foundation_constraints_on_program_repetition_rules_table.php
+  notes: 指摘は有効。DROP 構文の分岐自体は正しかったが、`sqlite` はテーブル再構築、`mysql` は `DROP CHECK`、`pgsql` / `sqlsrv` は `DROP CONSTRAINT` を使う前提がメソッド宣言だけでは伝わりにくかった。挙動は変更せず、対応ドライバー範囲と `sqlite` の扱いを PHPDoc で明文化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: booted() のライフサイクル責務を PHPDoc で明文化（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php
+  notes: 指摘は有効。booted() は saving フックを登録して永続化前にスケジュール制約を検証するエントリーポイントだが、メソッド宣言だけでは責務が伝わりにくかった。挙動は変更せず、ライフサイクルフックの目的を PHPDoc で簡潔に明文化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: end_date 必須をモデル側でも検証して DB 依存を解消（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は有効。end_date 必須は migration と業務要件で担保されていたが、モデルの saving 検証では未確認だったため、通常保存時は QueryException まで到達していた。ensureSupportedScheduleConfiguration() に end_date の null ガードを追加し、通常保存は InvalidArgumentException、withoutEvents() は引き続き QueryException になることを feature test で確認した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: ensureSupportedScheduleConfiguration の責務を PHPDoc で明文化（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php
+  notes: 指摘は有効。検証ロジック自体は妥当だったが、private helper の責務と PH6-2-1 制約を PHPDoc で明示すると保守性が上がる。挙動は変更せず、week_of_month 非対応・daily の day_of_week 禁止・weekly の day_of_week 必須かつ 0-6 制約をメソッド直上に文書化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: ProgramRepetitionRuleModelTest の到達不能ガード削除（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Unit/ProgramRepetitionRuleModelTest.php
+  notes: 指摘は有効。assertTrue(method_exists(...)) の直後に同一条件の否定分岐を置いており、失敗時はそこでテストが終了するため return 分岐は到達不能だった。Program / Location / Staff の3テストから冗長なガードを削除し、意図を保ったままテストを簡潔化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: addScheduleCheckConstraint 内の重複コード統合（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: database/migrations/2026_03_14_161547_enforce_program_repetition_rule_foundation_constraints_on_program_repetition_rules_table.php
+  notes: 指摘は有効。MySQL / pgsql / sqlsrv の ADD CONSTRAINT CHECK 構文が同一のため、条件分岐を統合し重複を削除した。addScheduleCheckConstraint は up() で sqlite 以外のときのみ呼ばれるため、ドライバーチェック自体も不要と判断し単一の DB::statement に簡略化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: PH6-2-1 ProgramRepetitionRule 基盤整備（daily/weekly限定、weekly=1曜日、end_date必須）
+  adopted: no
+  classification: none
+  targets: app/Models/ProgramRepetitionRule.php, app/Models/Program.php, app/Models/Location.php, app/Models/Staff.php, database/factories/ProgramRepetitionRuleFactory.php, database/migrations/2026_03_14_161547_enforce_program_repetition_rule_foundation_constraints_on_program_repetition_rules_table.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php, tests/Unit/ProgramRepetitionRuleModelTest.php
+  notes: ProgramRepetitionRule モデル・Factory・migration・テスト追加。cycle_type daily/weekly 限定、end_date 必須、weekly 時 day_of_week 必須、week_of_month 禁止を DB 制約とモデルガードで担保。親モデルに programRepetitionRules() リレーション追加。
+
 - date: 2026-03-02
   branch: feat/ph6-1-master-crud
   scope: PR指摘対応（StoreSettings ログの unique 衝突表現を緩和）

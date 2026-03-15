@@ -47,7 +47,7 @@
   - **繰越なし（期末失効）**
 - **管理（最小）**
   - マスタ管理（カテゴリ/種別/プログラム/コース/プリペイド/店舗設定/ロケーション/スタッフ）
-  - セッション生成（手動 + 繰り返しルールから自動生成）
+  - セッション生成（管理画面から手動実行し、繰り返しルールから自動生成）
   - 返金/付与失敗/Webhook失敗の検知と救済（手動リトライ + 監査メモ）
 
 ### MVPでやらないこと（明文化）
@@ -174,6 +174,7 @@
 - `users`: 会員/管理者（同一テーブル）
 - `member_profiles`: 会員プロフィール（`users` と1:1、`member_status` を保持）
 - `categories`, `program_types`, `programs`: マスタ
+- `program_repetition_rules`: 開催枠テンプレート（PH6-2では `daily` / `weekly` を手動生成）
 - `lesson_sessions`: 開催枠
 - `reservation_management`: 定員カウンタ（`lesson_session_id` が `unique`）
 - `trial_applications`: 体験申込/決済/返金の進行状態
@@ -398,6 +399,14 @@ tx:
   - 「手動リトライ」「強制解決」「監査メモ」を提供
 - Webhookログ閲覧（外部ID/イベントIDで検索可能に）
 - 出席管理（`attended` への更新 + 本会員昇格）
+- セッション生成（PH6-2）
+  - 管理画面から `program_repetition_rules` を 1 件ずつ手動実行する
+  - 対応する `cycle_type` は `daily` / `weekly` のみとする
+  - `weekly` は 1 設定 = 1 曜日とし、1 ルールで複数曜日は扱わない
+  - `start_date` / `end_date` は繰り返し設定そのものの有効期間とし、生成実行時に別の終了日は受け取らない
+  - `end_date` は必須とし、有限期間のルールだけを生成対象にする
+  - 生成時に既存 `lesson_sessions` と重複する候補は `skip` し、既存セッションは一切更新しない
+  - 新規作成時は `capacity` / `trial_capacity` などのテンプレート値を `lesson_sessions` にコピーし、`reservation_management` を初期化する
 
 ### 9.2 Runbook（不整合時の復旧手順）
 

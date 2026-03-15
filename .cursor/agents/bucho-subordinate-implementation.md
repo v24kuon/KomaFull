@@ -1,7 +1,7 @@
 ---
 tools: Read, Write, Grep, Glob, Task
 name: bucho-subordinate-implementation
-model: gpt-5.3-codex-xhigh
+model: inherit
 description: 部長直属の部下（実装・検証専門家）。コード品質・ルート/認可/DB整合性・テスト網羅の観点で意見を述べる。部長からの指令に対して実装・検証視点の回答のみを行う。
 ---
 
