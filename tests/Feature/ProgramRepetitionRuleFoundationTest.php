@@ -85,23 +85,30 @@ class ProgramRepetitionRuleFoundationTest extends TestCase
 
     public function test_invalid_cycle_type_is_rejected(): void
     {
-        $this->expectException(QueryException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $this->createRule(['cycle_type' => 'monthly']);
     }
 
     public function test_empty_cycle_type_is_rejected(): void
     {
-        $this->expectException(QueryException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $this->createRule(['cycle_type' => '']);
     }
 
     public function test_null_cycle_type_is_rejected(): void
     {
-        $this->expectException(QueryException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $this->createRule(['cycle_type' => null]);
+    }
+
+    public function test_invalid_cycle_type_is_enforced_even_when_model_events_are_disabled(): void
+    {
+        $this->expectException(QueryException::class);
+
+        $this->createRuleWithoutEvents(['cycle_type' => 'monthly']);
     }
 
     public function test_weekly_rule_requires_day_of_week(): void
@@ -207,7 +214,7 @@ class ProgramRepetitionRuleFoundationTest extends TestCase
     {
         $modelClass = $this->programRepetitionRuleModelClass();
 
-        return $modelClass::query()->create(array_merge($this->validAttributes(), $overrides));
+        return $modelClass::factory()->createOne(array_merge($this->validAttributes(), $overrides));
     }
 
     /**
@@ -218,7 +225,7 @@ class ProgramRepetitionRuleFoundationTest extends TestCase
         $modelClass = $this->programRepetitionRuleModelClass();
 
         return $modelClass::withoutEvents(
-            fn (): object => $modelClass::query()->create(array_merge($this->validAttributes(), $overrides))
+            fn (): object => $modelClass::factory()->createOne(array_merge($this->validAttributes(), $overrides))
         );
     }
 

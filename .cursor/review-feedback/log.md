@@ -18,6 +18,22 @@
 
 - date: 2026-03-15
   branch: feat/ph6-2-session-gen
+  scope: cycle_type の許容値外入力をモデル側でも拒否（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php, tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は有効。従来の ensureSupportedScheduleConfiguration() は daily の day_of_week 条件だけを確認した後、weekly 以外を早期 return していたため、monthly・空文字・null の cycle_type はモデル層を素通りして DB 制約へ依存していた。cycle_type の strict な許容値チェックを先頭に追加し、通常保存では InvalidArgumentException、withoutEvents() では引き続き QueryException になることを feature test で確認した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: ProgramRepetitionRuleFoundationTest の作成ヘルパーを Factory ベースへ統一（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramRepetitionRuleFoundationTest.php
+  notes: 指摘は有効。query()->create() 直書きでは ProgramRepetitionRuleFactory の生成経路から外れており、将来の defaults や state 拡張との整合が弱かった。テスト本文は変えず、createRule() / createRuleWithoutEvents() の内部だけを factory()->createOne() ベースに置き換えて Factory 経由へ統一した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
   scope: DROP 制約処理の対応ドライバー範囲を PHPDoc で明文化（PR指摘対応）
   adopted: yes
   classification: PR限定

@@ -86,14 +86,19 @@ class ProgramRepetitionRule extends Model
     /**
      * Validate that the repetition rule matches the PH6-2-1 supported schedule constraints.
      *
-     * `end_date` is required, `week_of_month` is not supported, `daily` rules
-     * must not have `day_of_week`, and `weekly` rules must provide `day_of_week`
-     * within the 0-6 range.
+     * `cycle_type` must be `daily` or `weekly`, `end_date` is required,
+     * `week_of_month` is not supported, `daily` rules must not have
+     * `day_of_week`, and `weekly` rules must provide `day_of_week` within
+     * the 0-6 range.
      *
      * @throws InvalidArgumentException
      */
     private function ensureSupportedScheduleConfiguration(): void
     {
+        if (! in_array($this->cycle_type, [self::CYCLE_TYPE_DAILY, self::CYCLE_TYPE_WEEKLY], true)) {
+            throw new InvalidArgumentException('cycle_type must be daily or weekly.');
+        }
+
         if ($this->end_date === null) {
             throw new InvalidArgumentException('end_date is required.');
         }
