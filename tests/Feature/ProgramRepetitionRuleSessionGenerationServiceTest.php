@@ -7,7 +7,7 @@ use App\Models\ProgramRepetitionRule;
 use App\Models\ReservationManagement;
 use App\Services\ProgramRepetitionRuleSessionGenerationService;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\TestCase;
@@ -250,6 +250,73 @@ class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
         $this->assertSame(0, ReservationManagement::query()->count());
     }
 
+    public function test_generate_skips_slot_when_concurrent_insert_wins_the_unique_constraint_race(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2026-03-01',
+            'end_date' => '2026-03-01',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        $competingInsertPerformed = false;
+
+        LessonSession::creating(function () use ($rule, &$competingInsertPerformed): void {
+            if ($competingInsertPerformed) {
+                return;
+            }
+
+            $competingInsertPerformed = true;
+
+            $competingSession = LessonSession::withoutEvents(
+                fn (): LessonSession => LessonSession::factory()
+                    ->forRelationIds($rule->program_id, $rule->location_id, $rule->staff_id)
+                    ->create([
+                        'starts_at' => '2026-03-01 10:15:30',
+                        'capacity' => 99,
+                        'trial_capacity' => 7,
+                        'status' => LessonSession::STATUS_INACTIVE,
+                    ])
+            );
+
+            ReservationManagement::factory()
+                ->forLessonSessionId($competingSession->id)
+                ->create([
+                    'reserved_count' => 3,
+                    'reserved_trial_count' => 1,
+                ]);
+        });
+
+        try {
+            $result = $this->service->generate($rule);
+        } finally {
+            LessonSession::flushEventListeners();
+        }
+
+        $this->assertSame(0, $result['created_count']);
+        $this->assertSame(1, $result['skipped_count']);
+        $this->assertDatabaseCount('lesson_sessions', 1);
+        $this->assertDatabaseCount('reservation_management', 1);
+
+        $existingSession = LessonSession::query()
+            ->where('program_id', $rule->program_id)
+            ->where('location_id', $rule->location_id)
+            ->where('staff_id', $rule->staff_id)
+            ->where('starts_at', '2026-03-01 10:15:30')
+            ->with('reservationManagement')
+            ->firstOrFail();
+
+        $this->assertSame(99, $existingSession->capacity);
+        $this->assertSame(7, $existingSession->trial_capacity);
+        $this->assertSame(LessonSession::STATUS_INACTIVE, $existingSession->status);
+        $this->assertSame(3, $existingSession->reservationManagement->reserved_count);
+        $this->assertSame(1, $existingSession->reservationManagement->reserved_trial_count);
+    }
+
     public function test_lesson_sessions_table_rejects_duplicate_concrete_slot_identity(): void
     {
         $rule = ProgramRepetitionRule::factory()->createOne([
@@ -276,12 +343,9 @@ class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
                     'starts_at' => '2026-03-01 10:15:30',
                 ]);
 
-            $this->fail('Expected QueryException was not thrown.');
-        } catch (QueryException $exception) {
-            $this->assertStringContainsString(
-                'UNIQUE constraint failed',
-                $exception->getMessage()
-            );
+            $this->fail('Expected UniqueConstraintViolationException was not thrown.');
+        } catch (UniqueConstraintViolationException) {
+            $this->assertDatabaseCount('lesson_sessions', 1);
         }
     }
 }

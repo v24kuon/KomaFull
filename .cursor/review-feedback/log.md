@@ -935,3 +935,19 @@
   classification: PR限定
   targets: database/migrations/2026_03_15_164314_add_concrete_slot_unique_to_lesson_sessions_table.php, tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。`ProgramRepetitionRuleSessionGenerationService` は `program_id` / `location_id` / `staff_id` / `starts_at` を concrete slot identity として重複 skip していたが、`lesson_sessions` の DB スキーマには `code` の UNIQUE しかなく、この4項目の一意性を物理保証していなかった。Laravel docs の複合 unique index 方針に合わせて `lesson_sessions_concrete_slot_unique` を追加し、同一 slot の 2 件目 insert が `QueryException` で拒否される回帰テストを追加した。現行 DB には同一4項目の重複行がないことも事前確認済み。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（concrete slot UNIQUE 競合を skip として吸収）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/ProgramRepetitionRuleSessionGenerationService.php, tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`lesson_sessions` の concrete slot UNIQUE 競合が発生したときに例外がそのまま上位へ伝播する懸念は妥当だった。一方で `UNIQUE 制約違反をすべて skip` として握りつぶすと `code` 競合など別原因まで隠してしまう。`createLessonSession()` の直後だけで `UniqueConstraintViolationException` を補足し、同一 `program_id` / `location_id` / `staff_id` / `starts_at` の既存行が実際に見つかった場合に限って `skipped_count` へ計上して続行するよう補強した。競合後に同一 slot 行が存在しない場合は従来どおり例外を再送出する。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（UNIQUE 制約テストの DB 依存メッセージを除去）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。現行テスト環境は sqlite 固定のため直ちに不安定ではなかったが、`'UNIQUE constraint failed'` への部分一致は SQLite 固有で、DB を切り替えると brittle だった。重複 concrete slot を DB が拒否するという契約自体が主目的なので、driver 依存の文言確認をやめて `UniqueConstraintViolationException` の型と件数維持だけを検証する形へ縮小した。

@@ -9,6 +9,7 @@ use App\Models\ProgramRepetitionRule;
 use App\Models\Staff;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -34,7 +35,8 @@ class ProgramRepetitionRuleSessionGenerationService
      * Transaction boundary: One DB transaction wraps the full generation run so session rows and reservation counters
      * stay in sync even if an exception occurs mid-run.
      * Idempotency: Re-running with unchanged inputs only creates previously missing candidates and returns skipped counts
-     * for already existing session slots.
+     * for already existing session slots. If another writer wins the concrete-slot unique constraint race after the
+     * duplicate pre-check, that slot is also treated as skipped.
      *
      * @return array{created_count: int, skipped_count: int}
      */
@@ -65,7 +67,20 @@ class ProgramRepetitionRuleSessionGenerationService
                     continue;
                 }
 
-                $lessonSession = $this->createLessonSession($lockedRule, $candidate);
+                try {
+                    $lessonSession = $this->createLessonSession($lockedRule, $candidate);
+                } catch (UniqueConstraintViolationException $exception) {
+                    $existingLessonSession = $this->findExistingLessonSessionForConcreteSlot($lockedRule, $candidate);
+
+                    if (! $existingLessonSession instanceof LessonSession) {
+                        throw $exception;
+                    }
+
+                    $existingScopedStartsAtKeys->put($startsAtKey, true);
+                    $skippedCount++;
+
+                    continue;
+                }
 
                 $lessonSession->reservationManagement()->create([
                     'reserved_count' => 0,
@@ -173,6 +188,24 @@ class ProgramRepetitionRuleSessionGenerationService
                 ? LessonSession::STATUS_INACTIVE
                 : LessonSession::STATUS_ACTIVE,
         ]);
+    }
+
+    /**
+     * Find an already persisted session for the concrete slot identity used by this generator.
+     *
+     * Preconditions: `$candidate` is the concrete session start datetime that may have been inserted by another writer.
+     * Update policy: Read-only lookup used only when a unique constraint violation occurs during session creation.
+     */
+    private function findExistingLessonSessionForConcreteSlot(
+        ProgramRepetitionRule $rule,
+        CarbonImmutable $candidate
+    ): ?LessonSession {
+        return LessonSession::query()
+            ->where('program_id', $rule->program_id)
+            ->where('location_id', $rule->location_id)
+            ->where('staff_id', $rule->staff_id)
+            ->where('starts_at', $candidate->format('Y-m-d H:i:s'))
+            ->first();
     }
 
     /**
