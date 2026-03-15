@@ -895,3 +895,59 @@
   classification: 汎用
   targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
   notes: エントリポイント PHPDoc に Lock/Transaction/Idempotent を明示し、RFP-009 に合わせた。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（reservation_management 作成を relation 経由へ統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/ProgramRepetitionRuleSessionGenerationService.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。LessonSession に reservationManagement() を追加済みのため、関連行作成は relation の create() を使う方が外部キーの手詰めを避けて意図を明確にできる。一方で、他サービスとの書き方統一という根拠は現状コードベースでは強くなかったため、その点は採用せず、生成処理の最小差分リファクタに限定して対応した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（reservation_management 作成失敗時の transaction rollback テスト追加）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。今回の主題は lesson_sessions と reservation_management を同一 transaction で扱う点にあるため、ReservationManagement::creating で例外を発生させたときに generate() 全体がロールバックされ、両テーブルが 0 件のままになる失敗系テストを追加した。既存実装の挙動確認が目的で、本番コードの変更は行っていない。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（reservation_management 関連の存在検証を false positive にならない形へ修正）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。従来の生成テストは relation()->value(...) の戻り値を int キャストしており、関連行が未作成でも null が 0 になって assertion を通過し得た。daily/weekly の正常系テストで reservationManagement を eager load し、関連が ReservationManagement インスタンスとして存在することを先に検証したうえでカウンタ値を読む形へ修正した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（重複判定 helper 名を starts_at スコープへ明確化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/ProgramRepetitionRuleSessionGenerationService.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。現状実装は `program_id` / `location_id` / `staff_id` で絞り込んだ既存セッション集合に対して `starts_at` をキー化しているため、現在の挙動としては誤判定しない。一方で `buildCandidateKey()` と `existingCandidateKeys()` という名前だと 4 項目の複合キーを返しているように読めて、将来の流用や検索条件変更時に前提を誤読しやすかった。重複判定ロジック自体は変えず、`buildScopedStartsAtKey()` / `existingScopedStartsAtKeys()` へ改名し、PHPDoc と変数名でも「rule scope 内の starts_at キー」であることを明示した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（lesson_sessions の concrete slot 複合 UNIQUE を追加）
+  adopted: yes
+  classification: PR限定
+  targets: database/migrations/2026_03_15_164314_add_concrete_slot_unique_to_lesson_sessions_table.php, tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`ProgramRepetitionRuleSessionGenerationService` は `program_id` / `location_id` / `staff_id` / `starts_at` を concrete slot identity として重複 skip していたが、`lesson_sessions` の DB スキーマには `code` の UNIQUE しかなく、この4項目の一意性を物理保証していなかった。Laravel docs の複合 unique index 方針に合わせて `lesson_sessions_concrete_slot_unique` を追加し、同一 slot の 2 件目 insert が `QueryException` で拒否される回帰テストを追加した。現行 DB には同一4項目の重複行がないことも事前確認済み。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（concrete slot UNIQUE 競合を skip として吸収）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/ProgramRepetitionRuleSessionGenerationService.php, tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`lesson_sessions` の concrete slot UNIQUE 競合が発生したときに例外がそのまま上位へ伝播する懸念は妥当だった。一方で `UNIQUE 制約違反をすべて skip` として握りつぶすと `code` 競合など別原因まで隠してしまう。`createLessonSession()` の直後だけで `UniqueConstraintViolationException` を補足し、同一 `program_id` / `location_id` / `staff_id` / `starts_at` の既存行が実際に見つかった場合に限って `skipped_count` へ計上して続行するよう補強した。競合後に同一 slot 行が存在しない場合は従来どおり例外を再送出する。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（UNIQUE 制約テストの DB 依存メッセージを除去）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。現行テスト環境は sqlite 固定のため直ちに不安定ではなかったが、`'UNIQUE constraint failed'` への部分一致は SQLite 固有で、DB を切り替えると brittle だった。重複 concrete slot を DB が拒否するという契約自体が主目的なので、driver 依存の文言確認をやめて `UniqueConstraintViolationException` の型と件数維持だけを検証する形へ縮小した。
