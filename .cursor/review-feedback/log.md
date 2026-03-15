@@ -887,3 +887,11 @@
   classification: 汎用
   targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
   notes: day_of_week 検証を enumerate() に移動し、enumerateDaily() から $rule を削除。enumerateWeekly() とシグネチャを揃えた。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-candidate
+  scope: PRレビュー指摘対応（lock/transaction/idempotency PHPDoc 明示）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
+  notes: エントリポイント PHPDoc に Lock/Transaction/Idempotent を明示し、RFP-009 に合わせた。

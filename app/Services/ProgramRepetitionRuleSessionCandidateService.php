@@ -16,6 +16,7 @@ class ProgramRepetitionRuleSessionCandidateService
      * Preconditions: `$rule` must be a PH6-2-2 supported rule (cycle_type daily or weekly, end_date required,
      * week_of_month null, daily without day_of_week, weekly with valid day_of_week 0-6).
      * Update policy: Returns derived datetimes only and does not mutate the rule or any persisted state.
+     * Lock: none. Transaction: none. Idempotent: yes (pure function; same input yields same output).
      *
      * @return Collection<int, CarbonImmutable>
      */
