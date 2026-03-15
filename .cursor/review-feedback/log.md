@@ -895,3 +895,27 @@
   classification: 汎用
   targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
   notes: エントリポイント PHPDoc に Lock/Transaction/Idempotent を明示し、RFP-009 に合わせた。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（reservation_management 作成を relation 経由へ統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/ProgramRepetitionRuleSessionGenerationService.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。LessonSession に reservationManagement() を追加済みのため、関連行作成は relation の create() を使う方が外部キーの手詰めを避けて意図を明確にできる。一方で、他サービスとの書き方統一という根拠は現状コードベースでは強くなかったため、その点は採用せず、生成処理の最小差分リファクタに限定して対応した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（reservation_management 作成失敗時の transaction rollback テスト追加）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。今回の主題は lesson_sessions と reservation_management を同一 transaction で扱う点にあるため、ReservationManagement::creating で例外を発生させたときに generate() 全体がロールバックされ、両テーブルが 0 件のままになる失敗系テストを追加した。既存実装の挙動確認が目的で、本番コードの変更は行っていない。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-persistence
+  scope: PRレビュー指摘対応（reservation_management 関連の存在検証を false positive にならない形へ修正）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramRepetitionRuleSessionGenerationServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。従来の生成テストは relation()->value(...) の戻り値を int キャストしており、関連行が未作成でも null が 0 になって assertion を通過し得た。daily/weekly の正常系テストで reservationManagement を eager load し、関連が ReservationManagement インスタンスとして存在することを先に検証したうえでカウンタ値を読む形へ修正した。

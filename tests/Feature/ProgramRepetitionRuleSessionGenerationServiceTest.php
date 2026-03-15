@@ -8,6 +8,7 @@ use App\Models\ReservationManagement;
 use App\Services\ProgramRepetitionRuleSessionGenerationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use RuntimeException;
 use Tests\TestCase;
 
 class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
@@ -42,6 +43,7 @@ class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
         $this->assertSame(0, $result['skipped_count']);
 
         $sessions = $rule->program->lessonSessions()
+            ->with('reservationManagement')
             ->where('location_id', $rule->location_id)
             ->where('staff_id', $rule->staff_id)
             ->orderBy('starts_at')
@@ -57,16 +59,20 @@ class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
         )->all());
         $this->assertSame([12, 12, 12], $sessions->pluck('capacity')->all());
         $this->assertSame([2, 2, 2], $sessions->pluck('trial_capacity')->all());
+        $this->assertContainsOnlyInstancesOf(
+            ReservationManagement::class,
+            $sessions->pluck('reservationManagement')->all()
+        );
         $this->assertSame(
             [0, 0, 0],
             $sessions->map(
-                static fn ($session): int => (int) $session->reservationManagement()->value('reserved_count')
+                static fn ($session): int => $session->reservationManagement->reserved_count
             )->all()
         );
         $this->assertSame(
             [0, 0, 0],
             $sessions->map(
-                static fn ($session): int => (int) $session->reservationManagement()->value('reserved_trial_count')
+                static fn ($session): int => $session->reservationManagement->reserved_trial_count
             )->all()
         );
     }
@@ -142,6 +148,7 @@ class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
         $this->assertSame(0, $result['skipped_count']);
 
         $sessions = LessonSession::query()
+            ->with('reservationManagement')
             ->where('program_id', $rule->program_id)
             ->where('location_id', $rule->location_id)
             ->where('staff_id', $rule->staff_id)
@@ -155,11 +162,15 @@ class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
         ], $sessions->map(
             static fn ($session): string => CarbonImmutable::instance($session->starts_at)->format('Y-m-d H:i:s')
         )->all());
+        $this->assertContainsOnlyInstancesOf(
+            ReservationManagement::class,
+            $sessions->pluck('reservationManagement')->all()
+        );
         $this->assertSame([0, 0, 0], $sessions->map(
-            static fn ($session): int => (int) $session->reservationManagement()->value('reserved_count')
+            static fn ($session): int => $session->reservationManagement->reserved_count
         )->all());
         $this->assertSame([0, 0, 0], $sessions->map(
-            static fn ($session): int => (int) $session->reservationManagement()->value('reserved_trial_count')
+            static fn ($session): int => $session->reservationManagement->reserved_trial_count
         )->all());
     }
 
@@ -185,6 +196,36 @@ class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
         $this->assertSame(3, $secondResult['skipped_count']);
         $this->assertSame(3, LessonSession::query()->count());
         $this->assertSame(3, ReservationManagement::query()->count());
+    }
+
+    public function test_generate_rolls_back_created_sessions_when_reservation_management_creation_fails(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2026-03-01',
+            'end_date' => '2026-03-03',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        ReservationManagement::creating(static function (): void {
+            throw new RuntimeException('Simulated reservation management creation failure.');
+        });
+
+        try {
+            $this->service->generate($rule);
+            $this->fail('Expected RuntimeException was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Simulated reservation management creation failure.', $exception->getMessage());
+        } finally {
+            ReservationManagement::flushEventListeners();
+        }
+
+        $this->assertDatabaseCount('lesson_sessions', 0);
+        $this->assertDatabaseCount('reservation_management', 0);
     }
 
     public function test_generate_returns_zero_counts_when_candidate_enumeration_is_empty(): void

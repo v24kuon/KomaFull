@@ -6,7 +6,6 @@ use App\Models\LessonSession;
 use App\Models\Location;
 use App\Models\Program;
 use App\Models\ProgramRepetitionRule;
-use App\Models\ReservationManagement;
 use App\Models\Staff;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\ConnectionInterface;
@@ -68,8 +67,7 @@ class ProgramRepetitionRuleSessionGenerationService
 
                 $lessonSession = $this->createLessonSession($lockedRule, $candidate);
 
-                ReservationManagement::query()->create([
-                    'lesson_session_id' => $lessonSession->id,
+                $lessonSession->reservationManagement()->create([
                     'reserved_count' => 0,
                     'reserved_trial_count' => 0,
                 ]);
