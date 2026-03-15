@@ -52,10 +52,6 @@ class ProgramRepetitionRuleModelTest extends TestCase
     {
         $this->assertTrue(method_exists(Program::class, 'programRepetitionRules'));
 
-        if (! method_exists(Program::class, 'programRepetitionRules')) {
-            return;
-        }
-
         $program = new Program;
         $relation = $program->programRepetitionRules();
 
@@ -67,10 +63,6 @@ class ProgramRepetitionRuleModelTest extends TestCase
     {
         $this->assertTrue(method_exists(Location::class, 'programRepetitionRules'));
 
-        if (! method_exists(Location::class, 'programRepetitionRules')) {
-            return;
-        }
-
         $location = new Location;
         $relation = $location->programRepetitionRules();
 
@@ -81,10 +73,6 @@ class ProgramRepetitionRuleModelTest extends TestCase
     public function test_staff_has_program_repetition_rules_relation(): void
     {
         $this->assertTrue(method_exists(Staff::class, 'programRepetitionRules'));
-
-        if (! method_exists(Staff::class, 'programRepetitionRules')) {
-            return;
-        }
 
         $staff = new Staff;
         $relation = $staff->programRepetitionRules();

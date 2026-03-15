@@ -79,6 +79,14 @@ class ProgramRepetitionRule extends Model
         return $this->belongsTo(Staff::class);
     }
 
+    /**
+     * Validate that the repetition rule matches the PH6-2-1 supported schedule constraints.
+     *
+     * `week_of_month` is not supported, `daily` rules must not have `day_of_week`,
+     * and `weekly` rules must provide `day_of_week` within the 0-6 range.
+     *
+     * @throws InvalidArgumentException
+     */
     private function ensureSupportedScheduleConfiguration(): void
     {
         if ($this->week_of_month !== null) {

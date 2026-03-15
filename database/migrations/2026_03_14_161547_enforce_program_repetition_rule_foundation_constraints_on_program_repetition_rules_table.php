@@ -51,26 +51,11 @@ return new class extends Migration
 
     private function addScheduleCheckConstraint(): void
     {
-        $driver = Schema::getConnection()->getDriverName();
-        $expression = $this->scheduleCheckExpression();
-
-        if ($driver === 'mysql') {
-            DB::statement(sprintf(
-                'ALTER TABLE program_repetition_rules ADD CONSTRAINT %s CHECK (%s)',
-                self::SCHEDULE_CHECK_NAME,
-                $expression
-            ));
-
-            return;
-        }
-
-        if ($driver === 'pgsql' || $driver === 'sqlsrv') {
-            DB::statement(sprintf(
-                'ALTER TABLE program_repetition_rules ADD CONSTRAINT %s CHECK (%s)',
-                self::SCHEDULE_CHECK_NAME,
-                $expression
-            ));
-        }
+        DB::statement(sprintf(
+            'ALTER TABLE program_repetition_rules ADD CONSTRAINT %s CHECK (%s)',
+            self::SCHEDULE_CHECK_NAME,
+            $this->scheduleCheckExpression()
+        ));
     }
 
     private function dropScheduleCheckConstraint(): void

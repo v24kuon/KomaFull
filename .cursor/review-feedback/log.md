@@ -18,6 +18,30 @@
 
 - date: 2026-03-15
   branch: feat/ph6-2-session-gen
+  scope: ensureSupportedScheduleConfiguration の責務を PHPDoc で明文化（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/ProgramRepetitionRule.php
+  notes: 指摘は有効。検証ロジック自体は妥当だったが、private helper の責務と PH6-2-1 制約を PHPDoc で明示すると保守性が上がる。挙動は変更せず、week_of_month 非対応・daily の day_of_week 禁止・weekly の day_of_week 必須かつ 0-6 制約をメソッド直上に文書化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: ProgramRepetitionRuleModelTest の到達不能ガード削除（PR指摘対応）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Unit/ProgramRepetitionRuleModelTest.php
+  notes: 指摘は有効。assertTrue(method_exists(...)) の直後に同一条件の否定分岐を置いており、失敗時はそこでテストが終了するため return 分岐は到達不能だった。Program / Location / Staff の3テストから冗長なガードを削除し、意図を保ったままテストを簡潔化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
+  scope: addScheduleCheckConstraint 内の重複コード統合（PR指摘対応）
+  adopted: yes
+  classification: none
+  targets: database/migrations/2026_03_14_161547_enforce_program_repetition_rule_foundation_constraints_on_program_repetition_rules_table.php
+  notes: 指摘は有効。MySQL / pgsql / sqlsrv の ADD CONSTRAINT CHECK 構文が同一のため、条件分岐を統合し重複を削除した。addScheduleCheckConstraint は up() で sqlite 以外のときのみ呼ばれるため、ドライバーチェック自体も不要と判断し単一の DB::statement に簡略化した。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-session-gen
   scope: PH6-2-1 ProgramRepetitionRule 基盤整備（daily/weekly限定、weekly=1曜日、end_date必須）
   adopted: no
   classification: none
