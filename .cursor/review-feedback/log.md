@@ -855,3 +855,11 @@
   classification: 汎用
   targets: .cursor/commands/commit-push.md
   notes: Bセクションの git add -A に || exit 1 を追加し、Aセクションと整合。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-candidate
+  scope: PH6-2-2 生成候補列挙サービス実装
+  adopted: no
+  classification: none
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php, tests/Unit/ProgramRepetitionRuleSessionCandidateServiceTest.php
+  notes: daily/weekly の候補日時列挙サービスを追加。start_date/end_date/start_time/day_of_week の不正値を fail fast で拒否し、境界値と異常系の unit test を追加。
