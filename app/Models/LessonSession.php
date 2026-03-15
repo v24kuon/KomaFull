@@ -40,7 +40,12 @@ class LessonSession extends Model
     protected function casts(): array
     {
         return [
+            'program_id' => 'integer',
+            'location_id' => 'integer',
+            'staff_id' => 'integer',
             'starts_at' => 'datetime',
+            'capacity' => 'integer',
+            'trial_capacity' => 'integer',
         ];
     }
 

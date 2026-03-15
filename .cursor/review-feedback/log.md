@@ -959,3 +959,11 @@
   classification: none
   targets: app/Http/Controllers/Admin/ProgramRepetitionRuleGenerationController.php, routes/web.php, tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php, .cursor/review-feedback/log.md
   notes: 新規実装のため採用レビュー指摘はなし。管理者専用の手動生成 route/controller を追加し、guest/member/admin・0件境界・404・再実行時の skip 件数を feature test で確認した。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-action
+  scope: PRレビュー指摘対応（LessonSession の整数属性 cast を明示）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/LessonSession.php, tests/Unit/LessonSessionModelTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php` の `capacity` / `trial_capacity` に対する strict 比較は、SQLite では通っても DB ドライバ差で不安定化し得た。一方で `assertEquals` へ弱めるより、`LessonSession` 自体が整数として扱うべき属性の型契約を明示する方が適切だったため、`program_id` / `location_id` / `staff_id` / `capacity` / `trial_capacity` を integer cast に追加し、unit test で固定した。
