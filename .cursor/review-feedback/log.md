@@ -879,3 +879,11 @@
   classification: 汎用
   targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
   notes: エントリポイント enumerate() に責務・前提・更新方針の PHPDoc を追加し、review-feedback-prevention 2.5 に合わせた。
+
+- date: 2026-03-15
+  branch: feat/ph6-2-generation-candidate
+  scope: PRレビュー指摘対応（enumerateDaily の $rule パラメータ整理）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php
+  notes: day_of_week 検証を enumerate() に移動し、enumerateDaily() から $rule を削除。enumerateWeekly() とシグネチャを揃えた。

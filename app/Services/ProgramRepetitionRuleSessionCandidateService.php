@@ -34,14 +34,17 @@ class ProgramRepetitionRuleSessionCandidateService
 
         [$hours, $minutes, $seconds] = $this->parseStartTime($rule->start_time);
 
+        if ($rule->cycle_type === ProgramRepetitionRule::CYCLE_TYPE_DAILY && $rule->day_of_week !== null) {
+            throw new InvalidArgumentException('day_of_week must be null for daily rules.');
+        }
+
         return match ($rule->cycle_type) {
             ProgramRepetitionRule::CYCLE_TYPE_DAILY => $this->enumerateDaily(
                 $startDate,
                 $endDate,
                 $hours,
                 $minutes,
-                $seconds,
-                $rule
+                $seconds
             ),
             ProgramRepetitionRule::CYCLE_TYPE_WEEKLY => $this->enumerateWeekly(
                 $startDate,
@@ -61,8 +64,8 @@ class ProgramRepetitionRuleSessionCandidateService
     /**
      * Build daily candidate datetimes across the inclusive effective date range.
      *
-     * Preconditions: `$startDate` and `$endDate` are normalized boundaries, and daily rules must not carry `day_of_week`.
-     * Update policy: Returns derived datetimes only and does not mutate the rule or persisted state.
+     * Preconditions: `$startDate` and `$endDate` are normalized boundaries. Caller must ensure day_of_week is null for daily rules.
+     * Update policy: Returns derived datetimes only and does not mutate application state.
      *
      * @return Collection<int, CarbonImmutable>
      */
@@ -71,13 +74,8 @@ class ProgramRepetitionRuleSessionCandidateService
         CarbonImmutable $endDate,
         int $hours,
         int $minutes,
-        int $seconds,
-        ProgramRepetitionRule $rule
+        int $seconds
     ): Collection {
-        if ($rule->day_of_week !== null) {
-            throw new InvalidArgumentException('day_of_week must be null for daily rules.');
-        }
-
         $candidates = [];
 
         for ($cursor = $startDate; $cursor->lte($endDate); $cursor = $cursor->addDay()) {
