@@ -181,6 +181,9 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
 
         $newSessions = LessonSession::query()
             ->with('reservationManagement')
+            ->where('program_id', $rule->program_id)
+            ->where('location_id', $rule->location_id)
+            ->where('staff_id', $rule->staff_id)
             ->whereKeyNot($existingSession->id)
             ->orderBy('starts_at')
             ->get();
