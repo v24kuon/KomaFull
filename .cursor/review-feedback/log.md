@@ -1023,3 +1023,27 @@
   classification: PR限定
   targets: tests/Feature/Admin/AdminProgramRepetitionRuleCrudTest.php, .cursor/review-feedback/log.md
   notes: 指摘は一部有効。`week_of_month` は shared `StoreProgramRepetitionRuleRequest` の `prohibited` ルールで store / update の両経路とも既に拒否されており、本番コードの欠落はなかった。一方で既存テストは store 側の tampered `week_of_month` しか確認しておらず、Update が別 Request クラスとして存在する構成では update 経路の回帰が見えにくかった。`test_update_rejects_tampered_week_of_month_and_leaves_rule_unchanged` を追加し、更新時に `week_of_month=2` を送っても validation error となり、既存ルールが不変であることを固定した。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: PRレビュー指摘対応（生成候補上限 366 件ちょうどの成功境界を回帰テストで固定）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。既存の生成上限テストは「366 件を超える」失敗系だけで、上限文言どおりの「366 件ちょうどは許可される」境界が未固定だったため、`>` が `>=` に退行しても検知できなかった。daily ルールの有効期間を 2028-01-01〜2028-12-31 とした 366 件ちょうどの feature test を追加し、generate アクションが成功フラッシュを返し、`lesson_sessions` と `reservation_management` を各 366 件作成することを確認して fencepost バグを防ぐようにした。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: PRレビュー指摘対応（candidateCount 系メソッドの PHPDoc 粒度を公開契約に合わせて補強）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`candidateCount()` は `enumerate()` と並ぶ公開入口で同じ前提検証を共有しているため、前提条件・副作用なし・純粋性の説明粒度を揃える価値があった。一方で private helper の `countWeeklyCandidates()` は公開メソッドほど厚い契約までは不要だったため、正規化済み日付と `dayOfWeek` 0-6 を前提とし、状態変更なしで件数だけ返すことを簡潔に補足する最小差分に留めた。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: PRレビュー指摘対応（Update request の daily 正規化責務を PHPDoc で明文化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Admin/UpdateProgramRepetitionRuleRequest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`UpdateProgramRepetitionRuleRequest::prepareForValidation()` は weekly→daily 切り替え時の stale `day_of_week` を shared validator 前に吸収する update 専用責務を持ち、これを store 側へ広げない設計意図も重要だった。責務・前提・更新方針を短い PHPDoc で追加し、daily 更新時だけ `day_of_week` を null 化し、store 経路は引き続き tampered daily payload を拒否する前提を明文化した。

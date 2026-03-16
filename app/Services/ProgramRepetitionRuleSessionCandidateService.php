@@ -47,9 +47,12 @@ class ProgramRepetitionRuleSessionCandidateService
     }
 
     /**
-     * Count candidate sessions for one repetition rule without materializing the full collection.
+     * Count PH6-2-2 candidate session start datetimes for a repetition rule without materializing the full collection.
      *
-     * Preconditions: `$rule` must satisfy the PH6-2 supported schedule constraints.
+     * Preconditions: `$rule` must be a PH6-2-2 supported rule (cycle_type daily or weekly, end_date required,
+     * week_of_month null, daily without day_of_week, weekly with valid day_of_week 0-6).
+     * Update policy: Returns a derived count only and does not mutate the rule or any persisted state.
+     * Lock: none. Transaction: none. Idempotent: yes (pure function; same input yields the same count).
      */
     public function candidateCount(ProgramRepetitionRule $rule): int
     {
@@ -173,6 +176,9 @@ class ProgramRepetitionRuleSessionCandidateService
 
     /**
      * Count weekly candidates that match the configured weekday within the inclusive date range.
+     *
+     * Preconditions: `$startDate` and `$endDate` are normalized boundaries, and `$dayOfWeek` is already validated to 0-6.
+     * Update policy: Returns a derived scalar only and does not mutate application state.
      */
     private function countWeeklyCandidates(
         CarbonImmutable $startDate,

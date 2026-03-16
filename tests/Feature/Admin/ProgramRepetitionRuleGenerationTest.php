@@ -169,6 +169,31 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
     }
 
     /**
+     * 候補件数が上限ちょうどのルールは生成を許可すること。
+     */
+    public function test_generate_action_allows_rules_at_exact_candidate_limit(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2028-01-01',
+            'end_date' => '2028-12-31',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.program-repetition-rules.generate', $rule));
+
+        $response->assertRedirect(route('admin.program-repetition-rules.index'));
+        $response->assertSessionHas('success', 'セッション生成を実行しました。（作成: 366件 / スキップ: 0件）');
+        $this->assertDatabaseCount('lesson_sessions', 366);
+        $this->assertDatabaseCount('reservation_management', 366);
+    }
+
+    /**
      * 候補件数が上限を超えるルールは生成を拒否すること。
      */
     public function test_generate_action_rejects_rules_that_exceed_candidate_limit(): void
