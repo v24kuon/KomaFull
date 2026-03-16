@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-16
+  branch: feat/ph6-2-verification
+  scope: PH6-2-6 不足テスト補完（admin経由の週次生成・既存不変・reservation_management 初期化）
+  adopted: no
+  classification: none
+  targets: tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php
+  notes: PH6-2-6 最終検証として admin 経由の回帰テスト2件を追加。採用指摘なし。
+
 - date: 2026-03-15
   branch: feat/ph6-2-session-gen
   scope: PR指摘対応（weekly の day_of_week 非数値文字列をモデル側で拒否）
