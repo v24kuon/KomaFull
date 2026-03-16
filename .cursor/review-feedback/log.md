@@ -967,3 +967,11 @@
   classification: PR限定
   targets: app/Models/LessonSession.php, tests/Unit/LessonSessionModelTest.php, .cursor/review-feedback/log.md
   notes: 指摘は一部有効。`tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php` の `capacity` / `trial_capacity` に対する strict 比較は、SQLite では通っても DB ドライバ差で不安定化し得た。一方で `assertEquals` へ弱めるより、`LessonSession` 自体が整数として扱うべき属性の型契約を明示する方が適切だったため、`program_id` / `location_id` / `staff_id` / `capacity` / `trial_capacity` を integer cast に追加し、unit test で固定した。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: [PH6-2-5] 管理画面UI実装（繰り返し設定CRUD、1件生成、生成結果表示）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/Admin/ProgramRepetitionRuleController.php, app/Http/Controllers/Admin/ProgramRepetitionRuleGenerationController.php, app/Http/Requests/Admin/StoreProgramRepetitionRuleRequest.php, app/Http/Requests/Admin/UpdateProgramRepetitionRuleRequest.php, routes/web.php, resources/views/layouts/admin.blade.php, resources/views/admin/program-repetition-rules/, tests/Feature/Admin/AdminProgramRepetitionRuleCrudTest.php, tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php, .cursor/review-feedback/log.md
+  notes: 新規実装のため採用レビュー指摘はなし。既存の admin CRUD パターンに合わせて ProgramRepetitionRule の resource route/controller/FormRequest/Blade を追加し、1件生成アクションの戻り先を一覧へ変更して結果フラッシュを表示するようにした。関連する CRUD・HTMX・generate 導線は feature test で確認済み。

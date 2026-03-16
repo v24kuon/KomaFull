@@ -10,6 +10,8 @@ use InvalidArgumentException;
 
 class ProgramRepetitionRuleSessionCandidateService
 {
+    public const MAX_GENERATION_CANDIDATES = 366;
+
     /**
      * Enumerate PH6-2-2 candidate session start datetimes from a repetition rule.
      *
@@ -53,6 +55,44 @@ class ProgramRepetitionRuleSessionCandidateService
                 $hours,
                 $minutes,
                 $seconds,
+                $this->resolveWeeklyDayOfWeek($rule)
+            ),
+            default => throw new InvalidArgumentException(sprintf(
+                'Unsupported cycle_type: %s',
+                is_scalar($rule->cycle_type) ? (string) $rule->cycle_type : gettype($rule->cycle_type)
+            )),
+        };
+    }
+
+    /**
+     * Count candidate sessions for one repetition rule without materializing the full collection.
+     *
+     * Preconditions: `$rule` must satisfy the PH6-2 supported schedule constraints.
+     */
+    public function candidateCount(ProgramRepetitionRule $rule): int
+    {
+        $startDate = $this->resolveBoundaryDate($rule->start_date, 'start_date');
+        $endDate = $this->resolveBoundaryDate($rule->end_date, 'end_date');
+
+        if ($startDate->gt($endDate)) {
+            throw new InvalidArgumentException('start_date must be on or before end_date.');
+        }
+
+        if ($rule->week_of_month !== null) {
+            throw new InvalidArgumentException('week_of_month is not supported for PH6-2-2.');
+        }
+
+        $this->parseStartTime($rule->start_time);
+
+        if ($rule->cycle_type === ProgramRepetitionRule::CYCLE_TYPE_DAILY && $rule->day_of_week !== null) {
+            throw new InvalidArgumentException('day_of_week must be null for daily rules.');
+        }
+
+        return match ($rule->cycle_type) {
+            ProgramRepetitionRule::CYCLE_TYPE_DAILY => $startDate->diffInDays($endDate) + 1,
+            ProgramRepetitionRule::CYCLE_TYPE_WEEKLY => $this->countWeeklyCandidates(
+                $startDate,
+                $endDate,
                 $this->resolveWeeklyDayOfWeek($rule)
             ),
             default => throw new InvalidArgumentException(sprintf(
@@ -111,6 +151,24 @@ class ProgramRepetitionRuleSessionCandidateService
         }
 
         return collect($candidates);
+    }
+
+    /**
+     * Count weekly candidates that match the configured weekday within the inclusive date range.
+     */
+    private function countWeeklyCandidates(
+        CarbonImmutable $startDate,
+        CarbonImmutable $endDate,
+        int $dayOfWeek
+    ): int {
+        $daysUntilFirstMatch = ($dayOfWeek - $startDate->dayOfWeek + 7) % 7;
+        $firstCandidateDate = $startDate->addDays($daysUntilFirstMatch);
+
+        if ($firstCandidateDate->gt($endDate)) {
+            return 0;
+        }
+
+        return intdiv($firstCandidateDate->diffInDays($endDate), 7) + 1;
     }
 
     /**

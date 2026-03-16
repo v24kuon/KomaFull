@@ -42,7 +42,7 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->post(route('admin.program-repetition-rules.generate', $rule));
 
-        $response->assertRedirect(route('admin.dashboard'));
+        $response->assertRedirect(route('admin.program-repetition-rules.index'));
         $response->assertSessionHas('success', 'セッション生成を実行しました。（作成: 3件 / スキップ: 0件）');
         $this->assertDatabaseCount('lesson_sessions', 3);
         $this->assertDatabaseCount('reservation_management', 3);
@@ -70,7 +70,7 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->post(route('admin.program-repetition-rules.generate', $rule));
 
-        $response->assertRedirect(route('admin.dashboard'));
+        $response->assertRedirect(route('admin.program-repetition-rules.index'));
         $response->assertSessionHas('success', 'セッション生成を実行しました。（作成: 0件 / スキップ: 3件）');
         $this->assertDatabaseCount('lesson_sessions', 3);
         $this->assertDatabaseCount('reservation_management', 3);
@@ -93,7 +93,7 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->post(route('admin.program-repetition-rules.generate', $rule));
 
-        $response->assertRedirect(route('admin.dashboard'));
+        $response->assertRedirect(route('admin.program-repetition-rules.index'));
         $response->assertSessionHas('success', 'セッション生成を実行しました。（作成: 0件 / スキップ: 0件）');
         $this->assertDatabaseCount('lesson_sessions', 0);
         $this->assertDatabaseCount('reservation_management', 0);
@@ -166,5 +166,114 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
         $this->assertSame('2026-03-01 10:15:30', $session->starts_at->format('Y-m-d H:i:s'));
         $this->assertSame(12, $session->capacity);
         $this->assertSame(2, $session->trial_capacity);
+    }
+
+    /**
+     * 候補件数が上限を超えるルールは生成を拒否すること。
+     */
+    public function test_generate_action_rejects_rules_that_exceed_candidate_limit(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2026-01-01',
+            'end_date' => '2027-12-31',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.program-repetition-rules.generate', $rule));
+
+        $response->assertRedirect(route('admin.program-repetition-rules.index'));
+        $response->assertSessionHas('error', '生成対象が多すぎます。期間を短くして 366 件以内にしてください。');
+        $this->assertDatabaseCount('lesson_sessions', 0);
+        $this->assertDatabaseCount('reservation_management', 0);
+    }
+
+    /**
+     * 期間設定が壊れた既存ルールは 500 にせず利用者向けエラーへ変換すること。
+     */
+    public function test_generate_action_returns_error_for_rule_with_invalid_effective_period(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2026-03-10',
+            'end_date' => '2026-03-20',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        $rule->update([
+            'start_date' => '2026-04-10',
+            'end_date' => '2026-04-01',
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.program-repetition-rules.generate', $rule));
+
+        $response->assertRedirect(route('admin.program-repetition-rules.index'));
+        $response->assertSessionHas('error', '繰り返し設定の内容が不正です。設定を見直してください。');
+        $this->assertDatabaseCount('lesson_sessions', 0);
+        $this->assertDatabaseCount('reservation_management', 0);
+    }
+
+    /**
+     * ステータスが壊れた既存ルールからはセッション生成しないこと。
+     */
+    public function test_generate_action_returns_error_for_rule_with_invalid_status(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2026-03-01',
+            'end_date' => '2026-03-03',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        $rule->update([
+            'status' => 'archived',
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.program-repetition-rules.generate', $rule));
+
+        $response->assertRedirect(route('admin.program-repetition-rules.index'));
+        $response->assertSessionHas('error', '繰り返し設定の内容が不正です。設定を見直してください。');
+        $this->assertDatabaseCount('lesson_sessions', 0);
+        $this->assertDatabaseCount('reservation_management', 0);
+    }
+
+    /**
+     * 生成後の成功メッセージは繰り返し設定一覧画面で表示されること。
+     */
+    public function test_generate_action_displays_result_on_rules_index(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2026-03-01',
+            'end_date' => '2026-03-03',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->followingRedirects()
+            ->post(route('admin.program-repetition-rules.generate', $rule));
+
+        $response->assertOk();
+        $response->assertSeeText('繰り返し設定管理');
+        $response->assertSeeText('セッション生成を実行しました。（作成: 3件 / スキップ: 0件）');
     }
 }

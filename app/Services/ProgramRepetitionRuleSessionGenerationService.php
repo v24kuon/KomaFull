@@ -12,6 +12,7 @@ use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class ProgramRepetitionRuleSessionGenerationService
 {
@@ -44,6 +45,17 @@ class ProgramRepetitionRuleSessionGenerationService
     {
         return $this->connection->transaction(function () use ($rule): array {
             $lockedRule = $this->lockGenerationScope($rule);
+
+            if (
+                $this->candidateService->candidateCount($lockedRule)
+                > ProgramRepetitionRuleSessionCandidateService::MAX_GENERATION_CANDIDATES
+            ) {
+                throw new InvalidArgumentException(sprintf(
+                    'candidate count must not exceed %d.',
+                    ProgramRepetitionRuleSessionCandidateService::MAX_GENERATION_CANDIDATES
+                ));
+            }
+
             /** @var Collection<int, CarbonImmutable> $candidates */
             $candidates = $this->candidateService->enumerate($lockedRule);
 
@@ -184,9 +196,7 @@ class ProgramRepetitionRuleSessionGenerationService
             'starts_at' => $candidate,
             'capacity' => $rule->capacity,
             'trial_capacity' => $rule->trial_capacity,
-            'status' => $rule->status === ProgramRepetitionRule::STATUS_INACTIVE
-                ? LessonSession::STATUS_INACTIVE
-                : LessonSession::STATUS_ACTIVE,
+            'status' => $this->resolveGeneratedSessionStatus($rule),
         ]);
     }
 
@@ -230,5 +240,19 @@ class ProgramRepetitionRuleSessionGenerationService
     private function generateLessonSessionCode(): string
     {
         return 'SS'.strtoupper((string) Str::ulid());
+    }
+
+    /**
+     * Resolve the generated lesson-session status from a validated repetition-rule status.
+     *
+     * @throws InvalidArgumentException
+     */
+    private function resolveGeneratedSessionStatus(ProgramRepetitionRule $rule): string
+    {
+        return match ($rule->status) {
+            ProgramRepetitionRule::STATUS_ACTIVE => LessonSession::STATUS_ACTIVE,
+            ProgramRepetitionRule::STATUS_INACTIVE => LessonSession::STATUS_INACTIVE,
+            default => throw new InvalidArgumentException('status must be active or inactive.'),
+        };
     }
 }

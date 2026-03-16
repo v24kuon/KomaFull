@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdditionalItemController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\ProgramController;
+use App\Http\Controllers\Admin\ProgramRepetitionRuleController;
 use App\Http\Controllers\Admin\ProgramRepetitionRuleGenerationController;
 use App\Http\Controllers\Admin\ProgramTypeController;
 use App\Http\Controllers\Admin\StaffController;
@@ -20,6 +21,7 @@ Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->name('admin.')
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('program-types', ProgramTypeController::class)->except(['show']);
     Route::resource('programs', ProgramController::class)->except(['show']);
+    Route::resource('program-repetition-rules', ProgramRepetitionRuleController::class)->except(['show']);
     Route::resource('locations', LocationController::class)->except(['show']);
     Route::resource('staffs', StaffController::class)->except(['show']);
     Route::resource('additional-items', AdditionalItemController::class)->except(['show']);
