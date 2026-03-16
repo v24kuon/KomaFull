@@ -37,6 +37,14 @@ class ProgramRepetitionRuleSessionCandidateServiceTest extends TestCase
         ));
     }
 
+    public function test_service_has_candidate_count_method(): void
+    {
+        $this->assertTrue(method_exists(
+            ProgramRepetitionRuleSessionCandidateService::class,
+            'candidateCount'
+        ));
+    }
+
     public function test_daily_rule_enumerates_every_date_in_range(): void
     {
         $candidates = $this->service->enumerate($this->makeRule([
@@ -103,6 +111,20 @@ class ProgramRepetitionRuleSessionCandidateServiceTest extends TestCase
         $this->assertSame(['2026-03-05 08:00:00'], $this->formatCandidates($candidates->all()));
     }
 
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
+    #[DataProvider('candidateCountParityProvider')]
+    public function test_candidate_count_matches_enumerate_count_for_supported_rules(
+        array $overrides,
+        int $expectedCount
+    ): void {
+        $rule = $this->makeRule($overrides);
+
+        $this->assertSame($expectedCount, $this->service->candidateCount($rule));
+        $this->assertCount($expectedCount, $this->service->enumerate($rule));
+    }
+
     public function test_weekly_rule_returns_single_candidate_for_matching_single_day_range(): void
     {
         $candidates = $this->service->enumerate($this->makeRule([
@@ -167,6 +189,16 @@ class ProgramRepetitionRuleSessionCandidateServiceTest extends TestCase
         $this->expectExceptionMessage('day_of_week must be null for daily rules.');
 
         $this->service->enumerate($this->makeRule([
+            'day_of_week' => 1,
+        ]));
+    }
+
+    public function test_candidate_count_rejects_daily_rule_with_day_of_week(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('day_of_week must be null for daily rules.');
+
+        $this->service->candidateCount($this->makeRule([
             'day_of_week' => 1,
         ]));
     }
@@ -244,6 +276,43 @@ class ProgramRepetitionRuleSessionCandidateServiceTest extends TestCase
                     '2026-03-07 09:00:00',
                     '2026-03-14 09:00:00',
                 ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{0: array<string, mixed>, 1: int}>
+     */
+    public static function candidateCountParityProvider(): array
+    {
+        return [
+            'daily-range' => [
+                [
+                    'start_date' => '2026-03-01',
+                    'end_date' => '2026-03-03',
+                    'start_time' => '10:15:30',
+                ],
+                3,
+            ],
+            'weekly-range' => [
+                [
+                    'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_WEEKLY,
+                    'day_of_week' => 1,
+                    'start_date' => '2026-03-01',
+                    'end_date' => '2026-03-20',
+                    'start_time' => '18:45:00',
+                ],
+                3,
+            ],
+            'weekly-no-match' => [
+                [
+                    'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_WEEKLY,
+                    'day_of_week' => 1,
+                    'start_date' => '2026-03-01',
+                    'end_date' => '2026-03-01',
+                    'start_time' => '08:30:00',
+                ],
+                0,
             ],
         ];
     }

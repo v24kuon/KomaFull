@@ -209,10 +209,12 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
             'status' => ProgramRepetitionRule::STATUS_ACTIVE,
         ]);
 
-        $rule->update([
-            'start_date' => '2026-04-10',
-            'end_date' => '2026-04-01',
-        ]);
+        ProgramRepetitionRule::withoutEvents(
+            fn (): bool => $rule->update([
+                'start_date' => '2026-04-10',
+                'end_date' => '2026-04-01',
+            ])
+        );
 
         $response = $this->actingAs($this->admin)
             ->post(route('admin.program-repetition-rules.generate', $rule));
@@ -239,9 +241,11 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
             'status' => ProgramRepetitionRule::STATUS_ACTIVE,
         ]);
 
-        $rule->update([
-            'status' => 'archived',
-        ]);
+        ProgramRepetitionRule::withoutEvents(
+            fn (): bool => $rule->update([
+                'status' => 'archived',
+            ])
+        );
 
         $response = $this->actingAs($this->admin)
             ->post(route('admin.program-repetition-rules.generate', $rule));

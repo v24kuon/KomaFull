@@ -975,3 +975,51 @@
   classification: none
   targets: app/Http/Controllers/Admin/ProgramRepetitionRuleController.php, app/Http/Controllers/Admin/ProgramRepetitionRuleGenerationController.php, app/Http/Requests/Admin/StoreProgramRepetitionRuleRequest.php, app/Http/Requests/Admin/UpdateProgramRepetitionRuleRequest.php, routes/web.php, resources/views/layouts/admin.blade.php, resources/views/admin/program-repetition-rules/, tests/Feature/Admin/AdminProgramRepetitionRuleCrudTest.php, tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php, .cursor/review-feedback/log.md
   notes: 新規実装のため採用レビュー指摘はなし。既存の admin CRUD パターンに合わせて ProgramRepetitionRule の resource route/controller/FormRequest/Blade を追加し、1件生成アクションの戻り先を一覧へ変更して結果フラッシュを表示するようにした。関連する CRUD・HTMX・generate 導線は feature test で確認済み。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: PRレビュー指摘対応（candidateCount と enumerate の前提解決を共通化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/ProgramRepetitionRuleSessionCandidateService.php, tests/Unit/ProgramRepetitionRuleSessionCandidateServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`candidateCount()` と `enumerate()` が start/end 境界、week_of_month、start_time、daily/weekly の day_of_week 前提をそれぞれ個別に持っており、将来どちらか片方だけ修正されると「保存時や事前件数確認では通るが生成時に落ちる」ズレが起き得た。前提検証と cycle 分岐の正規化を `resolveCandidateRule()` へ集約し、件数計算と実列挙は従来どおり分離したまま維持した。あわせて unit test に `candidateCount() === enumerate()->count()` の日次/週次/0件ケースと、daily に `day_of_week` が入った不正設定の失敗系を追加して両公開経路の整合性を固定した。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: PRレビュー指摘対応（破損既存ルール生成テストのデータ準備を withoutEvents 化）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`ProgramRepetitionRule` は saving イベントで schedule 制約を検証しているため、`invalid_effective_period` / `invalid_status` の feature test で通常の `update()` を使うと、将来モデル検証が強化された際に Arrange 段階で失敗して「壊れた既存データを生成アクションが利用者向けエラーへ変換する」という本来の契約を守れなくなる。該当 2 か所の不正データ仕込みだけを `ProgramRepetitionRule::withoutEvents(fn () => $rule->update(...))` へ置き換え、既存破損データ再現の意図を明示した。挙動確認は既存の generation feature test を再実行して行った。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: PRレビュー指摘対応（ProgramRepetitionRule CRUD テストの payload helper を遅延共有 fixture 化）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/Admin/AdminProgramRepetitionRuleCrudTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`validDailyPayload()` が呼び出しごとに Program / Location / Staff を新規作成していたため、同一テスト内の payload 準備で不要なモデル作成が増えていた。一方で `setUp()` で全テストへ無条件に 3 モデルを追加すると、payload helper を使わないケースまで fixture ノイズが増えるため、その提案は採用しなかった。代わりに `sharedProgram()` / `sharedLocation()` / `sharedStaff()` を追加し、必要時だけ初回生成して同一テスト内で再利用する形へ調整した。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: PRレビュー指摘対応（ProgramRepetitionRule CRUD の未カバー認可経路を追加）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/Admin/AdminProgramRepetitionRuleCrudTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`program-repetition-rules` の CRUD ルートは `auth` + `can:access-admin` の admin group 配下にあり、index だけの認可テストでも現状のルート定義誤りはない。一方で将来 create/store/edit/update/destroy のいずれかが誤って group 外へ出た場合、index だけでは検知できないため、防御的な回帰として guest / non-admin 向けの未カバー経路を data provider で追加した。`show` は未定義、`generate` は別 feature test ですでに認可確認済みのため対象外とした。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: PRレビュー指摘対応（weekly→daily 更新時の stale day_of_week を update request で正規化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Admin/UpdateProgramRepetitionRuleRequest.php, tests/Feature/Admin/AdminProgramRepetitionRuleCrudTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。編集フォームは `day_of_week` を常に送信し、既存 weekly ルールを daily へ切り替えた際に stale な曜日値が残るため、shared request の after validation で daily として弾かれていた。一方で shared `StoreProgramRepetitionRuleRequest` 全体で null 正規化すると、create 側の tampered daily payload まで黙って通してしまうため適用範囲が広すぎた。`UpdateProgramRepetitionRuleRequest` の `prepareForValidation()` だけで daily 時に `day_of_week=null` を上書きし、store 側の防御は維持したまま、実フォーム由来の weekly→daily 更新だけを通すように調整した。あわせて CRUD feature test を stale weekday 送信ケースへ更新し、修正前は失敗・修正後は成功することを確認した。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-admin-ui
+  scope: PRレビュー指摘対応（ProgramRepetitionRule CRUD の Update 側に week_of_month 改ざん拒否テストを追加）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/Admin/AdminProgramRepetitionRuleCrudTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`week_of_month` は shared `StoreProgramRepetitionRuleRequest` の `prohibited` ルールで store / update の両経路とも既に拒否されており、本番コードの欠落はなかった。一方で既存テストは store 側の tampered `week_of_month` しか確認しておらず、Update が別 Request クラスとして存在する構成では update 経路の回帰が見えにくかった。`test_update_rejects_tampered_week_of_month_and_leaves_rule_unchanged` を追加し、更新時に `week_of_month=2` を送っても validation error となり、既存ルールが不変であることを固定した。

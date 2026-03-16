@@ -24,43 +24,25 @@ class ProgramRepetitionRuleSessionCandidateService
      */
     public function enumerate(ProgramRepetitionRule $rule): Collection
     {
-        $startDate = $this->resolveBoundaryDate($rule->start_date, 'start_date');
-        $endDate = $this->resolveBoundaryDate($rule->end_date, 'end_date');
+        $candidateRule = $this->resolveCandidateRule($rule);
+        [$hours, $minutes, $seconds] = $candidateRule['startTime'];
 
-        if ($startDate->gt($endDate)) {
-            throw new InvalidArgumentException('start_date must be on or before end_date.');
-        }
-
-        if ($rule->week_of_month !== null) {
-            throw new InvalidArgumentException('week_of_month is not supported for PH6-2-2.');
-        }
-
-        [$hours, $minutes, $seconds] = $this->parseStartTime($rule->start_time);
-
-        if ($rule->cycle_type === ProgramRepetitionRule::CYCLE_TYPE_DAILY && $rule->day_of_week !== null) {
-            throw new InvalidArgumentException('day_of_week must be null for daily rules.');
-        }
-
-        return match ($rule->cycle_type) {
+        return match ($candidateRule['cycleType']) {
             ProgramRepetitionRule::CYCLE_TYPE_DAILY => $this->enumerateDaily(
-                $startDate,
-                $endDate,
+                $candidateRule['startDate'],
+                $candidateRule['endDate'],
                 $hours,
                 $minutes,
                 $seconds
             ),
             ProgramRepetitionRule::CYCLE_TYPE_WEEKLY => $this->enumerateWeekly(
-                $startDate,
-                $endDate,
+                $candidateRule['startDate'],
+                $candidateRule['endDate'],
                 $hours,
                 $minutes,
                 $seconds,
-                $this->resolveWeeklyDayOfWeek($rule)
+                $candidateRule['dayOfWeek']
             ),
-            default => throw new InvalidArgumentException(sprintf(
-                'Unsupported cycle_type: %s',
-                is_scalar($rule->cycle_type) ? (string) $rule->cycle_type : gettype($rule->cycle_type)
-            )),
         };
     }
 
@@ -70,6 +52,35 @@ class ProgramRepetitionRuleSessionCandidateService
      * Preconditions: `$rule` must satisfy the PH6-2 supported schedule constraints.
      */
     public function candidateCount(ProgramRepetitionRule $rule): int
+    {
+        $candidateRule = $this->resolveCandidateRule($rule);
+
+        return match ($candidateRule['cycleType']) {
+            ProgramRepetitionRule::CYCLE_TYPE_DAILY => $candidateRule['startDate']->diffInDays($candidateRule['endDate']) + 1,
+            ProgramRepetitionRule::CYCLE_TYPE_WEEKLY => $this->countWeeklyCandidates(
+                $candidateRule['startDate'],
+                $candidateRule['endDate'],
+                $candidateRule['dayOfWeek']
+            ),
+        };
+    }
+
+    /**
+     * Validate a repetition rule once and return the normalized schedule inputs shared by counting and enumeration.
+     *
+     * Preconditions: `$rule` may contain persisted legacy values, but must still satisfy the PH6-2-2 schedule
+     * constraints before candidate processing continues.
+     * Update policy: Returns derived date/time scalars only and does not mutate the rule or any persisted state.
+     *
+     * @return array{
+     *   startDate: CarbonImmutable,
+     *   endDate: CarbonImmutable,
+     *   cycleType: string,
+     *   startTime: array{0: int, 1: int, 2: int},
+     *   dayOfWeek?: int
+     * }
+     */
+    private function resolveCandidateRule(ProgramRepetitionRule $rule): array
     {
         $startDate = $this->resolveBoundaryDate($rule->start_date, 'start_date');
         $endDate = $this->resolveBoundaryDate($rule->end_date, 'end_date');
@@ -82,19 +93,26 @@ class ProgramRepetitionRuleSessionCandidateService
             throw new InvalidArgumentException('week_of_month is not supported for PH6-2-2.');
         }
 
-        $this->parseStartTime($rule->start_time);
+        $startTime = $this->parseStartTime($rule->start_time);
 
         if ($rule->cycle_type === ProgramRepetitionRule::CYCLE_TYPE_DAILY && $rule->day_of_week !== null) {
             throw new InvalidArgumentException('day_of_week must be null for daily rules.');
         }
 
         return match ($rule->cycle_type) {
-            ProgramRepetitionRule::CYCLE_TYPE_DAILY => $startDate->diffInDays($endDate) + 1,
-            ProgramRepetitionRule::CYCLE_TYPE_WEEKLY => $this->countWeeklyCandidates(
-                $startDate,
-                $endDate,
-                $this->resolveWeeklyDayOfWeek($rule)
-            ),
+            ProgramRepetitionRule::CYCLE_TYPE_DAILY => [
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'cycleType' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+                'startTime' => $startTime,
+            ],
+            ProgramRepetitionRule::CYCLE_TYPE_WEEKLY => [
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'cycleType' => ProgramRepetitionRule::CYCLE_TYPE_WEEKLY,
+                'startTime' => $startTime,
+                'dayOfWeek' => $this->resolveWeeklyDayOfWeek($rule),
+            ],
             default => throw new InvalidArgumentException(sprintf(
                 'Unsupported cycle_type: %s',
                 is_scalar($rule->cycle_type) ? (string) $rule->cycle_type : gettype($rule->cycle_type)

@@ -8,6 +8,8 @@ use App\Models\ProgramRepetitionRule;
 use App\Models\Staff;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminProgramRepetitionRuleCrudTest extends TestCase
@@ -15,6 +17,12 @@ class AdminProgramRepetitionRuleCrudTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
+    private Program $sharedProgram;
+
+    private Location $sharedLocation;
+
+    private Staff $sharedStaff;
 
     protected function setUp(): void
     {
@@ -61,9 +69,9 @@ class AdminProgramRepetitionRuleCrudTest extends TestCase
 
     public function test_create_form_is_displayed_without_week_of_month_field(): void
     {
-        $program = Program::factory()->createOne();
-        $location = Location::factory()->createOne();
-        $staff = Staff::factory()->createOne();
+        $program = $this->sharedProgram();
+        $location = $this->sharedLocation();
+        $staff = $this->sharedStaff();
 
         $response = $this->actingAs($this->admin)->get(route('admin.program-repetition-rules.create'));
 
@@ -285,7 +293,7 @@ class AdminProgramRepetitionRuleCrudTest extends TestCase
         $response->assertSeeText($rule->staff->name);
     }
 
-    public function test_update_modifies_rule_and_clears_day_of_week_when_switching_to_daily(): void
+    public function test_update_clears_stale_day_of_week_when_switching_from_weekly_to_daily(): void
     {
         $rule = ProgramRepetitionRule::factory()->weekly(4)->createOne([
             'start_date' => '2026-03-01',
@@ -301,7 +309,7 @@ class AdminProgramRepetitionRuleCrudTest extends TestCase
             'location_id' => $rule->location_id,
             'staff_id' => $rule->staff_id,
             'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
-            'day_of_week' => null,
+            'day_of_week' => 4,
             'start_date' => '2026-04-01',
             'end_date' => '2026-04-10',
             'start_time' => '11:30:00',
@@ -398,6 +406,43 @@ class AdminProgramRepetitionRuleCrudTest extends TestCase
         ]);
     }
 
+    public function test_update_rejects_tampered_week_of_month_and_leaves_rule_unchanged(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->weekly(4)->createOne([
+            'start_date' => '2026-03-01',
+            'end_date' => '2026-03-31',
+            'start_time' => '10:15:00',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->put(route('admin.program-repetition-rules.update', $rule), [
+                'program_id' => $rule->program_id,
+                'location_id' => $rule->location_id,
+                'staff_id' => $rule->staff_id,
+                'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_WEEKLY,
+                'day_of_week' => 4,
+                'week_of_month' => 2,
+                'start_date' => '2026-03-01',
+                'end_date' => '2026-03-31',
+                'start_time' => '10:15:00',
+                'capacity' => 12,
+                'trial_capacity' => 2,
+                'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+            ]);
+
+        $response->assertSessionHasErrors(['week_of_month']);
+        $this->assertDatabaseHas('program_repetition_rules', [
+            'id' => $rule->id,
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_WEEKLY,
+            'day_of_week' => 4,
+            'week_of_month' => null,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+    }
+
     public function test_destroy_deletes_rule(): void
     {
         $rule = ProgramRepetitionRule::factory()->createOne();
@@ -439,6 +484,45 @@ class AdminProgramRepetitionRuleCrudTest extends TestCase
         $response->assertForbidden();
     }
 
+    #[DataProvider('protectedCrudActionProvider')]
+    public function test_guest_cannot_access_other_crud_actions(
+        string $method,
+        string $routeName,
+        bool $requiresRule
+    ): void {
+        $response = $this->requestProtectedCrudAction($method, $routeName, $requiresRule);
+
+        $response->assertRedirect(route('login'));
+    }
+
+    #[DataProvider('protectedCrudActionProvider')]
+    public function test_non_admin_cannot_access_other_crud_actions(
+        string $method,
+        string $routeName,
+        bool $requiresRule
+    ): void {
+        /** @var User $member */
+        $member = User::factory()->createOne(['role' => User::ROLE_MEMBER]);
+
+        $response = $this->requestProtectedCrudAction($method, $routeName, $requiresRule, $member);
+
+        $response->assertForbidden();
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string, 2: bool}>
+     */
+    public static function protectedCrudActionProvider(): array
+    {
+        return [
+            'create' => ['get', 'admin.program-repetition-rules.create', false],
+            'store' => ['post', 'admin.program-repetition-rules.store', false],
+            'edit' => ['get', 'admin.program-repetition-rules.edit', true],
+            'update' => ['put', 'admin.program-repetition-rules.update', true],
+            'destroy' => ['delete', 'admin.program-repetition-rules.destroy', true],
+        ];
+    }
+
     /**
      * @return array{
      *     program_id: int,
@@ -457,9 +541,9 @@ class AdminProgramRepetitionRuleCrudTest extends TestCase
     private function validDailyPayload(array $overrides = []): array
     {
         $payload = [
-            'program_id' => Program::factory()->createOne()->id,
-            'location_id' => Location::factory()->createOne()->id,
-            'staff_id' => Staff::factory()->createOne()->id,
+            'program_id' => $this->sharedProgram()->id,
+            'location_id' => $this->sharedLocation()->id,
+            'staff_id' => $this->sharedStaff()->id,
             'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
             'day_of_week' => null,
             'start_date' => '2026-03-01',
@@ -494,5 +578,50 @@ class AdminProgramRepetitionRuleCrudTest extends TestCase
             'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_WEEKLY,
             'day_of_week' => 1,
         ], $overrides);
+    }
+
+    private function sharedProgram(): Program
+    {
+        if (! isset($this->sharedProgram)) {
+            $this->sharedProgram = Program::factory()->createOne();
+        }
+
+        return $this->sharedProgram;
+    }
+
+    private function sharedLocation(): Location
+    {
+        if (! isset($this->sharedLocation)) {
+            $this->sharedLocation = Location::factory()->createOne();
+        }
+
+        return $this->sharedLocation;
+    }
+
+    private function sharedStaff(): Staff
+    {
+        if (! isset($this->sharedStaff)) {
+            $this->sharedStaff = Staff::factory()->createOne();
+        }
+
+        return $this->sharedStaff;
+    }
+
+    private function requestProtectedCrudAction(
+        string $method,
+        string $routeName,
+        bool $requiresRule,
+        ?User $user = null
+    ): TestResponse {
+        $routeParameter = $requiresRule ? ProgramRepetitionRule::factory()->createOne() : [];
+        $requester = $user instanceof User ? $this->actingAs($user) : $this;
+
+        return match ($method) {
+            'get' => $requester->get(route($routeName, $routeParameter)),
+            'post' => $requester->post(route($routeName, $routeParameter), []),
+            'put' => $requester->put(route($routeName, $routeParameter), []),
+            'delete' => $requester->delete(route($routeName, $routeParameter)),
+            default => throw new \InvalidArgumentException(sprintf('Unsupported method: %s', $method)),
+        };
     }
 }
