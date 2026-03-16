@@ -43,6 +43,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="{{ route('admin.program-repetition-rules.index') }}" class="p-admin-layout__nav-link nav-link text-white @if(request()->routeIs('admin.program-repetition-rules.*')) active @endif">
+                            繰り返し設定
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="{{ route('admin.locations.index') }}" class="p-admin-layout__nav-link nav-link text-white @if(request()->routeIs('admin.locations.*')) active @endif">
                             店舗
                         </a>

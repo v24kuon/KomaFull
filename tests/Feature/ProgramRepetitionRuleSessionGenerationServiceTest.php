@@ -9,6 +9,7 @@ use App\Services\ProgramRepetitionRuleSessionGenerationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use InvalidArgumentException;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -248,6 +249,30 @@ class ProgramRepetitionRuleSessionGenerationServiceTest extends TestCase
         $this->assertSame(0, $result['skipped_count']);
         $this->assertSame(0, LessonSession::query()->count());
         $this->assertSame(0, ReservationManagement::query()->count());
+    }
+
+    public function test_generate_throws_when_candidate_count_exceeds_limit(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2026-01-01',
+            'end_date' => '2027-12-31',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        try {
+            $this->service->generate($rule);
+            $this->fail('Expected InvalidArgumentException was not thrown.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertSame('candidate count must not exceed 366.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseCount('lesson_sessions', 0);
+        $this->assertDatabaseCount('reservation_management', 0);
     }
 
     public function test_generate_skips_slot_when_concurrent_insert_wins_the_unique_constraint_race(): void
