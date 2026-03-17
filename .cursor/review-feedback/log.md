@@ -16,6 +16,22 @@
 
 ## Entries
 
+- date: 2026-03-16
+  branch: feat/ph6-2-verification
+  scope: PR指摘対応（newSessions 取得をルールスコープへ限定）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php
+  notes: 指摘は有効。`whereKeyNot($existingSession->id)` のみだと、このテストに将来別ルール由来の `lesson_sessions` 前提データが追加された場合でも混入を拾い得る。新規生成分の確認対象を `program_id` / `location_id` / `staff_id` で対象ルールに限定し、重複skip後に作られた当該ルールのセッションだけを検証するように絞り込んだ。
+
+- date: 2026-03-16
+  branch: feat/ph6-2-verification
+  scope: PH6-2-6 不足テスト補完（admin経由の週次生成・既存不変・reservation_management 初期化）
+  adopted: no
+  classification: none
+  targets: tests/Feature/Admin/ProgramRepetitionRuleGenerationTest.php
+  notes: PH6-2-6 最終検証として admin 経由の回帰テスト2件を追加。採用指摘なし。
+
 - date: 2026-03-15
   branch: feat/ph6-2-session-gen
   scope: PR指摘対応（weekly の day_of_week 非数値文字列をモデル側で拒否）

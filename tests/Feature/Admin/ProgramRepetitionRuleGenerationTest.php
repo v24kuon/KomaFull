@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\LessonSession;
 use App\Models\ProgramRepetitionRule;
+use App\Models\ReservationManagement;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -49,6 +50,51 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
     }
 
     /**
+     * 管理者は週次ルールから対象曜日のセッションだけを生成できること。
+     */
+    public function test_admin_can_generate_weekly_sessions_from_a_repetition_rule(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->weekly(1)->createOne([
+            'start_date' => '2026-03-01',
+            'end_date' => '2026-03-20',
+            'start_time' => '18:45:00',
+            'capacity' => 8,
+            'trial_capacity' => 1,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.program-repetition-rules.generate', $rule));
+
+        $response->assertRedirect(route('admin.program-repetition-rules.index'));
+        $response->assertSessionHas('success', 'セッション生成を実行しました。（作成: 3件 / スキップ: 0件）');
+        $this->assertDatabaseCount('lesson_sessions', 3);
+        $this->assertDatabaseCount('reservation_management', 3);
+
+        $sessions = LessonSession::query()
+            ->with('reservationManagement')
+            ->where('program_id', $rule->program_id)
+            ->where('location_id', $rule->location_id)
+            ->where('staff_id', $rule->staff_id)
+            ->orderBy('starts_at')
+            ->get();
+
+        $this->assertSame([
+            '2026-03-02 18:45:00',
+            '2026-03-09 18:45:00',
+            '2026-03-16 18:45:00',
+        ], $sessions->map(
+            static fn (LessonSession $session): string => $session->starts_at->format('Y-m-d H:i:s')
+        )->all());
+        $this->assertSame([0, 0, 0], $sessions->map(
+            static fn (LessonSession $session): int => $session->reservationManagement->reserved_count
+        )->all());
+        $this->assertSame([0, 0, 0], $sessions->map(
+            static fn (LessonSession $session): int => $session->reservationManagement->reserved_trial_count
+        )->all());
+    }
+
+    /**
      * 管理者が同じルールを再実行すると既存候補はスキップ扱いになること。
      */
     public function test_admin_generate_action_reports_skipped_slots_when_re_run(): void
@@ -74,6 +120,86 @@ class ProgramRepetitionRuleGenerationTest extends TestCase
         $response->assertSessionHas('success', 'セッション生成を実行しました。（作成: 0件 / スキップ: 3件）');
         $this->assertDatabaseCount('lesson_sessions', 3);
         $this->assertDatabaseCount('reservation_management', 3);
+    }
+
+    /**
+     * 既存セッションがある場合は重複枠をスキップし、既存レコードを変更しないこと。
+     */
+    public function test_admin_generate_action_skips_existing_slots_without_modifying_existing_rows(): void
+    {
+        $rule = ProgramRepetitionRule::factory()->createOne([
+            'cycle_type' => ProgramRepetitionRule::CYCLE_TYPE_DAILY,
+            'day_of_week' => null,
+            'start_date' => '2026-03-01',
+            'end_date' => '2026-03-03',
+            'start_time' => '10:15:30',
+            'capacity' => 12,
+            'trial_capacity' => 2,
+            'status' => ProgramRepetitionRule::STATUS_ACTIVE,
+        ]);
+
+        $existingSession = LessonSession::factory()
+            ->forRelationIds($rule->program_id, $rule->location_id, $rule->staff_id)
+            ->create([
+                'starts_at' => '2026-03-02 10:15:30',
+                'capacity' => 99,
+                'trial_capacity' => 7,
+                'status' => LessonSession::STATUS_INACTIVE,
+            ]);
+
+        ReservationManagement::factory()
+            ->forLessonSessionId($existingSession->id)
+            ->create([
+                'reserved_count' => 3,
+                'reserved_trial_count' => 1,
+            ]);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.program-repetition-rules.generate', $rule));
+
+        $response->assertRedirect(route('admin.program-repetition-rules.index'));
+        $response->assertSessionHas('success', 'セッション生成を実行しました。（作成: 2件 / スキップ: 1件）');
+        $this->assertDatabaseCount('lesson_sessions', 3);
+        $this->assertDatabaseCount('reservation_management', 3);
+        $this->assertSame(
+            1,
+            LessonSession::query()
+                ->where('program_id', $rule->program_id)
+                ->where('location_id', $rule->location_id)
+                ->where('staff_id', $rule->staff_id)
+                ->where('starts_at', '2026-03-02 10:15:30')
+                ->count()
+        );
+
+        $reloadedExistingSession = $existingSession->fresh(['reservationManagement']);
+
+        $this->assertSame(99, $reloadedExistingSession->capacity);
+        $this->assertSame(7, $reloadedExistingSession->trial_capacity);
+        $this->assertSame(LessonSession::STATUS_INACTIVE, $reloadedExistingSession->status);
+        $this->assertSame(3, $reloadedExistingSession->reservationManagement->reserved_count);
+        $this->assertSame(1, $reloadedExistingSession->reservationManagement->reserved_trial_count);
+
+        $newSessions = LessonSession::query()
+            ->with('reservationManagement')
+            ->where('program_id', $rule->program_id)
+            ->where('location_id', $rule->location_id)
+            ->where('staff_id', $rule->staff_id)
+            ->whereKeyNot($existingSession->id)
+            ->orderBy('starts_at')
+            ->get();
+
+        $this->assertSame([
+            '2026-03-01 10:15:30',
+            '2026-03-03 10:15:30',
+        ], $newSessions->map(
+            static fn (LessonSession $session): string => $session->starts_at->format('Y-m-d H:i:s')
+        )->all());
+        $this->assertSame([0, 0], $newSessions->map(
+            static fn (LessonSession $session): int => $session->reservationManagement->reserved_count
+        )->all());
+        $this->assertSame([0, 0], $newSessions->map(
+            static fn (LessonSession $session): int => $session->reservationManagement->reserved_trial_count
+        )->all());
     }
 
     /**
