@@ -12,7 +12,13 @@ use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
-    public function index(Request $request): View|string
+    /**
+     * カテゴリ一覧を表示し、HTMX要求時は一覧テーブルのみ返す。
+     *
+     * 前提: 管理者認可済みのルートから呼び出されること。
+     * 更新方針: 読み取り専用で、DB更新は行わない。
+     */
+    public function index(Request $request): View
     {
         $categories = Category::query()
             ->orderBy('sort_order')
@@ -20,17 +26,29 @@ class CategoryController extends Controller
             ->get();
 
         if ($request->header('HX-Request')) {
-            return view('admin.categories._table', compact('categories'))->render();
+            return view('partials.admin.categories.table', compact('categories'));
         }
 
-        return view('admin.categories.index', compact('categories'));
+        return view('pages.admin.categories.index', compact('categories'));
     }
 
+    /**
+     * カテゴリ新規作成フォームを表示する。
+     *
+     * 前提: 管理者認可済みのルートから呼び出されること。
+     * 更新方針: フォーム表示のみで、DB更新は行わない。
+     */
     public function create(): View
     {
-        return view('admin.categories.create');
+        return view('pages.admin.categories.create');
     }
 
+    /**
+     * バリデーション済み入力を用いてカテゴリを新規作成する。
+     *
+     * 前提: StoreCategoryRequest で入力検証済みであること。
+     * 更新方針: validated() のみを create に渡して保存する。
+     */
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
         Category::create($request->validated());
@@ -39,11 +57,23 @@ class CategoryController extends Controller
             ->with('success', 'カテゴリを作成しました。');
     }
 
+    /**
+     * カテゴリ編集フォームを表示する。
+     *
+     * 前提: ルートモデルバインディングで対象レコードが解決されること。
+     * 更新方針: フォーム表示のみで、DB更新は行わない。
+     */
     public function edit(Category $category): View
     {
-        return view('admin.categories.edit', compact('category'));
+        return view('pages.admin.categories.edit', compact('category'));
     }
 
+    /**
+     * バリデーション済み入力で対象カテゴリを更新する。
+     *
+     * 前提: UpdateCategoryRequest で入力検証済みであること。
+     * 更新方針: validated() のみを update に渡して保存する。
+     */
     public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
     {
         $category->update($request->validated());
@@ -52,6 +82,12 @@ class CategoryController extends Controller
             ->with('success', 'カテゴリを更新しました。');
     }
 
+    /**
+     * 対象カテゴリを削除し、HTMX要求時は空レスポンスを返す。
+     *
+     * 前提: ルートモデルバインディングで対象レコードが解決されること。
+     * 更新方針: 対象レコードを delete したうえで応答形式を分岐する。
+     */
     public function destroy(Request $request, Category $category): RedirectResponse|string
     {
         $category->delete();

@@ -23,7 +23,7 @@ class ProgramController extends Controller
      * 前提: 管理者認可済みのルートから呼び出されること。
      * 更新方針: 読み取り専用で、DB更新は行わない。
      */
-    public function index(Request $request): View|string
+    public function index(Request $request): View
     {
         $programs = Program::query()
             ->with(['category', 'programType'])
@@ -31,10 +31,10 @@ class ProgramController extends Controller
             ->get();
 
         if ($request->header('HX-Request')) {
-            return view('admin.programs._table', compact('programs'))->render();
+            return view('partials.admin.programs.table', compact('programs'));
         }
 
-        return view('admin.programs.index', compact('programs'));
+        return view('pages.admin.programs.index', compact('programs'));
     }
 
     /**
@@ -47,7 +47,7 @@ class ProgramController extends Controller
     {
         $formMasterData = $this->resolveFormMasterData();
 
-        return view('admin.programs.create', $formMasterData);
+        return view('pages.admin.programs.create', $formMasterData);
     }
 
     /**
@@ -74,7 +74,7 @@ class ProgramController extends Controller
     {
         $formMasterData = $this->resolveFormMasterData();
 
-        return view('admin.programs.edit', [
+        return view('pages.admin.programs.edit', [
             'program' => $program,
             'categories' => $formMasterData['categories'],
             'programTypes' => $formMasterData['programTypes'],
@@ -124,7 +124,7 @@ class ProgramController extends Controller
     private function respondDeleteConstraintViolation(Request $request, Program $program): RedirectResponse|string
     {
         if ($request->header('HX-Request')) {
-            return view('admin.programs._delete_error_row', [
+            return view('partials.admin.programs.delete_error_row', [
                 'program' => $program,
                 'message' => self::DELETE_CONSTRAINT_MESSAGE,
             ])->render();

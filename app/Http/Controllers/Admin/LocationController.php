@@ -21,15 +21,15 @@ class LocationController extends Controller
      * 前提: 管理者認可済みのルートから呼び出されること。
      * 更新方針: 読み取り専用で、DB更新は行わない。
      */
-    public function index(Request $request): View|string
+    public function index(Request $request): View
     {
         $locations = Location::query()->orderBy('id', 'desc')->get();
 
         if ($request->header('HX-Request')) {
-            return view('admin.locations._table', compact('locations'))->render();
+            return view('partials.admin.locations.table', compact('locations'));
         }
 
-        return view('admin.locations.index', compact('locations'));
+        return view('pages.admin.locations.index', compact('locations'));
     }
 
     /**
@@ -40,7 +40,7 @@ class LocationController extends Controller
      */
     public function create(): View
     {
-        return view('admin.locations.create');
+        return view('pages.admin.locations.create');
     }
 
     /**
@@ -65,7 +65,7 @@ class LocationController extends Controller
      */
     public function edit(Location $location): View
     {
-        return view('admin.locations.edit', compact('location'));
+        return view('pages.admin.locations.edit', compact('location'));
     }
 
     /**
@@ -117,7 +117,7 @@ class LocationController extends Controller
     private function respondDeleteConstraintViolation(Request $request, Location $location): RedirectResponse|string
     {
         if ($request->header('HX-Request')) {
-            return view('admin.locations._delete_error_row', [
+            return view('partials.admin.locations.delete_error_row', [
                 'location' => $location,
                 'message' => self::DELETE_CONSTRAINT_MESSAGE,
             ])->render();

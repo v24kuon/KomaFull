@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-17
+  branch: feat/ph8-2-2-view-structure
+  scope: [PH8-2-2] ビューディレクトリ構成固定（pages, partials, components）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/Admin/*.php, app/Providers/FortifyServiceProvider.php, routes/web.php, resources/views/pages/, resources/views/partials/, resources/views/components/.gitkeep, tests/Feature/ViewDirectoryStructureTest.php
+  notes: 新規実装/構造整理のため採用レビュー指摘はなし。Blade の canonical 配置を `pages` / `partials` / `components` に統一し、Fortify・公開/管理ルート・HTMX 一覧応答の参照先を新構成へ揃えた。回帰として view 名固定テストを追加し、関連 auth/admin feature test を再実行している。
+
 - date: 2026-03-16
   branch: feat/ph6-2-verification
   scope: PR指摘対応（newSessions 取得をルールスコープへ限定）
