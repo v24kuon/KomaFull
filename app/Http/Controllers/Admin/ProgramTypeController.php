@@ -21,7 +21,7 @@ class ProgramTypeController extends Controller
      * 前提: 管理者認可済みのルートから呼び出されること。
      * 更新方針: 読み取り専用で、DB更新は行わない。
      */
-    public function index(Request $request): View|string
+    public function index(Request $request): View
     {
         $programTypes = ProgramType::query()
             ->orderBy('sort_order')
@@ -29,10 +29,10 @@ class ProgramTypeController extends Controller
             ->get();
 
         if ($request->header('HX-Request')) {
-            return view('admin.program-types._table', compact('programTypes'))->render();
+            return view('partials.admin.program-types.table', compact('programTypes'));
         }
 
-        return view('admin.program-types.index', compact('programTypes'));
+        return view('pages.admin.program-types.index', compact('programTypes'));
     }
 
     /**
@@ -43,7 +43,7 @@ class ProgramTypeController extends Controller
      */
     public function create(): View
     {
-        return view('admin.program-types.create');
+        return view('pages.admin.program-types.create');
     }
 
     /**
@@ -68,7 +68,7 @@ class ProgramTypeController extends Controller
      */
     public function edit(ProgramType $programType): View
     {
-        return view('admin.program-types.edit', compact('programType'));
+        return view('pages.admin.program-types.edit', compact('programType'));
     }
 
     /**
@@ -120,7 +120,7 @@ class ProgramTypeController extends Controller
     private function respondDeleteConstraintViolation(Request $request, ProgramType $programType): RedirectResponse|string
     {
         if ($request->header('HX-Request')) {
-            return view('admin.program-types._delete_error_row', [
+            return view('partials.admin.program-types.delete_error_row', [
                 'programType' => $programType,
                 'message' => self::DELETE_CONSTRAINT_MESSAGE,
             ])->render();

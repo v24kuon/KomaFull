@@ -18,7 +18,7 @@ class ProgramRepetitionRuleController extends Controller
     /**
      * 繰り返し設定一覧を表示し、HTMX 要求時は一覧テーブルのみ返す。
      */
-    public function index(Request $request): View|string
+    public function index(Request $request): View
     {
         $programRepetitionRules = ProgramRepetitionRule::query()
             ->with(['program', 'location', 'staff'])
@@ -26,10 +26,10 @@ class ProgramRepetitionRuleController extends Controller
             ->get();
 
         if ($request->header('HX-Request')) {
-            return view('admin.program-repetition-rules._table', compact('programRepetitionRules'))->render();
+            return view('partials.admin.program-repetition-rules.table', compact('programRepetitionRules'));
         }
 
-        return view('admin.program-repetition-rules.index', compact('programRepetitionRules'));
+        return view('pages.admin.program-repetition-rules.index', compact('programRepetitionRules'));
     }
 
     /**
@@ -37,7 +37,7 @@ class ProgramRepetitionRuleController extends Controller
      */
     public function create(): View
     {
-        return view('admin.program-repetition-rules.create', $this->resolveFormMasterData());
+        return view('pages.admin.program-repetition-rules.create', $this->resolveFormMasterData());
     }
 
     /**
@@ -60,7 +60,7 @@ class ProgramRepetitionRuleController extends Controller
     {
         $formMasterData = $this->resolveFormMasterData();
 
-        return view('admin.program-repetition-rules.edit', [
+        return view('pages.admin.program-repetition-rules.edit', [
             'programRepetitionRule' => $programRepetitionRule,
             'programs' => $formMasterData['programs'],
             'locations' => $formMasterData['locations'],

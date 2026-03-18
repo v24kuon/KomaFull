@@ -16,6 +16,38 @@
 
 ## Entries
 
+- date: 2026-03-18
+  branch: feat/ph8-2-2-view-structure
+  scope: PRレビュー指摘対応（Fortify のビュークロージャへ View 戻り値型を追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Providers/FortifyServiceProvider.php
+  notes: 指摘は有効。FortifyServiceProvider の `loginView` / `registerView` / `verifyEmailView` / `requestPasswordResetLinkView` / `resetPasswordView` はいずれも Blade view を返すコールバックだが、戻り値型が未明示だった。既存コードで使用している `Illuminate\View\View` に合わせて 5件すべてを `: View` へ統一し、`resetPasswordView` だけを先に型付けしていた状態の粒度差も解消した。
+
+- date: 2026-03-18
+  branch: feat/ph8-2-2-view-structure
+  scope: PRレビュー指摘対応（Fortify resetPasswordView の Request 型宣言を追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Providers/FortifyServiceProvider.php
+  notes: 指摘は有効。Fortify の view callback 群のうち resetPasswordView だけが `$request` 無型で、同一ファイル内でも `RateLimiter::for('login', function (Request $request) { ... })` と粒度が揃っていなかった。既存 import 済みの `Illuminate\Http\Request` をそのまま用いてクロージャ引数に型宣言を追加し、挙動を変えずに静的保証と一貫性を補強した。
+
+- date: 2026-03-17
+  branch: feat/ph8-2-2-view-structure
+  scope: PRレビュー指摘対応（CategoryController の FK制約違反削除ハンドリングを追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Admin/CategoryController.php, resources/views/partials/admin/categories/delete_error_row.blade.php, tests/Feature/Admin/AdminCategoryCrudTest.php
+  notes: 指摘は有効。CategoryController の destroy() だけが sibling CRUD と異なり QueryException を未捕捉で、Program がぶら下がるカテゴリ削除時に 500 へ落ちていた。ProgramTypeController などと同じ try-catch + isForeignKeyConstraintViolation() + respondDeleteConstraintViolation() パターンへ揃え、通常削除では error フラッシュ、HTMX 削除では category-row を維持したエラー行 HTML を返すよう修正した。あわせて Program を関連データに使った通常/HTMX の失敗系 feature test を追加した。
+
+- date: 2026-03-17
+  branch: feat/ph8-2-2-view-structure
+  scope: [PH8-2-2] ビューディレクトリ構成固定（pages, partials, components）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/Admin/*.php, app/Providers/FortifyServiceProvider.php, routes/web.php, resources/views/pages/, resources/views/partials/, resources/views/components/.gitkeep, tests/Feature/ViewDirectoryStructureTest.php
+  notes: 新規実装/構造整理のため採用レビュー指摘はなし。Blade の canonical 配置を `pages` / `partials` / `components` に統一し、Fortify・公開/管理ルート・HTMX 一覧応答の参照先を新構成へ揃えた。回帰として view 名固定テストを追加し、関連 auth/admin feature test を再実行している。
+
 - date: 2026-03-16
   branch: feat/ph6-2-verification
   scope: PR指摘対応（newSessions 取得をルールスコープへ限定）

@@ -23,7 +23,7 @@ class StoreSettingsController extends Controller
     {
         $settings = $this->resolveSettings();
 
-        return view('admin.store-settings.edit', compact('settings'));
+        return view('pages.admin.store-settings.edit', compact('settings'));
     }
 
     /**

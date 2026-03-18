@@ -21,15 +21,15 @@ class StaffController extends Controller
      * 前提: 管理者認可済みのルートから呼び出されること。
      * 更新方針: 読み取り専用で、DB更新は行わない。
      */
-    public function index(Request $request): View|string
+    public function index(Request $request): View
     {
         $staffs = Staff::query()->orderBy('id', 'desc')->get();
 
         if ($request->header('HX-Request')) {
-            return view('admin.staffs._table', compact('staffs'))->render();
+            return view('partials.admin.staffs.table', compact('staffs'));
         }
 
-        return view('admin.staffs.index', compact('staffs'));
+        return view('pages.admin.staffs.index', compact('staffs'));
     }
 
     /**
@@ -40,7 +40,7 @@ class StaffController extends Controller
      */
     public function create(): View
     {
-        return view('admin.staffs.create');
+        return view('pages.admin.staffs.create');
     }
 
     /**
@@ -65,7 +65,7 @@ class StaffController extends Controller
      */
     public function edit(Staff $staff): View
     {
-        return view('admin.staffs.edit', compact('staff'));
+        return view('pages.admin.staffs.edit', compact('staff'));
     }
 
     /**
@@ -117,7 +117,7 @@ class StaffController extends Controller
     private function respondDeleteConstraintViolation(Request $request, Staff $staff): RedirectResponse|string
     {
         if ($request->header('HX-Request')) {
-            return view('admin.staffs._delete_error_row', [
+            return view('partials.admin.staffs.delete_error_row', [
                 'staff' => $staff,
                 'message' => self::DELETE_CONSTRAINT_MESSAGE,
             ])->render();

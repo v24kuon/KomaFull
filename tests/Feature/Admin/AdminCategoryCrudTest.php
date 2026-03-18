@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Category;
+use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -185,6 +186,36 @@ class AdminCategoryCrudTest extends TestCase
 
         $response->assertRedirect(route('admin.categories.index'));
         $this->assertDatabaseMissing('categories', ['id' => $category->id]);
+    }
+
+    public function test_destroy_fails_with_error_message_when_category_has_related_programs(): void
+    {
+        $category = Category::factory()->createOne();
+        Program::factory()->createOne(['category_id' => $category->id]);
+
+        $response = $this->actingAs($this->admin)->delete(route('admin.categories.destroy', $category));
+
+        $response->assertRedirect(route('admin.categories.index'));
+        $response->assertSessionHas('error', fn (string $message): bool => str_contains($message, '削除できません'));
+        $response->assertSessionHas('error', fn (string $message): bool => str_contains($message, '関連プログラム'));
+        $this->assertDatabaseHas('categories', ['id' => $category->id]);
+    }
+
+    public function test_destroy_with_htmx_returns_error_row_when_category_has_related_programs(): void
+    {
+        $category = Category::factory()->createOne();
+        Program::factory()->createOne(['category_id' => $category->id]);
+
+        $response = $this->actingAs($this->admin)
+            ->withHeader('HX-Request', 'true')
+            ->delete(route('admin.categories.destroy', $category));
+
+        $response->assertOk();
+        $response->assertSeeText('削除できません');
+        $response->assertSeeText('関連プログラム');
+        $response->assertSee('role="alert"', false);
+        $response->assertSee('id="category-row-'.$category->id.'"', false);
+        $this->assertDatabaseHas('categories', ['id' => $category->id]);
     }
 
     public function test_destroy_with_htmx_returns_empty(): void

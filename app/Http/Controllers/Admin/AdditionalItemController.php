@@ -18,15 +18,15 @@ class AdditionalItemController extends Controller
      * 前提: 管理者認可済みのルートから呼び出されること。
      * 更新方針: 読み取り専用で、DB更新は行わない。
      */
-    public function index(Request $request): View|string
+    public function index(Request $request): View
     {
         $additionalItems = AdditionalItem::query()->orderBy('id', 'desc')->get();
 
         if ($request->header('HX-Request')) {
-            return view('admin.additional-items._table', compact('additionalItems'))->render();
+            return view('partials.admin.additional-items.table', compact('additionalItems'));
         }
 
-        return view('admin.additional-items.index', compact('additionalItems'));
+        return view('pages.admin.additional-items.index', compact('additionalItems'));
     }
 
     /**
@@ -37,7 +37,7 @@ class AdditionalItemController extends Controller
      */
     public function create(): View
     {
-        return view('admin.additional-items.create');
+        return view('pages.admin.additional-items.create');
     }
 
     /**
@@ -62,7 +62,7 @@ class AdditionalItemController extends Controller
      */
     public function edit(AdditionalItem $additionalItem): View
     {
-        return view('admin.additional-items.edit', compact('additionalItem'));
+        return view('pages.admin.additional-items.edit', compact('additionalItem'));
     }
 
     /**
