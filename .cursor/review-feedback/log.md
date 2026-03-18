@@ -18,6 +18,14 @@
 
 - date: 2026-03-18
   branch: feat/ph8-2-2-view-structure
+  scope: PRレビュー指摘対応（Fortify のビュークロージャへ View 戻り値型を追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Providers/FortifyServiceProvider.php
+  notes: 指摘は有効。FortifyServiceProvider の `loginView` / `registerView` / `verifyEmailView` / `requestPasswordResetLinkView` / `resetPasswordView` はいずれも Blade view を返すコールバックだが、戻り値型が未明示だった。既存コードで使用している `Illuminate\View\View` に合わせて 5件すべてを `: View` へ統一し、`resetPasswordView` だけを先に型付けしていた状態の粒度差も解消した。
+
+- date: 2026-03-18
+  branch: feat/ph8-2-2-view-structure
   scope: PRレビュー指摘対応（Fortify resetPasswordView の Request 型宣言を追加）
   adopted: yes
   classification: PR限定
