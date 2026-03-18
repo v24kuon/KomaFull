@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCategoryRequest;
 use App\Http\Requests\Admin\UpdateCategoryRequest;
 use App\Models\Category;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
+    private const DELETE_CONSTRAINT_MESSAGE = '関連データが存在するためカテゴリを削除できません。先に関連プログラムを削除してください。';
+
     /**
      * カテゴリ一覧を表示し、HTMX要求時は一覧テーブルのみ返す。
      *
@@ -86,11 +89,19 @@ class CategoryController extends Controller
      * 対象カテゴリを削除し、HTMX要求時は空レスポンスを返す。
      *
      * 前提: ルートモデルバインディングで対象レコードが解決されること。
-     * 更新方針: 対象レコードを delete したうえで応答形式を分岐する。
+     * 更新方針: 対象レコードを delete したうえで応答形式を分岐する。FK制約違反時は利用者向けエラーを返す。
      */
     public function destroy(Request $request, Category $category): RedirectResponse|string
     {
-        $category->delete();
+        try {
+            $category->delete();
+        } catch (QueryException $exception) {
+            if ($this->isForeignKeyConstraintViolation($exception)) {
+                return $this->respondDeleteConstraintViolation($request, $category);
+            }
+
+            throw $exception;
+        }
 
         if ($request->header('HX-Request')) {
             return '';
@@ -98,5 +109,24 @@ class CategoryController extends Controller
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'カテゴリを削除しました。');
+    }
+
+    /**
+     * FK制約違反時の削除失敗レスポンスを要求種別に応じて返す。
+     *
+     * 前提: destroy() から外部キー制約違反として判定された場合のみ呼び出されること。
+     * 更新方針: HTMX要求では対象行のエラー表示HTMLを返し、通常要求では一覧画面へリダイレクトしてエラーフラッシュを設定する。
+     */
+    private function respondDeleteConstraintViolation(Request $request, Category $category): RedirectResponse|string
+    {
+        if ($request->header('HX-Request')) {
+            return view('partials.admin.categories.delete_error_row', [
+                'category' => $category,
+                'message' => self::DELETE_CONSTRAINT_MESSAGE,
+            ])->render();
+        }
+
+        return redirect()->route('admin.categories.index')
+            ->with('error', self::DELETE_CONSTRAINT_MESSAGE);
     }
 }

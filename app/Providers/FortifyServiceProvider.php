@@ -34,7 +34,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::registerView(fn () => view('pages.auth.register'));
         Fortify::verifyEmailView(fn () => view('pages.auth.verify-email'));
         Fortify::requestPasswordResetLinkView(fn () => view('pages.auth.forgot-password'));
-        Fortify::resetPasswordView(fn ($request) => view('pages.auth.reset-password', ['request' => $request]));
+        Fortify::resetPasswordView(fn (Request $request) => view('pages.auth.reset-password', ['request' => $request]));
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
