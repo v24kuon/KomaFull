@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-03-19
+  branch: feat/ph9-2-1-welcome-replace
+  scope: [PH9-2-1] welcome.blade.php の置換と共通レイアウト適用
+  adopted: no
+  classification: none
+  targets: resources/views/pages/welcome.blade.php, public/assets/css/pages/welcome.css, tests/Feature/WelcomePageTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。welcome を layouts.app に載せ替え、認証状態ごとの導線（ゲスト: login/register、管理者: admin.dashboard、一般会員: logout）を分岐。welcome.css を追加し WelcomePageTest を新設。
+
+- date: 2026-03-19
   branch: feat/ph8-4-1-common-ui-components
   scope: PRレビュー指摘対応（submitState の pageshow リスナーを destroy で解除）
   adopted: yes

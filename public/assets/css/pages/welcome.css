@@ -1,0 +1,27 @@
+/* ==========================================================
+   公開トップページ
+   ========================================================== */
+.p-welcome__hero {
+    background:
+        radial-gradient(circle at top right, rgba(13, 110, 253, 0.16), transparent 32%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.96));
+}
+
+.p-welcome__eyebrow,
+.p-welcome__section-label {
+    color: var(--app-brand-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.p-welcome__hero-panel {
+    background-color: rgba(255, 255, 255, 0.92);
+    border-radius: 1.5rem;
+}
+
+.p-welcome__metric {
+    background-color: rgba(13, 110, 253, 0.06);
+    border: 1px solid rgba(13, 110, 253, 0.1);
+}
