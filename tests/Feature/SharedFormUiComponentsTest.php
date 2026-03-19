@@ -38,6 +38,26 @@ BLADE);
     }
 
     /**
+     * TC-R-01: loading 表示は初期非表示を維持しつつ Alpine が display class を切り替えられること。
+     */
+    public function test_submit_button_component_uses_toggleable_loading_display_classes(): void
+    {
+        $html = $this->renderBlade(<<<'BLADE'
+<x-ui.submit-button loading="保存中...">保存</x-ui.submit-button>
+BLADE);
+
+        $this->assertStringContainsString('class="d-none"', $html);
+        $this->assertStringContainsString(
+            'x-bind:class="{ \'d-none\': !submitting, \'d-inline-flex align-items-center\': submitting }"',
+            $html
+        );
+        $this->assertStringNotContainsString(
+            'x-bind:class="submitting ? \'d-inline-flex align-items-center\' : \'d-none\'"',
+            $html
+        );
+    }
+
+    /**
      * TC-N-02: 対象フィールドの validation error を invalid-feedback として描画すること。
      */
     public function test_field_error_component_renders_invalid_feedback_for_target_field(): void
@@ -116,7 +136,5 @@ BLADE);
         } catch (\Throwable $throwable) {
             $this->fail($throwable->getMessage());
         }
-
-        return '';
     }
 }

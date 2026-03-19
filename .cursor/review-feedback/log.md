@@ -18,6 +18,30 @@
 
 - date: 2026-03-19
   branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（submit-button の display class 競合を解消）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/components/ui/submit-button.blade.php, tests/Feature/SharedFormUiComponentsTest.php
+  notes: 指摘は有効。loading 表示 span が静的 `d-none` と string 形式の `x-bind:class` を併用しており、送信中に `d-none` と `d-inline-flex` が共存し得た。初期非表示は維持したまま、Alpine が `d-none` を外せる object syntax へ変更し、回帰テストを追加した。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（SharedFormUiComponentsTest の到達不能 return を削除）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/SharedFormUiComponentsTest.php
+  notes: 指摘は有効。`renderBlade()` の catch 節で呼ぶ `$this->fail()` は例外を投げて処理を中断するため、直後の `return ''` は到達不能だった。挙動変更なしでデッドコードのみ削除した。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（submitState の bfcache 復元時リセットを追加）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/js/app.js, tests/Feature/AppLayoutAlpineCspTest.php
+  notes: 指摘は有効。submitState は startSubmitting() で `submitting` を true にするだけで戻し処理がなく、bfcache 復元時に disabled 状態が残る可能性があった。`pageshow` + `event.persisted` で `submitting=false` へ戻す処理を追加し、ソースレベルの回帰テストを加えた。実ブラウザでの bfcache 再現までは feature test では扱えないため、今回は hook の存在を検証対象とした。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
   scope: [PH8-4-1] 共通UI部品（送信ボタンLoading, バリデーションエラー表示）の実装
   adopted: no
   classification: none

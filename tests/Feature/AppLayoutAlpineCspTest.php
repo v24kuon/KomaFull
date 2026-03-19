@@ -122,6 +122,27 @@ class AppLayoutAlpineCspTest extends TestCase
     }
 
     /**
+     * Application script resets submitState when the page is restored from bfcache.
+     */
+    public function test_application_script_resets_submit_state_on_bfcache_restore(): void
+    {
+        $script = File::get(public_path('assets/js/app.js'));
+
+        $this->assertMatchesRegularExpression(
+            '/addEventListener\(\s*[\'"]pageshow[\'"]\s*,/',
+            $script
+        );
+        $this->assertMatchesRegularExpression(
+            '/event\.persisted/',
+            $script
+        );
+        $this->assertMatchesRegularExpression(
+            '/this\.submitting\s*=\s*false/',
+            $script
+        );
+    }
+
+    /**
      * Blade views do not inline Alpine object literals in x-data.
      */
     public function test_blade_views_do_not_inline_alpine_object_literals(): void

@@ -14,7 +14,7 @@
     {{ $attributes->merge(['class' => $defaultClass]) }}
 >
     <span x-bind:class="submitting ? 'd-none' : 'd-inline'">{{ $slot }}</span>
-    <span class="d-none" x-bind:class="submitting ? 'd-inline-flex align-items-center' : 'd-none'">
+    <span class="d-none" x-bind:class="{ 'd-none': !submitting, 'd-inline-flex align-items-center': submitting }">
         <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
         <span>{{ $loading }}</span>
     </span>
