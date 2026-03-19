@@ -16,6 +16,22 @@
 
 ## Entries
 
+- date: 2026-03-19
+  branch: feat/ph8-3-1-alpine-data-standard
+  scope: PRレビュー指摘対応（containsInlineAlpineObjectLiteral の属性境界誤検知を修正）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/AppLayoutAlpineCspTest.php
+  notes: 指摘は有効。x-data の値を切り出す前に全体へ正規表現を当てていたため、後続属性（例: data-config="{ open: false }"）の {...} を誤検知し得た。extractXDataAttributeValues() で x-data 属性値のみを抽出し、その値内だけを判定するよう修正。あわせて誤検知防止の回帰テストを追加した。
+
+- date: 2026-03-19
+  branch: feat/ph8-3-1-alpine-data-standard
+  scope: [PH8-3-1] Alpine.data() 登録方式の標準化（x-data直書き禁止規約）
+  adopted: no
+  classification: none
+  targets: public/assets/js/app.js, resources/views/layouts/app.blade.php, resources/views/layouts/admin.blade.php, tests/Feature/AppLayoutAlpineCspTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。`app.js` に `alpine:init` フックを追加し、共通の `Alpine.data()` 登録ポイントを固定した。あわせて app/admin レイアウトで `app.js` を Alpine CSP バンドルより前に読み込む順序へ統一し、Blade 全体で `x-data` のインラインオブジェクトリテラルを禁止する回帰テストを追加した。
+
 - date: 2026-03-18
   branch: feat/ph8-2-2-view-structure
   scope: PRレビュー指摘対応（Fortify のビュークロージャへ View 戻り値型を追加）
@@ -1095,3 +1111,27 @@
   classification: PR限定
   targets: app/Http/Requests/Admin/UpdateProgramRepetitionRuleRequest.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。`UpdateProgramRepetitionRuleRequest::prepareForValidation()` は weekly→daily 切り替え時の stale `day_of_week` を shared validator 前に吸収する update 専用責務を持ち、これを store 側へ広げない設計意図も重要だった。責務・前提・更新方針を短い PHPDoc で追加し、daily 更新時だけ `day_of_week` を null 化し、store 経路は引き続き tampered daily payload を拒否する前提を明文化した。
+
+- date: 2026-03-19
+  branch: feat/ph8-3-1-alpine-data-standard
+  scope: PRレビュー指摘対応（AppLayoutAlpineCspTest の brittle assertion を緩和）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/AppLayoutAlpineCspTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`document.addEventListener('alpine:init'` の完全一致は引用符形式に依存しており、イベント名自体を正規表現で検証する変更は妥当だったため採用した。一方で `<script defer src="..."></script>` の完全一致が属性順や `nonce` 追加に弱いという問題意識も妥当だが、単に `src` 文字列の存在だけを見る提案は `assertAssetLoadsBefore()` と重複して回帰検知力が落ちるため採用しなかった。代わりに、`src` を持つ `<script>` タグであることを属性順・追加属性・引用符差分に耐える正規表現で検証する最小差分へ調整した。
+
+- date: 2026-03-19
+  branch: feat/ph8-3-1-alpine-data-standard
+  scope: PRレビュー指摘対応（empty x-data での capture group 判定不備を修正）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/AppLayoutAlpineCspTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`extractXDataAttributeValues()` は `PREG_SET_ORDER` の未参加 capture group が配列に存在しない前提を考慮せず、`$match[1] !== '' ? ... : $match[2] ...` と空文字比較で分岐していたため、`x-data=""` や `x-data=''` で未定義キー参照が発生していた。最小差分として「空文字かどうか」ではなく「最初に定義されている capture group を返す」実装へ変更し、空のダブルクォート・シングルクォート値が例外なく `false` 判定になる回帰ケースを provider に追加した。
+
+- date: 2026-03-19
+  branch: feat/ph8-3-1-alpine-data-standard
+  scope: PRレビュー指摘対応（Blade コメントと pure echo の x-data 誤検知を抑止）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/AppLayoutAlpineCspTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`test_blade_views_do_not_inline_alpine_object_literals()` は raw Blade source を走査しており、`{{-- ... --}}` 内の `x-data="{ ... }"` と `x-data="{{ $componentName }}"` / `x-data="{!! $componentName !!}"` のような pure Blade echo 値まで `{...}` 判定に巻き込んで false positive になっていた。現行 `resources/views` に `x-data` は存在せず即時の実害はなかったが、将来のコメントアウトや動的登録名で不必要に赤くなるため、最小差分として Blade コメントを除去してから走査し、pure Blade echo 値だけは inline object literal 判定から除外するよう調整した。回帰ケースは provider に追加して再発を防止した。
