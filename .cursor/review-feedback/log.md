@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-19
+  branch: feat/ph8-3-1-alpine-data-standard
+  scope: [PH8-3-1] Alpine.data() 登録方式の標準化（x-data直書き禁止規約）
+  adopted: no
+  classification: none
+  targets: public/assets/js/app.js, resources/views/layouts/app.blade.php, resources/views/layouts/admin.blade.php, tests/Feature/AppLayoutAlpineCspTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。`app.js` に `alpine:init` フックを追加し、共通の `Alpine.data()` 登録ポイントを固定した。あわせて app/admin レイアウトで `app.js` を Alpine CSP バンドルより前に読み込む順序へ統一し、Blade 全体で `x-data` のインラインオブジェクトリテラルを禁止する回帰テストを追加した。
+
 - date: 2026-03-18
   branch: feat/ph8-2-2-view-structure
   scope: PRレビュー指摘対応（Fortify のビュークロージャへ View 戻り値型を追加）
