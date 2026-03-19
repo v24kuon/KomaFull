@@ -18,6 +18,14 @@
 
 - date: 2026-03-19
   branch: feat/ph8-3-1-alpine-data-standard
+  scope: PRレビュー指摘対応（containsInlineAlpineObjectLiteral の属性境界誤検知を修正）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/AppLayoutAlpineCspTest.php
+  notes: 指摘は有効。x-data の値を切り出す前に全体へ正規表現を当てていたため、後続属性（例: data-config="{ open: false }"）の {...} を誤検知し得た。extractXDataAttributeValues() で x-data 属性値のみを抽出し、その値内だけを判定するよう修正。あわせて誤検知防止の回帰テストを追加した。
+
+- date: 2026-03-19
+  branch: feat/ph8-3-1-alpine-data-standard
   scope: [PH8-3-1] Alpine.data() 登録方式の標準化（x-data直書き禁止規約）
   adopted: no
   classification: none

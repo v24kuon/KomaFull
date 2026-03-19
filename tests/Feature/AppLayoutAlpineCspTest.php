@@ -170,6 +170,14 @@ class AppLayoutAlpineCspTest extends TestCase
                 '<div x-data="dropdown()"></div>',
                 false,
             ],
+            'adjacent attribute object literal does not count as x-data inline object' => [
+                '<div x-data="dropdown" data-config="{ open: false }"></div>',
+                false,
+            ],
+            'adjacent attribute object literal does not count as x-data factory call' => [
+                '<div x-data="dropdown()" data-config="{ open: false }"></div>',
+                false,
+            ],
         ];
     }
 
@@ -212,6 +220,34 @@ BLADE);
 
     private function containsInlineAlpineObjectLiteral(string $contents): bool
     {
-        return preg_match('/x-data\s*=\s*(?:(["\']).*?\{.*?\}.*?\1|\{.*?\})/s', $contents) === 1;
+        foreach ($this->extractXDataAttributeValues($contents) as $xDataValue) {
+            if (preg_match('/\{.*\}/s', $xDataValue) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function extractXDataAttributeValues(string $contents): array
+    {
+        preg_match_all(
+            '/\bx-data\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))/s',
+            $contents,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        return array_values(array_map(
+            static function (array $match): string {
+                return $match[1] !== ''
+                    ? $match[1]
+                    : ($match[2] !== '' ? $match[2] : ($match[3] ?? ''));
+            },
+            $matches
+        ));
     }
 }
