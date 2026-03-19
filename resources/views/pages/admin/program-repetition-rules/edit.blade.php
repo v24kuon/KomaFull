@@ -9,13 +9,15 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-body">
-        <form method="POST" action="{{ route('admin.program-repetition-rules.update', $programRepetitionRule) }}">
+        @include('partials.admin.errors')
+
+        <form method="POST" action="{{ route('admin.program-repetition-rules.update', $programRepetitionRule) }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
             @csrf
             @method('PUT')
             @include('partials.admin.program-repetition-rules.form')
             <div class="d-flex justify-content-end gap-2">
                 <a href="{{ route('admin.program-repetition-rules.index') }}" class="btn btn-outline-secondary">キャンセル</a>
-                <button type="submit" class="btn btn-primary">更新する</button>
+                <x-ui.submit-button>更新する</x-ui.submit-button>
             </div>
         </form>
     </div>

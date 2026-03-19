@@ -29,6 +29,20 @@ class AuthViewsTest extends TestCase
     }
 
     /**
+     * TC-N-01: ログイン画面は共通 submit loading state を持つこと。
+     */
+    public function test_login_screen_uses_shared_submit_loading_markup(): void
+    {
+        $response = $this->get('/login');
+
+        $response->assertOk();
+        $response->assertSee('x-data="submitState()"', false);
+        $response->assertSee('x-on:submit="startSubmitting($event)"', false);
+        $response->assertSee('x-bind:disabled="submitting"', false);
+        $response->assertSee('送信中...', false);
+    }
+
+    /**
      * TC-N-02: 会員登録画面表示
      */
     public function test_register_screen_can_be_rendered(): void

@@ -20,7 +20,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('password.email') }}">
+                    <form method="POST" action="{{ route('password.email') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                         @csrf
 
                         <div class="mb-3">
@@ -35,13 +35,11 @@
                                 autocomplete="email"
                                 autofocus
                             >
-                            @error('email')
-                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
-                            @enderror
+                            <x-ui.field-error field="email" />
                         </div>
 
                         <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary">再設定リンクを送信</button>
+                            <x-ui.submit-button>再設定リンクを送信</x-ui.submit-button>
                         </div>
 
                         <div class="text-center">

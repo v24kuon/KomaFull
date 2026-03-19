@@ -7,5 +7,16 @@ document.addEventListener('alpine:init', () => {
         return;
     }
 
-    // Shared Alpine.data() registrations belong in this callback.
+    Alpine.data('submitState', () => ({
+        submitting: false,
+        startSubmitting(event) {
+            if (this.submitting) {
+                event.preventDefault();
+
+                return;
+            }
+
+            this.submitting = true;
+        },
+    }));
 });

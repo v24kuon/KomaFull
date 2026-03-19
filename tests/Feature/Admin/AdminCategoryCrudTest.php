@@ -52,6 +52,17 @@ class AdminCategoryCrudTest extends TestCase
         $response->assertSeeText('カテゴリ作成');
     }
 
+    public function test_create_form_uses_shared_submit_loading_markup(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.create'));
+
+        $response->assertOk();
+        $response->assertSee('x-data="submitState()"', false);
+        $response->assertSee('x-on:submit="startSubmitting($event)"', false);
+        $response->assertSee('x-bind:disabled="submitting"', false);
+        $response->assertSee('送信中...', false);
+    }
+
     public function test_store_creates_category(): void
     {
         $data = [

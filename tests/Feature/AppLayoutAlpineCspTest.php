@@ -104,6 +104,24 @@ class AppLayoutAlpineCspTest extends TestCase
     }
 
     /**
+     * Application script registers the shared submitState Alpine data helper.
+     */
+    public function test_application_script_registers_submit_state_alpine_data(): void
+    {
+        $script = File::get(public_path('assets/js/app.js'));
+
+        $this->assertMatchesRegularExpression(
+            '/Alpine\.data\(\s*[\'"]submitState[\'"]\s*,/',
+            $script
+        );
+        $this->assertStringContainsString('submitting: false', $script);
+        $this->assertMatchesRegularExpression(
+            '/startSubmitting\s*\(/',
+            $script
+        );
+    }
+
+    /**
      * Blade views do not inline Alpine object literals in x-data.
      */
     public function test_blade_views_do_not_inline_alpine_object_literals(): void

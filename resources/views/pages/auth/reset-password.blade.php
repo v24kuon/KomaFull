@@ -10,7 +10,7 @@
                 <div class="card-body p-4">
                     <h1 class="h4 text-center mb-4">新しいパスワードの設定</h1>
 
-                    <form method="POST" action="{{ route('password.update') }}">
+                    <form method="POST" action="{{ route('password.update') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                         @csrf
 
                         <input type="hidden" name="token" value="{{ $request->route('token') }}">
@@ -27,9 +27,7 @@
                                 autocomplete="email"
                                 autofocus
                             >
-                            @error('email')
-                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
-                            @enderror
+                            <x-ui.field-error field="email" />
                         </div>
 
                         <div class="mb-3">
@@ -42,9 +40,7 @@
                                 required
                                 autocomplete="new-password"
                             >
-                            @error('password')
-                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
-                            @enderror
+                            <x-ui.field-error field="password" />
                         </div>
 
                         <div class="mb-3">
@@ -60,7 +56,7 @@
                         </div>
 
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">パスワードを再設定</button>
+                            <x-ui.submit-button>パスワードを再設定</x-ui.submit-button>
                         </div>
                     </form>
                 </div>

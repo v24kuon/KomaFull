@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: [PH8-4-1] 共通UI部品（送信ボタンLoading, バリデーションエラー表示）の実装
+  adopted: no
+  classification: none
+  targets: resources/views/components/ui/, public/assets/js/app.js, resources/views/partials/admin/errors.blade.php, resources/views/partials/admin/*/form.blade.php, resources/views/pages/auth/*.blade.php, resources/views/pages/admin/**/create.blade.php, resources/views/pages/admin/**/edit.blade.php, config/app.php, .env.example, tests/Feature/SharedFormUiComponentsTest.php, tests/Feature/AppLayoutAlpineCspTest.php, tests/Feature/AuthViewsTest.php, tests/Feature/Admin/AdminCategoryCrudTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。x-ui.submit-button / field-error / form-errors を追加し、app.js に submitState() を登録。auth/admin フォームへ送信 loading と共通エラー表示を適用。ASSET_VERSION を 20260319_1 に更新。
+
+- date: 2026-03-19
   branch: feat/ph8-3-1-alpine-data-standard
   scope: PRレビュー指摘対応（containsInlineAlpineObjectLiteral の属性境界誤検知を修正）
   adopted: yes
