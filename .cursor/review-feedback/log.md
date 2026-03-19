@@ -1175,3 +1175,11 @@
   classification: PR限定
   targets: tests/Feature/AppLayoutAlpineCspTest.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。`test_blade_views_do_not_inline_alpine_object_literals()` は raw Blade source を走査しており、`{{-- ... --}}` 内の `x-data="{ ... }"` と `x-data="{{ $componentName }}"` / `x-data="{!! $componentName !!}"` のような pure Blade echo 値まで `{...}` 判定に巻き込んで false positive になっていた。現行 `resources/views` に `x-data` は存在せず即時の実害はなかったが、将来のコメントアウトや動的登録名で不必要に赤くなるため、最小差分として Blade コメントを除去してから走査し、pure Blade echo 値だけは inline object literal 判定から除外するよう調整した。回帰ケースは provider に追加して再発を防止した。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（AppLayoutAlpineCspTest の app.js 読み込みを setUp() に集約）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/AppLayoutAlpineCspTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`File::get(public_path('assets/js/app.js'))` が 4 テストで重複しており、読み込み箇所を 1 か所へ寄せる問題意識は妥当だった。一方で `setUp()` へ無条件に移すと `app.js` を使わないケースまでファイル読み込みに依存し、DataProvider ケースも含めて失敗面が広がるため、その提案は採用しなかった。代わりに `applicationScript()` の lazy helper を追加し、必要なテストだけが同一ロジック経由で `app.js` を取得する最小差分へ調整した。アサーション対象の文字列や検証観点は変更していない。

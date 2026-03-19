@@ -13,6 +13,8 @@ class AppLayoutAlpineCspTest extends TestCase
 
     private string $renderedAdminLayoutHtml;
 
+    private ?string $applicationScript = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -95,11 +97,9 @@ class AppLayoutAlpineCspTest extends TestCase
      */
     public function test_application_script_registers_alpine_data_on_alpine_init(): void
     {
-        $script = File::get(public_path('assets/js/app.js'));
-
         $this->assertMatchesRegularExpression(
             '/document\.addEventListener\(\s*[\'"]alpine:init[\'"]\s*,/',
-            $script
+            $this->applicationScript()
         );
     }
 
@@ -108,16 +108,14 @@ class AppLayoutAlpineCspTest extends TestCase
      */
     public function test_application_script_registers_submit_state_alpine_data(): void
     {
-        $script = File::get(public_path('assets/js/app.js'));
-
         $this->assertMatchesRegularExpression(
             '/Alpine\.data\(\s*[\'"]submitState[\'"]\s*,/',
-            $script
+            $this->applicationScript()
         );
-        $this->assertStringContainsString('submitting: false', $script);
+        $this->assertStringContainsString('submitting: false', $this->applicationScript());
         $this->assertMatchesRegularExpression(
             '/startSubmitting\s*\(/',
-            $script
+            $this->applicationScript()
         );
     }
 
@@ -126,19 +124,17 @@ class AppLayoutAlpineCspTest extends TestCase
      */
     public function test_application_script_resets_submit_state_on_bfcache_restore(): void
     {
-        $script = File::get(public_path('assets/js/app.js'));
-
         $this->assertMatchesRegularExpression(
             '/addEventListener\(\s*[\'"]pageshow[\'"]\s*,/',
-            $script
+            $this->applicationScript()
         );
         $this->assertMatchesRegularExpression(
             '/event\.persisted/',
-            $script
+            $this->applicationScript()
         );
         $this->assertMatchesRegularExpression(
             '/this\.submitting\s*=\s*false/',
-            $script
+            $this->applicationScript()
         );
     }
 
@@ -147,19 +143,17 @@ class AppLayoutAlpineCspTest extends TestCase
      */
     public function test_application_script_unregisters_submit_state_pageshow_listener_on_destroy(): void
     {
-        $script = File::get(public_path('assets/js/app.js'));
-
         $this->assertMatchesRegularExpression(
             '/pageShowHandler\s*:\s*null/',
-            $script
+            $this->applicationScript()
         );
         $this->assertMatchesRegularExpression(
             '/destroy\s*\(\)\s*\{/',
-            $script
+            $this->applicationScript()
         );
         $this->assertMatchesRegularExpression(
             '/removeEventListener\(\s*[\'"]pageshow[\'"]\s*,\s*this\.pageShowHandler\s*\)/',
-            $script
+            $this->applicationScript()
         );
     }
 
@@ -304,6 +298,15 @@ BLADE);
             sprintf('/<script\b[^>]*\bsrc=(["\'])%s\1[^>]*><\/script>/s', preg_quote($asset, '/')),
             $html
         );
+    }
+
+    private function applicationScript(): string
+    {
+        if ($this->applicationScript === null) {
+            $this->applicationScript = File::get(public_path('assets/js/app.js'));
+        }
+
+        return $this->applicationScript;
     }
 
     private function containsInlineAlpineObjectLiteral(string $contents): bool
