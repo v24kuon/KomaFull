@@ -17,6 +17,46 @@
 ## Entries
 
 - date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（submitState の pageshow リスナーを destroy で解除）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/js/app.js, tests/Feature/AppLayoutAlpineCspTest.php
+  notes: 指摘は有効。submitState は init() で window の `pageshow` リスナーを追加するが、destroy() がなく HTMX で破棄された行フォームのハンドラ参照が残り得た。インスタンスごとに handler を保持し、destroy() で removeEventListener して null へ戻す最小差分で解消した。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（submit-button の display class 競合を解消）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/components/ui/submit-button.blade.php, tests/Feature/SharedFormUiComponentsTest.php
+  notes: 指摘は有効。loading 表示 span が静的 `d-none` と string 形式の `x-bind:class` を併用しており、送信中に `d-none` と `d-inline-flex` が共存し得た。初期非表示は維持したまま、Alpine が `d-none` を外せる object syntax へ変更し、回帰テストを追加した。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（SharedFormUiComponentsTest の到達不能 return を削除）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/SharedFormUiComponentsTest.php
+  notes: 指摘は有効。`renderBlade()` の catch 節で呼ぶ `$this->fail()` は例外を投げて処理を中断するため、直後の `return ''` は到達不能だった。挙動変更なしでデッドコードのみ削除した。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（submitState の bfcache 復元時リセットを追加）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/js/app.js, tests/Feature/AppLayoutAlpineCspTest.php
+  notes: 指摘は有効。submitState は startSubmitting() で `submitting` を true にするだけで戻し処理がなく、bfcache 復元時に disabled 状態が残る可能性があった。`pageshow` + `event.persisted` で `submitting=false` へ戻す処理を追加し、ソースレベルの回帰テストを加えた。実ブラウザでの bfcache 再現までは feature test では扱えないため、今回は hook の存在を検証対象とした。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: [PH8-4-1] 共通UI部品（送信ボタンLoading, バリデーションエラー表示）の実装
+  adopted: no
+  classification: none
+  targets: resources/views/components/ui/, public/assets/js/app.js, resources/views/partials/admin/errors.blade.php, resources/views/partials/admin/*/form.blade.php, resources/views/pages/auth/*.blade.php, resources/views/pages/admin/**/create.blade.php, resources/views/pages/admin/**/edit.blade.php, config/app.php, .env.example, tests/Feature/SharedFormUiComponentsTest.php, tests/Feature/AppLayoutAlpineCspTest.php, tests/Feature/AuthViewsTest.php, tests/Feature/Admin/AdminCategoryCrudTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。x-ui.submit-button / field-error / form-errors を追加し、app.js に submitState() を登録。auth/admin フォームへ送信 loading と共通エラー表示を適用。ASSET_VERSION を 20260319_1 に更新。
+
+- date: 2026-03-19
   branch: feat/ph8-3-1-alpine-data-standard
   scope: PRレビュー指摘対応（containsInlineAlpineObjectLiteral の属性境界誤検知を修正）
   adopted: yes
@@ -1135,3 +1175,11 @@
   classification: PR限定
   targets: tests/Feature/AppLayoutAlpineCspTest.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。`test_blade_views_do_not_inline_alpine_object_literals()` は raw Blade source を走査しており、`{{-- ... --}}` 内の `x-data="{ ... }"` と `x-data="{{ $componentName }}"` / `x-data="{!! $componentName !!}"` のような pure Blade echo 値まで `{...}` 判定に巻き込んで false positive になっていた。現行 `resources/views` に `x-data` は存在せず即時の実害はなかったが、将来のコメントアウトや動的登録名で不必要に赤くなるため、最小差分として Blade コメントを除去してから走査し、pure Blade echo 値だけは inline object literal 判定から除外するよう調整した。回帰ケースは provider に追加して再発を防止した。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（AppLayoutAlpineCspTest に applicationScript() lazy helper を追加）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/AppLayoutAlpineCspTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は一部有効。`File::get(public_path('assets/js/app.js'))` が 4 テストで重複しており、読み込み箇所を 1 か所へ寄せる問題意識は妥当だった。一方で `setUp()` へ無条件に移すと `app.js` を使わないケースまでファイル読み込みに依存し、DataProvider ケースも含めて失敗面が広がるため、その提案は採用しなかった。代わりに `applicationScript()` の lazy helper を追加し、必要なテストだけが同一ロジック経由で `app.js` を取得する最小差分へ調整した。アサーション対象の文字列や検証観点は変更していない。

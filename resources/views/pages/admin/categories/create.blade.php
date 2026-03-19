@@ -9,11 +9,11 @@
             <div class="card-body">
                 @include('partials.admin.errors')
 
-                <form method="POST" action="{{ route('admin.categories.store') }}">
+                <form method="POST" action="{{ route('admin.categories.store') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                     @csrf
                     @include('partials.admin.categories.form')
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">作成</button>
+                        <x-ui.submit-button>作成</x-ui.submit-button>
                         <a href="{{ route('admin.categories.index') }}" class="btn btn-outline-secondary">キャンセル</a>
                     </div>
                 </form>

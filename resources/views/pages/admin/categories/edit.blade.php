@@ -9,12 +9,12 @@
             <div class="card-body">
                 @include('partials.admin.errors')
 
-                <form method="POST" action="{{ route('admin.categories.update', $category) }}">
+                <form method="POST" action="{{ route('admin.categories.update', $category) }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                     @csrf
                     @method('PUT')
                     @include('partials.admin.categories.form')
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">更新</button>
+                        <x-ui.submit-button>更新</x-ui.submit-button>
                         <a href="{{ route('admin.categories.index') }}" class="btn btn-outline-secondary">キャンセル</a>
                     </div>
                 </form>

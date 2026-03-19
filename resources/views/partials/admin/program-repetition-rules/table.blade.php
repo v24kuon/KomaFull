@@ -52,9 +52,9 @@
                 <td class="text-end">
                     <div class="d-inline-flex gap-2">
                         <a href="{{ route('admin.program-repetition-rules.edit', $programRepetitionRule) }}" class="btn btn-sm btn-outline-primary">編集</a>
-                        <form method="POST" action="{{ route('admin.program-repetition-rules.generate', $programRepetitionRule) }}">
+                        <form method="POST" action="{{ route('admin.program-repetition-rules.generate', $programRepetitionRule) }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                             @csrf
-                            <button type="submit" class="btn btn-sm btn-outline-success">1件生成</button>
+                            <x-ui.submit-button class="btn btn-sm btn-outline-success">1件生成</x-ui.submit-button>
                         </form>
                         <button
                             type="button"

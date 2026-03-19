@@ -16,7 +16,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('login') }}">
+                    <form method="POST" action="{{ route('login') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                         @csrf
 
                         <div class="mb-3">
@@ -31,9 +31,7 @@
                                 autocomplete="email"
                                 autofocus
                             >
-                            @error('email')
-                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
-                            @enderror
+                            <x-ui.field-error field="email" />
                         </div>
 
                         <div class="mb-3">
@@ -46,9 +44,7 @@
                                 required
                                 autocomplete="current-password"
                             >
-                            @error('password')
-                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
-                            @enderror
+                            <x-ui.field-error field="password" />
                         </div>
 
                         <div class="mb-3 form-check">
@@ -63,7 +59,7 @@
                         </div>
 
                         <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary">ログイン</button>
+                            <x-ui.submit-button>ログイン</x-ui.submit-button>
                         </div>
 
                         <div class="text-center">

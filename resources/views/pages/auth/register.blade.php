@@ -10,7 +10,7 @@
                 <div class="card-body p-4">
                     <h1 class="h4 text-center mb-4">会員登録</h1>
 
-                    <form method="POST" action="{{ route('register') }}">
+                    <form method="POST" action="{{ route('register') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                         @csrf
 
                         <div class="mb-3">
@@ -25,9 +25,7 @@
                                 autocomplete="name"
                                 autofocus
                             >
-                            @error('name')
-                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
-                            @enderror
+                            <x-ui.field-error field="name" />
                         </div>
 
                         <div class="mb-3">
@@ -41,9 +39,7 @@
                                 required
                                 autocomplete="email"
                             >
-                            @error('email')
-                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
-                            @enderror
+                            <x-ui.field-error field="email" />
                         </div>
 
                         <div class="mb-3">
@@ -56,9 +52,7 @@
                                 required
                                 autocomplete="new-password"
                             >
-                            @error('password')
-                                <div class="invalid-feedback" role="alert">{{ $message }}</div>
-                            @enderror
+                            <x-ui.field-error field="password" />
                         </div>
 
                         <div class="mb-3">
@@ -74,7 +68,7 @@
                         </div>
 
                         <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary">登録する</button>
+                            <x-ui.submit-button>登録する</x-ui.submit-button>
                         </div>
 
                         <div class="text-center">

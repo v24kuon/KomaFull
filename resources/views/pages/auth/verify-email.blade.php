@@ -20,10 +20,10 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('verification.send') }}">
+                    <form method="POST" action="{{ route('verification.send') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                         @csrf
                         <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary">確認メールを再送する</button>
+                            <x-ui.submit-button>確認メールを再送する</x-ui.submit-button>
                         </div>
                     </form>
 
