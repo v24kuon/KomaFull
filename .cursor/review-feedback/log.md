@@ -1178,7 +1178,7 @@
 
 - date: 2026-03-19
   branch: feat/ph8-4-1-common-ui-components
-  scope: PRレビュー指摘対応（AppLayoutAlpineCspTest の app.js 読み込みを setUp() に集約）
+  scope: PRレビュー指摘対応（AppLayoutAlpineCspTest に applicationScript() lazy helper を追加）
   adopted: yes
   classification: PR限定
   targets: tests/Feature/AppLayoutAlpineCspTest.php, .cursor/review-feedback/log.md
