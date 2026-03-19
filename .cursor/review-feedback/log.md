@@ -18,6 +18,14 @@
 
 - date: 2026-03-19
   branch: feat/ph8-4-1-common-ui-components
+  scope: PRレビュー指摘対応（submitState の pageshow リスナーを destroy で解除）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/js/app.js, tests/Feature/AppLayoutAlpineCspTest.php
+  notes: 指摘は有効。submitState は init() で window の `pageshow` リスナーを追加するが、destroy() がなく HTMX で破棄された行フォームのハンドラ参照が残り得た。インスタンスごとに handler を保持し、destroy() で removeEventListener して null へ戻す最小差分で解消した。
+
+- date: 2026-03-19
+  branch: feat/ph8-4-1-common-ui-components
   scope: PRレビュー指摘対応（submit-button の display class 競合を解消）
   adopted: yes
   classification: PR限定

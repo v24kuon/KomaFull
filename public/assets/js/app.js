@@ -9,12 +9,23 @@ document.addEventListener('alpine:init', () => {
 
     Alpine.data('submitState', () => ({
         submitting: false,
+        pageShowHandler: null,
         init() {
-            window.addEventListener('pageshow', (event) => {
+            this.pageShowHandler = (event) => {
                 if (event.persisted) {
                     this.submitting = false;
                 }
-            });
+            };
+
+            window.addEventListener('pageshow', this.pageShowHandler);
+        },
+        destroy() {
+            if (this.pageShowHandler === null) {
+                return;
+            }
+
+            window.removeEventListener('pageshow', this.pageShowHandler);
+            this.pageShowHandler = null;
         },
         startSubmitting(event) {
             if (this.submitting) {

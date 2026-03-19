@@ -143,6 +143,27 @@ class AppLayoutAlpineCspTest extends TestCase
     }
 
     /**
+     * Application script unregisters submitState pageshow listener when Alpine destroys the component.
+     */
+    public function test_application_script_unregisters_submit_state_pageshow_listener_on_destroy(): void
+    {
+        $script = File::get(public_path('assets/js/app.js'));
+
+        $this->assertMatchesRegularExpression(
+            '/pageShowHandler\s*:\s*null/',
+            $script
+        );
+        $this->assertMatchesRegularExpression(
+            '/destroy\s*\(\)\s*\{/',
+            $script
+        );
+        $this->assertMatchesRegularExpression(
+            '/removeEventListener\(\s*[\'"]pageshow[\'"]\s*,\s*this\.pageShowHandler\s*\)/',
+            $script
+        );
+    }
+
+    /**
      * Blade views do not inline Alpine object literals in x-data.
      */
     public function test_blade_views_do_not_inline_alpine_object_literals(): void
