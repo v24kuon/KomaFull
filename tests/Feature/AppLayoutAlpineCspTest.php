@@ -27,9 +27,9 @@ class AppLayoutAlpineCspTest extends TestCase
      */
     public function test_layout_loads_self_hosted_alpine_csp_asset(): void
     {
-        $this->assertStringContainsString(
-            '<script defer src="'.v_asset('assets/vendor/alpine/alpine.csp.min.js').'"></script>',
-            $this->renderedAppLayoutHtml
+        $this->assertScriptTagLoadsAsset(
+            $this->renderedAppLayoutHtml,
+            v_asset('assets/vendor/alpine/alpine.csp.min.js')
         );
     }
 
@@ -61,9 +61,9 @@ class AppLayoutAlpineCspTest extends TestCase
      */
     public function test_admin_layout_loads_self_hosted_alpine_csp_asset(): void
     {
-        $this->assertStringContainsString(
-            '<script defer src="'.v_asset('assets/vendor/alpine/alpine.csp.min.js').'"></script>',
-            $this->renderedAdminLayoutHtml
+        $this->assertScriptTagLoadsAsset(
+            $this->renderedAdminLayoutHtml,
+            v_asset('assets/vendor/alpine/alpine.csp.min.js')
         );
     }
 
@@ -97,8 +97,8 @@ class AppLayoutAlpineCspTest extends TestCase
     {
         $script = File::get(public_path('assets/js/app.js'));
 
-        $this->assertStringContainsString(
-            "document.addEventListener('alpine:init'",
+        $this->assertMatchesRegularExpression(
+            '/document\.addEventListener\(\s*[\'"]alpine:init[\'"]\s*,/',
             $script
         );
     }
@@ -162,6 +162,26 @@ class AppLayoutAlpineCspTest extends TestCase
                 '<div x-data={open:false}></div>',
                 true,
             ],
+            'empty double quoted x-data' => [
+                '<div x-data=""></div>',
+                false,
+            ],
+            'empty single quoted x-data' => [
+                "<div x-data=''></div>",
+                false,
+            ],
+            'blade comment containing inline object literal does not count' => [
+                '{{-- <div x-data="{ foo: true }"></div> --}}',
+                false,
+            ],
+            'blade echo x-data value does not count as inline object literal' => [
+                '<div x-data="{{ $componentName }}"></div>',
+                false,
+            ],
+            'blade raw echo x-data value does not count as inline object literal' => [
+                '<div x-data="{!! $componentName !!}"></div>',
+                false,
+            ],
             'registered alpine data reference' => [
                 '<div x-data="dropdown"></div>',
                 false,
@@ -218,15 +238,37 @@ BLADE);
         );
     }
 
+    private function assertScriptTagLoadsAsset(string $html, string $asset): void
+    {
+        $this->assertMatchesRegularExpression(
+            sprintf('/<script\b[^>]*\bsrc=(["\'])%s\1[^>]*><\/script>/s', preg_quote($asset, '/')),
+            $html
+        );
+    }
+
     private function containsInlineAlpineObjectLiteral(string $contents): bool
     {
-        foreach ($this->extractXDataAttributeValues($contents) as $xDataValue) {
+        foreach ($this->extractXDataAttributeValues($this->stripBladeComments($contents)) as $xDataValue) {
+            if ($this->isPureBladeEchoValue($xDataValue)) {
+                continue;
+            }
+
             if (preg_match('/\{.*\}/s', $xDataValue) === 1) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private function stripBladeComments(string $contents): string
+    {
+        return preg_replace('/\{\{--.*?--\}\}/s', '', $contents) ?? $contents;
+    }
+
+    private function isPureBladeEchoValue(string $xDataValue): bool
+    {
+        return preg_match('/^\s*(?:\{\{.*?\}\}|\{!!.*?!!\})\s*$/s', $xDataValue) === 1;
     }
 
     /**
@@ -243,9 +285,15 @@ BLADE);
 
         return array_values(array_map(
             static function (array $match): string {
-                return $match[1] !== ''
-                    ? $match[1]
-                    : ($match[2] !== '' ? $match[2] : ($match[3] ?? ''));
+                if (array_key_exists(3, $match)) {
+                    return $match[3];
+                }
+
+                if (array_key_exists(2, $match)) {
+                    return $match[2];
+                }
+
+                return $match[1] ?? '';
             },
             $matches
         ));
