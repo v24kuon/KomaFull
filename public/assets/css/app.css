@@ -3,6 +3,7 @@
    ========================================================== */
 :root {
     --app-brand-color: var(--bs-primary, #0d6efd);
+    --app-brand-rgb: 13, 110, 253;
     --app-brand-color-contrast: #ffffff;
     --app-surface-color: var(--bs-light, #f8f9fa);
     --app-text-color: var(--bs-body-color, #212529);

@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（welcome.css のブランド色重複を CSS 変数へ統一）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/app.css, public/assets/css/pages/welcome.css
+  notes: 指摘は有効。welcome.css で `rgba(13, 110, 253, ...)` が 3 箇所重複していたため、社長変数ゾーンへ `--app-brand-rgb` を追加し、ページ CSS は `rgba(var(--app-brand-rgb), ...)` 参照へ統一した。見た目の変更はなく、トークン管理の一貫性だけを改善した。
+
 - date: 2026-03-19
   branch: feat/ph9-2-1-welcome-replace
   scope: [PH9-2-1] welcome.blade.php の置換と共通レイアウト適用
