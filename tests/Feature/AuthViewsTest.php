@@ -77,7 +77,9 @@ class AuthViewsTest extends TestCase
     public function test_users_can_authenticate_using_login_screen(): void
     {
         /** @var User $user */
-        $user = User::factory()->createOne();
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_MEMBER,
+        ]);
 
         $response = $this->post('/login', [
             'email' => $user->email,
@@ -85,7 +87,48 @@ class AuthViewsTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/');
+        $response->assertRedirect(route('member.dashboard'));
+    }
+
+    /**
+     * TC-N-04b: 管理者ログインは管理ダッシュボードへ遷移すること。
+     */
+    public function test_admin_login_redirects_to_admin_dashboard(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('admin.dashboard'));
+    }
+
+    /**
+     * TC-N-04c: セッションに url.intended がある場合はロール別デフォルトより優先すること（管理者も同様）。
+     *
+     * 例: 管理者が会員向けURLへ行こうとしてログインへ誘導されたあと、ログイン後は会員画面へ戻る。
+     */
+    public function test_login_redirect_prefers_session_intended_url_over_role_default_for_admin(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        $response = $this->withSession(['url.intended' => route('member.dashboard')])
+            ->post('/login', [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('member.dashboard'));
     }
 
     /**

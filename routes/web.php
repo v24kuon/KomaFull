@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\StoreSettingsController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
 use App\Http\Controllers\ProgramController as PublicProgramController;
 use App\Http\Controllers\PublicStoreController;
 use App\Http\Controllers\ScheduleController;
@@ -34,6 +35,10 @@ Route::post('/contact', [ContactController::class, 'store'])
     ->name('contact.store');
 
 Route::get('/legal/tokushoho', [LegalController::class, 'tokushoho'])->name('legal.tokushoho');
+
+Route::middleware(['auth', 'verified'])->prefix('mypage')->name('member.')->group(function (): void {
+    Route::get('/', MemberDashboardController::class)->name('dashboard');
+});
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/', 'pages.admin.dashboard')->name('dashboard');

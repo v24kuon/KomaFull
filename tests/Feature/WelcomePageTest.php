@@ -56,6 +56,7 @@ class WelcomePageTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('action="'.route('logout').'"', false);
+        $response->assertSee(route('member.dashboard'), false);
         $response->assertDontSee(route('login'), false);
         $response->assertDontSee(route('register'), false);
         $response->assertDontSee(route('admin.dashboard'), false);

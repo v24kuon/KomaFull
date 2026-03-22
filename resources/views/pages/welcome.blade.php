@@ -33,7 +33,7 @@
                             @can('access-admin')
                                 <a href="{{ route('admin.dashboard') }}" class="btn btn-primary btn-lg">管理ダッシュボードへ</a>
                             @else
-                                <span class="badge rounded-pill text-bg-success px-3 py-2">ログイン中</span>
+                                <a href="{{ route('member.dashboard') }}" class="btn btn-primary btn-lg">マイページ</a>
                             @endcan
 
                             <form method="POST" action="{{ route('logout') }}">
@@ -46,7 +46,7 @@
                     @auth
                         @cannot('access-admin')
                             <p class="small text-secondary mt-3 mb-0">
-                                会員向けダッシュボードは次フェーズで公開予定です。現在は予約導線と認証基盤を順次整備しています。
+                                予約状況と回数券・ポイントの残高は <a href="{{ route('member.dashboard') }}">マイページ</a> から確認できます。
                             </p>
                         @endcannot
                     @endauth
