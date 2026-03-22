@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（お問い合わせフォームの email に maxlength=255 を追加）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/pages/contact/create.blade.php
+  notes: 指摘は有効。name/phone と同様、サーバー max:255 と整合する maxlength を付与。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
   scope: PRレビュー（StoreContactRequest::labelFor の unknown を InvalidArgumentException に）
   adopted: yes
   classification: PR限定

@@ -58,6 +58,7 @@
                     value="{{ old('email') }}"
                     required
                     autocomplete="email"
+                    maxlength="255"
                 >
                 <x-ui.field-error field="email" />
             </div>
