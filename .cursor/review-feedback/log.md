@@ -1871,3 +1871,35 @@
   classification: none
   targets: （該当なし）
   notes: 外部PRレビュー指摘の採用はなし。実装時点でレビュー指摘の蓄積対象はなしと判定した。
+
+- date: 2026-03-23
+  branch: feat/ph10-3-2-subscription-ui
+  scope: PH10-3-2 サブスク管理画面・README 更新・関連テスト
+  adopted: no
+  classification: none
+  targets: （該当なし）
+  notes: 外部PRレビュー指摘の採用はなし。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
+
+- date: 2026-03-23
+  branch: feat/ph10-3-2-subscription-ui
+  scope: PRレビュー（会員サブスク解約・再開・プラン表示・テスト網羅）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsSubscriptionController.php, app/Http/Requests/Member/CancelMemberSubscriptionRequest.php, app/Http/Requests/Member/ResumeMemberSubscriptionRequest.php, app/Services/Member/MemberSubscriptionManagementService.php, resources/views/pages/member/settings/subscription.blade.php, tests/Feature/Member/MemberSubscriptionSettingsTest.php, .cursor/review-feedback/log.md
+  notes: レビュー反映。inactive CoursePlan でも契約中表示用にプラン名を解決。canSwap と canCancelAtPeriodEnd の共通条件を private へ。Cancel/Resume に required メッセージと withValidator で状態検証。次回請求日をコントローラで1回だけ解決してビューへ渡し取得失敗は warning（ビューで currentPeriodEnd を直接呼ばない）。grace 文言の重複を修正。Feature テストに inactive 表示・確認必須・cancel/resume のサービス例外時エラー・after バリデーションを追加。
+
+- date: 2026-03-23
+  branch: feat/ph10-3-2-subscription-ui
+  scope: PRレビュー（サブスク画面エラーバッグ・Swap 検証・例外分離・文言・価格ID DRY）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsSubscriptionController.php, app/Http/Requests/Member/{Swap,Cancel,Resume}MemberSubscriptionRequest.php, app/Services/Member/MemberSubscriptionManagementService.php, resources/views/pages/member/settings/subscription.blade.php, tests/Feature/Member/MemberSubscriptionSettingsTest.php, .cursor/review-feedback/log.md
+  notes: レビュー反映。FormRequest の errorBag を swap/cancel/resume に分け form-errors の重複を解消。Swap に canSwap の after 検証。resolveCoursePlan と currentStripePriceId の価格取得を private へ集約。grace 表示を「解約予定日」に変更。コントローラで InvalidArgumentException を warning＋業務向け文言、IncompletePayment/SubscriptionUpdateFailure と Throwable を分岐ログ。Feature テストをバッグ名・Swap 業務例外・canSwap 不可に合わせて更新。
+
+- date: 2026-03-23
+  branch: feat/ph10-3-2-subscription-ui
+  scope: PRレビュー（サブスク after 早期 return・swap バッグ・PHPDoc・cancel/resume 業務例外テスト）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsSubscriptionController.php, app/Http/Requests/Member/{Swap,Cancel,Resume}MemberSubscriptionRequest.php, resources/views/pages/member/settings/subscription.blade.php, tests/Feature/Member/MemberSubscriptionSettingsTest.php, .cursor/review-feedback/log.md
+  notes: レビュー反映。Cancel/Resume/Swap の withValidator で基礎ルール失敗時は after の状態検証をスキップ。swap フォームの form-errors と @error に bag=swap。SettingsSubscriptionController で resolveSubscriptionCurrentPeriodEndForDisplay 用 PHPDoc を正しい位置に移し null 条件を追記。MemberSubscriptionSettingsTest に cancel/resume の InvalidArgumentException 業務文言の回帰を追加。

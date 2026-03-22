@@ -207,6 +207,25 @@ class ViewDirectoryStructureTest extends TestCase
     }
 
     /**
+     * TC-N-15: サブスク管理は pages/member 配下の view を使うこと。
+     */
+    public function test_member_settings_subscription_uses_pages_directory_view(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_MEMBER,
+            'email_verified_at' => now(),
+        ]);
+
+        MemberProfile::factory()->for($user)->createOne();
+
+        $response = $this->actingAs($user)->get(route('member.settings.subscription.edit'));
+
+        $response->assertOk();
+        $response->assertViewIs('pages.member.settings.subscription');
+    }
+
+    /**
      * @return array<string, array{0: string, 1: string}>
      */
     public static function authPageProvider(): array

@@ -17,6 +17,7 @@ use App\Http\Controllers\Member\SettingsBillingPortalController;
 use App\Http\Controllers\Member\SettingsController;
 use App\Http\Controllers\Member\SettingsEmailController;
 use App\Http\Controllers\Member\SettingsPasswordController;
+use App\Http\Controllers\Member\SettingsSubscriptionController;
 use App\Http\Controllers\Member\SettingsWithdrawalController;
 use App\Http\Controllers\ProgramController as PublicProgramController;
 use App\Http\Controllers\PublicStoreController;
@@ -62,6 +63,16 @@ Route::middleware(['auth', 'member.role', 'verified', 'member.not_withdrawn'])->
     Route::post('/settings/billing-portal', SettingsBillingPortalController::class)
         ->middleware('throttle:10,1')
         ->name('settings.billing-portal');
+    Route::get('/settings/subscription', [SettingsSubscriptionController::class, 'edit'])->name('settings.subscription.edit');
+    Route::post('/settings/subscription/swap', [SettingsSubscriptionController::class, 'swap'])
+        ->middleware('throttle:10,1')
+        ->name('settings.subscription.swap');
+    Route::post('/settings/subscription/cancel', [SettingsSubscriptionController::class, 'cancel'])
+        ->middleware('throttle:10,1')
+        ->name('settings.subscription.cancel');
+    Route::post('/settings/subscription/resume', [SettingsSubscriptionController::class, 'resume'])
+        ->middleware('throttle:10,1')
+        ->name('settings.subscription.resume');
     Route::get('/settings/withdraw', [SettingsWithdrawalController::class, 'edit'])->name('settings.withdraw.edit');
     Route::post('/settings/withdraw', [SettingsWithdrawalController::class, 'destroy'])->name('settings.withdraw.destroy');
 });

@@ -53,6 +53,7 @@ class MemberSettingsTest extends TestCase
         $response->assertOk();
         $response->assertViewIs('pages.member.settings.index');
         $response->assertSee('会員設定', false);
+        $response->assertSee('サブスクを管理', false);
     }
 
     /**
@@ -246,6 +247,7 @@ class MemberSettingsTest extends TestCase
      */
     public function test_verified_member_without_profile_is_redirected_from_email_settings(): void
     {
+        /** @var User $user */
         $user = User::factory()->createOne([
             'role' => User::ROLE_MEMBER,
             'email_verified_at' => now(),
