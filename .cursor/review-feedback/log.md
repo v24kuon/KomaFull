@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（PublicMiscPagesTest の観点表と test-strategy.mdc §2 項4 の整合を PHPDoc で明示）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/PublicMiscPagesTest.php
+  notes: 指摘は有効。項2の「失敗系は正常系と同数以上」は項4の例外（合理的でない場合は主要エラー経路＋Notes）で説明可能と判断。表に TC-N-21 と TC-A-12 を反映し、集計行を更新。legal 店舗ありテストに TC-N-21 の PHPDoc を付与。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
   scope: PRレビュー（POST /contact に throttle:5,1 を付与しスパム送信を抑制）
   adopted: yes
   classification: PR限定

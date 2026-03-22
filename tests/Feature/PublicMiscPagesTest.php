@@ -27,8 +27,10 @@ use Tests\TestCase;
  * | TC-A-11 | POST body 空 | Boundary | セッションエラー | - |
  * | TC-A-12 | POST 同一分に6回目 | Boundary – throttle | 429 | 5回/分/IP |
  * | TC-N-20 | GET legal | Equivalence | 200、表記見出し | - |
+ * | TC-N-21 | GET legal・active 店舗あり | Equivalence | 200、住所・電話を表示 | TC-N-20 補足（プレースホルダではない表示） |
  *
- * 失敗系: 店舗404×2、お問い合わせバリデーション×2。正常系6。失敗系は主要経路を優先。
+ * test-strategy.mdc §2 項2（失敗系は正常系と同数以上を原則）に対し、同§2 項4のとおり「達成が合理的でない場合はビジネスインパクトの高い分岐および主要なエラー経路を網羅し、理由を Notes に明示する」。本クラスは公開 GET が主で、HTTP として意味のある失敗経路は 404・フォームバリデーション・429（throttle）に集約されるため、形式的に失敗テスト件数を増やさない。
+ * 集計（表上の TC-N / TC-A）: 正常系 8 件、失敗系 5 件（TC-A-01,02,10,11,12）。項2 を厳密適用すると失敗系が少ないが、項4の例外に該当すると判断する。
  */
 class PublicMiscPagesTest extends TestCase
 {
@@ -191,6 +193,9 @@ class PublicMiscPagesTest extends TestCase
         $response->assertSee('事業者名', false);
     }
 
+    /**
+     * TC-N-21: active 店舗がいるとき特商法ページに住所・電話が出る（TC-N-20 の補足）。
+     */
     public function test_legal_tokushoho_uses_primary_location_when_present(): void
     {
         Location::factory()->createOne([
