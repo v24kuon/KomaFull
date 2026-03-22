@@ -66,12 +66,12 @@
                 <div class="card-body">
                     <h2 class="h6 card-title">プラン変更</h2>
                     <p class="card-text small text-secondary mb-3">別のプランへ変更します。差額の扱いは Stripe の設定に従います。</p>
-                    <x-ui.form-errors />
+                    <x-ui.form-errors bag="swap" />
                     <form method="POST" action="{{ route('member.settings.subscription.swap') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                         @csrf
                         <div class="mb-3">
                             <label for="stripe_price_id" class="form-label">変更先プラン</label>
-                            <select name="stripe_price_id" id="stripe_price_id" class="form-select @error('stripe_price_id') is-invalid @enderror" required data-testid="subscription-swap-select">
+                            <select name="stripe_price_id" id="stripe_price_id" class="form-select @error('stripe_price_id', 'swap') is-invalid @enderror" required data-testid="subscription-swap-select">
                                 <option value="" disabled {{ old('stripe_price_id') ? '' : 'selected' }}>選択してください</option>
                                 @foreach ($swapCandidates as $plan)
                                     <option value="{{ $plan->stripe_price_id }}" {{ old('stripe_price_id') === $plan->stripe_price_id ? 'selected' : '' }}>

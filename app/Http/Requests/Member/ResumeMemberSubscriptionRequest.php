@@ -49,12 +49,18 @@ class ResumeMemberSubscriptionRequest extends FormRequest
 
     /**
      * 解約取り消し可能（猶予期間内）かを検証する（{@see SwapMemberSubscriptionRequest} と同様に after で状態を検証）。
+     *
+     * `required` / `accepted` で既にエラーがある場合は状態検証を行わない。
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
             $user = $this->user();
             if (! $user instanceof User) {
+                return;
+            }
+
+            if ($validator->errors()->has('resume_confirmed')) {
                 return;
             }
 

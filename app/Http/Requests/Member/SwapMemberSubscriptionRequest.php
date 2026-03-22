@@ -57,12 +57,18 @@ class SwapMemberSubscriptionRequest extends FormRequest
 
     /**
      * サブスク存在・同一価格チェックに加え、{@see MemberSubscriptionManagementService::canSwap()} でプラン変更可否を検証する。
+     *
+     * `stripe_price_id` の基礎ルールで既にエラーがある場合は以降の状態検証を行わない。
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
             $user = $this->user();
             if (! $user instanceof User) {
+                return;
+            }
+
+            if ($validator->errors()->has('stripe_price_id')) {
                 return;
             }
 

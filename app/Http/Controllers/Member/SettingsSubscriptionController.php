@@ -226,13 +226,9 @@ class SettingsSubscriptionController extends Controller
     }
 
     /**
-     * 表示用の請求期間終了日時を1回だけ解決する。
-     *
-     * `Subscription::currentPeriodEnd()` は内部で Stripe API を参照し得るため、ビューで複数回呼ばない。
-     * 取得失敗時は画面全体を落とさず、目安行を出さない。
-     */
-    /**
      * {@see MemberSubscriptionManagementService} が投げる {@see InvalidArgumentException} のメッセージを会員向け文言へマップする。
+     *
+     * 前提: サービス層の例外メッセージ文字列と本メソッド内の match キーが整合していること。
      */
     private function memberSubscriptionInvalidArgumentUserMessage(InvalidArgumentException $e): string
     {
@@ -247,6 +243,14 @@ class SettingsSubscriptionController extends Controller
         };
     }
 
+    /**
+     * 表示用の請求期間終了日時を1回だけ解決する。
+     *
+     * `Subscription::currentPeriodEnd()` は内部で Stripe API を参照し得るため、ビューで複数回呼ばない。
+     * 取得失敗時は画面全体を落とさず、目安行を出さない。
+     *
+     * `null` を返す条件: `$subscription` が null または非 valid、トライアル中、猶予期間中、`currentPeriodEnd()` が例外または取得不能。
+     */
     private function resolveSubscriptionCurrentPeriodEndForDisplay(?Subscription $subscription): ?CarbonInterface
     {
         if ($subscription === null || ! $subscription->valid()) {

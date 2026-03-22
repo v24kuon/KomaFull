@@ -21,7 +21,8 @@ class MemberSubscriptionSettingsTest extends TestCase
     /**
      * テスト観点（抜粋）: ゲスト拒否 / 管理者403 / プロフィールなしリダイレクト /
      * 有効サブスクなしメッセージ / プラン名表示 / swap バリデーション・成功（mock）/ cancel・resume 成功（mock）/
-     * swap・cancel・resume 失敗時フラッシュエラー（サービス例外 mock）/ cancel・resume の確認チェック必須 /
+     * swap・cancel・resume 失敗時フラッシュエラー（サービス例外 mock）/ swap・cancel・resume の InvalidArgumentException 業務文言 /
+     * cancel・resume の確認チェック必須 /
      * cancel・resume の after バリデーション（解約不可・猶予外）/ swap の canSwap 不可。
      */
     private function createVerifiedMemberWithProfile(): User
@@ -365,6 +366,35 @@ class MemberSubscriptionSettingsTest extends TestCase
         $response->assertSessionHas('error', '解約手続きを完了できませんでした。時間をおいて再度お試しください。');
     }
 
+    public function test_cancel_redirects_with_business_message_when_service_throws_invalid_argument(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_cancel_ia_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        Subscription::factory()->for($user)->withPrice('price_cancel_ia_001')->create();
+
+        $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canCancelAtPeriodEnd')->once()->andReturn(true);
+            $mock->shouldReceive('cancelAtPeriodEnd')->once()->andThrow(
+                new InvalidArgumentException('Subscription cannot be canceled.')
+            );
+        });
+
+        $response = $this->actingAs($user)->post(route('member.settings.subscription.cancel'), [
+            'cancellation_confirmed' => '1',
+        ]);
+
+        $response->assertRedirect(route('member.settings.subscription.edit'));
+        $response->assertSessionHas(
+            'error',
+            '現在、請求期間末での解約を予約できる状態ではありません。'
+        );
+    }
+
     public function test_resume_redirects_with_success_when_service_succeeds(): void
     {
         $user = $this->createVerifiedMemberWithProfile();
@@ -417,6 +447,38 @@ class MemberSubscriptionSettingsTest extends TestCase
 
         $response->assertRedirect(route('member.settings.subscription.edit'));
         $response->assertSessionHas('error', '解約の取り消しを完了できませんでした。時間をおいて再度お試しください。');
+    }
+
+    public function test_resume_redirects_with_business_message_when_service_throws_invalid_argument(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_resume_ia_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        Subscription::factory()->for($user)->withPrice('price_resume_ia_001')->create([
+            'ends_at' => now()->addWeek(),
+            'stripe_status' => StripeSubscription::STATUS_ACTIVE,
+        ]);
+
+        $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canResume')->once()->andReturn(true);
+            $mock->shouldReceive('resume')->once()->andThrow(
+                new InvalidArgumentException('Subscription cannot be resumed.')
+            );
+        });
+
+        $response = $this->actingAs($user)->post(route('member.settings.subscription.resume'), [
+            'resume_confirmed' => '1',
+        ]);
+
+        $response->assertRedirect(route('member.settings.subscription.edit'));
+        $response->assertSessionHas(
+            'error',
+            '現在、解約の取り消しができる状態ではありません。'
+        );
     }
 
     public function test_cancel_fails_validation_when_no_cancelable_subscription(): void
