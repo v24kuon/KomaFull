@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\MemberProfile;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -146,6 +147,24 @@ class ViewDirectoryStructureTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('pages.legal.tokushoho');
+    }
+
+    /**
+     * TC-N-12: 会員マイページは pages/member 配下の view を使うこと。
+     */
+    public function test_member_dashboard_uses_pages_directory_view(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_MEMBER,
+        ]);
+
+        MemberProfile::factory()->for($user)->createOne();
+
+        $response = $this->actingAs($user)->get(route('member.dashboard'));
+
+        $response->assertOk();
+        $response->assertViewIs('pages.member.dashboard');
     }
 
     /**

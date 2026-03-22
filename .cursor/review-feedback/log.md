@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-03-22
+  branch: feat/ph10-2-1-mypage-dashboard
+  scope: [PH10-2-1] マイページ・ダッシュボード（予約状況・残高サマリ）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/Member/DashboardController.php, app/Http/Responses/LoginResponse.php, app/Providers/AppServiceProvider.php, app/Services/Member/MemberDashboardSummary.php, app/Models/User.php, routes/web.php, resources/views/layouts/member.blade.php, resources/views/pages/member/dashboard.blade.php, resources/views/pages/welcome.blade.php, public/assets/css/pages/member.css, tests/Feature/Member/MemberDashboardTest.php, tests/Feature/AuthViewsTest.php, tests/Feature/WelcomePageTest.php, tests/Feature/ViewDirectoryStructureTest.php
+  notes: プラン To-do 実装。外部レビュー前のため採用指摘なし。Fortify ログイン成功時のリダイレクトを一般会員は member.dashboard、管理者は admin.dashboard に分岐。
+
+- date: 2026-03-22
   branch: feat/ph9-2-4-public-pages-misc
   scope: PRレビュー（PublicMiscPagesTest の Mail::assertSent で phone を検証）
   adopted: yes

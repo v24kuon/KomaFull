@@ -85,7 +85,26 @@ class AuthViewsTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/');
+        $response->assertRedirect(route('member.dashboard'));
+    }
+
+    /**
+     * TC-N-04b: 管理者ログインは管理ダッシュボードへ遷移すること。
+     */
+    public function test_admin_login_redirects_to_admin_dashboard(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('admin.dashboard'));
     }
 
     /**

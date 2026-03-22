@@ -1,0 +1,14 @@
+/* 会員マイページ */
+
+.p-member-layout__header .navbar-brand {
+    color: var(--bs-primary);
+}
+
+.p-member-dashboard__card {
+    border-radius: var(--bs-border-radius-xl);
+}
+
+.p-member-dashboard .table th {
+    font-weight: 600;
+    font-size: 0.875rem;
+}

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateProvisionalMemberProfile;
+use App\Http\Responses\LoginResponse;
 use App\Jobs\ProcessSubscriptionPaymentWebhookJob;
 use App\Jobs\RouteCheckoutSessionWebhookJob;
 use App\Models\User;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Events\WebhookReceived;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
     }
 
     /**
