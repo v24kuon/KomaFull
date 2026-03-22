@@ -13,6 +13,26 @@ class UpdateAdditionalItemRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $lines = $this->input('select_options_lines');
+        if (! is_string($lines)) {
+            $this->merge(['select_options' => null]);
+
+            return;
+        }
+
+        $trimmed = trim($lines);
+        if ($trimmed === '') {
+            $this->merge(['select_options' => null]);
+
+            return;
+        }
+
+        $arr = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $lines))));
+        $this->merge(['select_options' => $arr]);
+    }
+
     /**
      * @return array<string, array<int, \Illuminate\Validation\Rules\Unique|string>>
      */
@@ -24,6 +44,8 @@ class UpdateAdditionalItemRequest extends FormRequest
             'label_name' => ['required', 'string', 'max:255'],
             'input_type' => ['required', 'string', 'in:text,number,select,checkbox'],
             'digits' => ['nullable', 'integer', 'min:1'],
+            'select_options' => ['nullable', 'array'],
+            'select_options.*' => ['string', 'max:255'],
             'status' => ['required', 'string', 'in:'.AdditionalItem::STATUS_ACTIVE.','.AdditionalItem::STATUS_INACTIVE],
         ];
     }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AdditionalItem extends Model
 {
@@ -23,6 +24,7 @@ class AdditionalItem extends Model
         'label_name',
         'input_type',
         'digits',
+        'select_options',
         'status',
     ];
 
@@ -33,6 +35,15 @@ class AdditionalItem extends Model
     {
         return [
             'digits' => 'integer',
+            'select_options' => 'array',
         ];
+    }
+
+    /**
+     * @return HasMany<MemberAdditionalItemValue, self>
+     */
+    public function memberAdditionalItemValues(): HasMany
+    {
+        return $this->hasMany(MemberAdditionalItemValue::class);
     }
 }

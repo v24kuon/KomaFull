@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PH10-2-2 会員プロフィール表示・編集（追加項目・セレクト候補）の実装
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/Member/ProfileController.php, app/Http/Requests/Member/UpdateMemberProfileRequest.php, app/Services/Member/MemberProfileUpdateService.php, app/Models/MemberAdditionalItemValue.php, database/migrations/2026_03_22_075048_add_select_options_to_additional_items_table.php, database/migrations/2026_03_22_075049_create_member_additional_item_values_table.php, tests/Feature/Member/MemberProfileTest.php
+  notes: PRレビュー指摘の採用なし。コミット前の判定記録として classification none を付与。
+
+- date: 2026-03-22
   branch: feat/ph10-2-1-mypage-dashboard
   scope: PRレビュー（MemberDashboardSummary::build の PHPDoc に責務・副作用・トランザクション・冪等性を追記）
   adopted: yes

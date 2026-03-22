@@ -7,6 +7,21 @@ document.addEventListener('alpine:init', () => {
         return;
     }
 
+    Alpine.data('additionalItemForm', () => ({
+        inputType: 'text',
+        init() {
+            const el = document.getElementById('input_type');
+            if (!el) {
+                return;
+            }
+
+            this.inputType = el.value;
+            el.addEventListener('change', () => {
+                this.inputType = el.value;
+            });
+        },
+    }));
+
     Alpine.data('submitState', () => ({
         submitting: false,
         pageShowHandler: null,

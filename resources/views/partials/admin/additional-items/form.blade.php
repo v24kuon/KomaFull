@@ -1,7 +1,13 @@
 @php
     $model = $additionalItem ?? null;
+    $linesDefault = old('select_options_lines');
+    if ($linesDefault === null && $model !== null && is_array($model->select_options)) {
+        $linesDefault = implode("\n", $model->select_options);
+    }
+    $linesDefault = is_string($linesDefault) ? $linesDefault : '';
 @endphp
 
+<div x-data="additionalItemForm()">
 <div class="row mb-3">
     <div class="col-md-6">
         <label for="code" class="form-label">コード <span class="text-danger">*</span></label>
@@ -39,6 +45,15 @@
     </div>
 </div>
 
+<div class="row mb-3" x-show="inputType === 'select'">
+    <div class="col-12">
+        <label for="select_options_lines" class="form-label">セレクト候補（1行に1つ）</label>
+        <textarea class="form-control @error('select_options') is-invalid @enderror" id="select_options_lines" name="select_options_lines" rows="4">{{ $linesDefault }}</textarea>
+        <x-ui.field-error field="select_options" />
+        <p class="form-text small mb-0">入力形式がセレクトのときのみ使用します。</p>
+    </div>
+</div>
+
 <div class="mb-4">
     <label for="status" class="form-label">ステータス <span class="text-danger">*</span></label>
     <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
@@ -46,4 +61,5 @@
         <option value="inactive" @selected(old('status', $model?->status) === 'inactive')>無効</option>
     </select>
     <x-ui.field-error field="status" />
+</div>
 </div>

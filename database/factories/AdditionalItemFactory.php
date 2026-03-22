@@ -23,6 +23,7 @@ class AdditionalItemFactory extends Factory
             'label_name' => fake()->word(),
             'input_type' => fake()->randomElement(['text', 'number', 'select', 'checkbox']),
             'digits' => fake()->optional()->numberBetween(1, 10),
+            'select_options' => null,
             'status' => AdditionalItem::STATUS_ACTIVE,
         ];
     }
