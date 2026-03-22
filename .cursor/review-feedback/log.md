@@ -16,6 +16,78 @@
 
 ## Entries
 
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（layouts.app の body に HTMX 用 hx-headers を付与）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/app.blade.php
+  notes: 指摘は有効。`no-build-convention.mdc` 2.2 に従い、公開レイアウトも `layouts/admin` と同様に `body` に `hx-headers` で `X-CSRF-TOKEN` を付与し、将来の公開側 HTMX 利用時の CSRF 前提を揃えた。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（layouts.app の app.name フォールバックを KomaFull に統一）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/app.blade.php
+  notes: 指摘は有効。`APP_NAME` 未設定時に `layouts/app` のデフォルトタイトルだけが Laravel 表記になる不整合を解消し、`welcome`・`layouts/admin` と同じ `config('app.name', 'KomaFull')` に揃えた。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（WelcomePageTest でゲストのログアウトフォーム不在をアサート）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/WelcomePageTest.php
+  notes: 指摘は有効。ゲスト向け TC-N-01/02 で `route('logout')` の POST フォームが描画されないことを明示し、認証済み向け `@else` 分岐との対称性と回帰保護を追加した。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（WelcomePageTest で一般会員の admin.dashboard 非表示をアサート）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/WelcomePageTest.php
+  notes: 指摘は有効。管理者テストと対称に、一般会員向け TC-N-04 で `route('admin.dashboard')` が描画されないことを明示し、`@can('access-admin')` 分岐の回帰を補強した。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（WelcomePageTest で管理者のログアウト導線をアサート）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/WelcomePageTest.php
+  notes: 指摘は有効。管理者向けテストが admin.dashboard と旧 /dashboard 不在のみだったため、`@else` ブロック共通の `route('logout')` POST フォーム表示を会員テストと同形式で検証し回帰保護を追加した。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（welcome の login/register を Route::has でガード）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/pages/welcome.blade.php
+  notes: 指摘は有効。Fortify で registration を外す等でルートが消えた場合に `route()` が例外となるのを防ぐため、旧 welcome と同様に `Route::has('register')` / `Route::has('login')` でリンクを条件表示に戻した（`pages/auth/login.blade.php` の register リンクと整合）。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（app.css 変更に伴う ASSET_VERSION の更新）
+  adopted: yes
+  classification: PR限定
+  targets: config/app.php, .env.example
+  notes: 指摘は有効。`--app-brand-rgb` を app.css に追加したため、同一 `?v=` のままだとブラウザが古い app.css を保持した場合に `welcome.css` の `rgba(var(--app-brand-rgb), …)` が未定義となり得る。no-build 規約に従い `ASSET_VERSION` を 20260319_2 へ更新し、`v_asset()` のキャッシュバスティングを揃えた。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（welcome.css のブランド色重複を CSS 変数へ統一）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/app.css, public/assets/css/pages/welcome.css
+  notes: 指摘は有効。welcome.css で `rgba(13, 110, 253, ...)` が 3 箇所重複していたため、社長変数ゾーンへ `--app-brand-rgb` を追加し、ページ CSS は `rgba(var(--app-brand-rgb), ...)` 参照へ統一した。見た目の変更はなく、トークン管理の一貫性だけを改善した。
+
+- date: 2026-03-19
+  branch: feat/ph9-2-1-welcome-replace
+  scope: [PH9-2-1] welcome.blade.php の置換と共通レイアウト適用
+  adopted: no
+  classification: none
+  targets: resources/views/pages/welcome.blade.php, public/assets/css/pages/welcome.css, tests/Feature/WelcomePageTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。welcome を layouts.app に載せ替え、認証状態ごとの導線（ゲスト: login/register、管理者: admin.dashboard、一般会員: logout）を分岐。welcome.css を追加し WelcomePageTest を新設。
+
 - date: 2026-03-19
   branch: feat/ph8-4-1-common-ui-components
   scope: PRレビュー指摘対応（submitState の pageshow リスナーを destroy で解除）

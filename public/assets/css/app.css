@@ -1,8 +1,16 @@
 /* ==========================================================
    社長変数ゾーン（色・余白・フォント等のデザイントークン）
    ========================================================== */
+/*
+ * ブランド色の二重指定について:
+ * --app-brand-color は --bs-primary（なければ #0d6efd）に追従するが、
+ * rgba(var(--app-brand-rgb), …) 用の --app-brand-rgb は CSS 単体では自動分解できないため、
+ * 実効ブランド色を変えたときは「その色の R,G,B」と手動で揃えること（更新漏れで welcome 等の半透明が旧色のままになる）。
+ * 将来、ブラウザ対応と設計方針が固まれば color-mix() 等への寄せを検討してよい。
+ */
 :root {
     --app-brand-color: var(--bs-primary, #0d6efd);
+    --app-brand-rgb: 13, 110, 253;
     --app-brand-color-contrast: #ffffff;
     --app-surface-color: var(--bs-light, #f8f9fa);
     --app-text-color: var(--bs-body-color, #212529);
