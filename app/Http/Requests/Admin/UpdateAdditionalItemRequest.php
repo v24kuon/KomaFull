@@ -2,12 +2,16 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\AdditionalItemInputType;
+use App\Http\Requests\Admin\Concerns\PreparesAdditionalItemSelectOptions;
 use App\Models\AdditionalItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateAdditionalItemRequest extends FormRequest
 {
+    use PreparesAdditionalItemSelectOptions;
+
     public function authorize(): bool
     {
         return true;
@@ -22,8 +26,10 @@ class UpdateAdditionalItemRequest extends FormRequest
             'code' => ['required', 'string', 'max:255', Rule::unique('additional_items', 'code')->ignore($this->route('additional_item'))],
             'additional_item_type' => ['required', 'string', 'in:member_profile'],
             'label_name' => ['required', 'string', 'max:255'],
-            'input_type' => ['required', 'string', 'in:text,number,select,checkbox'],
+            'input_type' => ['required', 'string', Rule::in(AdditionalItemInputType::values())],
             'digits' => ['nullable', 'integer', 'min:1'],
+            'select_options' => ['nullable', 'array'],
+            'select_options.*' => ['string', 'max:255'],
             'status' => ['required', 'string', 'in:'.AdditionalItem::STATUS_ACTIVE.','.AdditionalItem::STATUS_INACTIVE],
         ];
     }

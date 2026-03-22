@@ -7,6 +7,34 @@ document.addEventListener('alpine:init', () => {
         return;
     }
 
+    Alpine.data('additionalItemForm', () => ({
+        inputType: 'text',
+        inputTypeEl: null,
+        inputTypeChangeHandler: null,
+        init() {
+            const el = document.getElementById('input_type');
+            if (!el) {
+                return;
+            }
+
+            this.inputTypeEl = el;
+            this.inputType = el.value;
+            this.inputTypeChangeHandler = () => {
+                this.inputType = el.value;
+            };
+            el.addEventListener('change', this.inputTypeChangeHandler);
+        },
+        destroy() {
+            if (this.inputTypeEl === null || this.inputTypeChangeHandler === null) {
+                return;
+            }
+
+            this.inputTypeEl.removeEventListener('change', this.inputTypeChangeHandler);
+            this.inputTypeEl = null;
+            this.inputTypeChangeHandler = null;
+        },
+    }));
+
     Alpine.data('submitState', () => ({
         submitting: false,
         pageShowHandler: null,

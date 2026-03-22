@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\AdditionalItemInputType;
 use App\Models\AdditionalItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,8 +22,9 @@ class AdditionalItemFactory extends Factory
             'code' => 'AI'.fake()->unique()->numerify('###'),
             'additional_item_type' => 'member_profile',
             'label_name' => fake()->word(),
-            'input_type' => fake()->randomElement(['text', 'number', 'select', 'checkbox']),
+            'input_type' => fake()->randomElement(AdditionalItemInputType::values()),
             'digits' => fake()->optional()->numberBetween(1, 10),
+            'select_options' => null,
             'status' => AdditionalItem::STATUS_ACTIVE,
         ];
     }

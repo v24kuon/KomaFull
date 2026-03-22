@@ -17,6 +17,86 @@
 ## Entries
 
 - date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（追加項目 input_type の文字列リテラルを AdditionalItemInputType enum に統一、syncAdditionalItemValue の is_scalar 削除）
+  adopted: yes
+  classification: PR限定
+  targets: app/Enums/AdditionalItemInputType.php, app/Http/Requests/Admin/StoreAdditionalItemRequest.php, app/Http/Requests/Admin/UpdateAdditionalItemRequest.php, app/Http/Requests/Admin/Concerns/PreparesAdditionalItemSelectOptions.php, app/Http/Requests/Member/UpdateMemberProfileRequest.php, app/Services/Member/MemberProfileUpdateService.php, database/factories/AdditionalItemFactory.php, resources/views/pages/member/profile/edit.blade.php, resources/views/partials/admin/additional-items/form.blade.php
+  notes: 指摘は有効。PrepaidType と同様の backed enum。Rule::in(values()) でバリデーションと単一情報源を整合。UpdateMemberProfileRequest 検証済みデータ前提で (string) キャストに簡略化し PHPDoc で意図を明示。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（MemberProfileUpdateService の additional_item_type を TYPE_MEMBER_PROFILE に統一、syncAdditionalItemValue に責務 PHPDoc）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberProfileUpdateService.php
+  notes: 指摘は有効。Controller/FormRequest と同様に定数参照でタイポ時の静かな空結果を避ける。RFP-009 に沿い private ヘルパーに前提・更新方針・副作用を記載。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（additional_item_type の member_profile を AdditionalItem::TYPE_MEMBER_PROFILE に定数化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/AdditionalItem.php, app/Http/Controllers/Member/ProfileController.php, app/Http/Requests/Member/UpdateMemberProfileRequest.php
+  notes: 指摘は有効。タイポ時の静かな空結果を避け IDE 補完を効かせる。MemberProfileUpdateService の同一リテラルは本コミット対象外。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（Store/Update AdditionalItemRequest の prepareForValidation を Trait へ抽出）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Admin/Concerns/PreparesAdditionalItemSelectOptions.php, app/Http/Requests/Admin/StoreAdditionalItemRequest.php, app/Http/Requests/Admin/UpdateAdditionalItemRequest.php
+  notes: 指摘は有効。重複を PreparesAdditionalItemSelectOptions に集約。トレイトは App\Http\Requests\Admin\Concerns を FQN で use。select 以外時の select_options クリアと空行除去ロジックを維持。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（Alpine additionalItemForm に change リスナーの destroy / removeEventListener）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/js/app.js, config/app.php, .env.example
+  notes: 指摘は有効。input_type 要素とハンドラ参照を保持し destroy で解除。submitState と同様。ASSET_VERSION を 20260322_10 に更新。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（MemberProfileUpdateService の User 更新を forceFill から fill へ）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberProfileUpdateService.php
+  notes: 指摘は有効。name は User::$fillable のため fill で十分。マスアサイン保護を維持。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（管理フォーム x-show により非 select 時も select_options_lines が送信される点のサーバー側クリア）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Admin/StoreAdditionalItemRequest.php, app/Http/Requests/Admin/UpdateAdditionalItemRequest.php, tests/Feature/Admin/AdminAdditionalItemCrudTest.php
+  notes: 指摘は有効。prepareForValidation で input_type !== select のとき select_options を null に統一。Blade の x-if は未採用（サーバー正で十分）。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（UpdateMemberProfileRequest の activeAdditionalItems が同一リクエストで3回 SELECT する点のメモ化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Member/UpdateMemberProfileRequest.php
+  notes: 指摘は有効。cachedActiveAdditionalItems で1回だけ取得し rules / attributes / prepareForValidation で再利用。挙動は不変。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（追加項目の select_options_lines 正規化で array_filter 無コールバックにより文字列 "0" が欠落する問題）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Admin/StoreAdditionalItemRequest.php, app/Http/Requests/Admin/UpdateAdditionalItemRequest.php, tests/Feature/Admin/AdminAdditionalItemCrudTest.php
+  notes: 指摘は有効。PHP の array_filter（コールバックなし）は (bool)string が false な要素を落とすため "0" が消える。空行除去のみ static fn (string $v) => $v !== '' に変更。store/update の Feature テストを追加。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
+  scope: PH10-2-2 会員プロフィール表示・編集（追加項目・セレクト候補）の実装
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/Member/ProfileController.php, app/Http/Requests/Member/UpdateMemberProfileRequest.php, app/Services/Member/MemberProfileUpdateService.php, app/Models/MemberAdditionalItemValue.php, database/migrations/2026_03_22_075048_add_select_options_to_additional_items_table.php, database/migrations/2026_03_22_075049_create_member_additional_item_values_table.php, tests/Feature/Member/MemberProfileTest.php
+  notes: PRレビュー指摘の採用なし。コミット前の判定記録として classification none を付与。
+
+- date: 2026-03-22
   branch: feat/ph10-2-1-mypage-dashboard
   scope: PRレビュー（MemberDashboardSummary::build の PHPDoc に責務・副作用・トランザクション・冪等性を追記）
   adopted: yes

@@ -85,6 +85,46 @@ class AdminAdditionalItemCrudTest extends TestCase
         $response->assertSessionHasErrors(['input_type']);
     }
 
+    /**
+     * セレクト候補が文字列 "0" のときも保存されること（array_filter 無コールバックだと '0' が落ちる退行防止）。
+     */
+    public function test_store_preserves_select_option_string_zero(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('admin.additional-items.store'), [
+            'code' => 'AI-ZERO-OPT',
+            'additional_item_type' => 'member_profile',
+            'label_name' => 'ゼロ候補',
+            'input_type' => 'select',
+            'select_options_lines' => "0\n1",
+            'status' => AdditionalItem::STATUS_ACTIVE,
+        ]);
+
+        $response->assertRedirect(route('admin.additional-items.index'));
+
+        $item = AdditionalItem::query()->where('code', 'AI-ZERO-OPT')->firstOrFail();
+        $this->assertSame(['0', '1'], $item->select_options);
+    }
+
+    /**
+     * input_type が select 以外のときは select_options_lines を送っても select_options は保存されない（x-show の非表示フィールド送信対策）。
+     */
+    public function test_store_does_not_save_select_options_when_input_type_is_not_select(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('admin.additional-items.store'), [
+            'code' => 'AI-NO-SEL',
+            'additional_item_type' => 'member_profile',
+            'label_name' => 'テキスト項目',
+            'input_type' => 'text',
+            'select_options_lines' => "A\nB\nC",
+            'status' => AdditionalItem::STATUS_ACTIVE,
+        ]);
+
+        $response->assertRedirect(route('admin.additional-items.index'));
+
+        $item = AdditionalItem::query()->where('code', 'AI-NO-SEL')->firstOrFail();
+        $this->assertNull($item->select_options);
+    }
+
     public function test_store_validates_unique_code(): void
     {
         AdditionalItem::factory()->createOne(['code' => 'EXISTING']);
@@ -99,6 +139,59 @@ class AdminAdditionalItemCrudTest extends TestCase
 
         $response->assertSessionHasErrors(['code']);
         $this->assertDatabaseCount('additional_items', 1);
+    }
+
+    /**
+     * 更新時もセレクト候補の文字列 "0" が欠落しないこと。
+     */
+    public function test_update_preserves_select_option_string_zero(): void
+    {
+        $item = AdditionalItem::factory()->createOne([
+            'code' => 'AI-ZERO-UPD',
+            'input_type' => 'select',
+            'select_options' => ['1'],
+        ]);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.additional-items.update', $item), [
+            'code' => $item->code,
+            'additional_item_type' => 'member_profile',
+            'label_name' => $item->label_name,
+            'input_type' => 'select',
+            'select_options_lines' => "0\n2",
+            'status' => $item->status,
+        ]);
+
+        $response->assertRedirect(route('admin.additional-items.index'));
+
+        $item->refresh();
+        $this->assertSame(['0', '2'], $item->select_options);
+    }
+
+    /**
+     * select から text へ変更したとき、非表示の select_options_lines が残っていても select_options をクリアする。
+     */
+    public function test_update_clears_select_options_when_changing_input_type_from_select_to_text(): void
+    {
+        $item = AdditionalItem::factory()->createOne([
+            'code' => 'AI-CLEAR-SEL',
+            'input_type' => 'select',
+            'select_options' => ['東', '西'],
+            'status' => AdditionalItem::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.additional-items.update', $item), [
+            'code' => $item->code,
+            'additional_item_type' => 'member_profile',
+            'label_name' => $item->label_name,
+            'input_type' => 'text',
+            'select_options_lines' => "残り続けない行\n",
+            'status' => $item->status,
+        ]);
+
+        $response->assertRedirect(route('admin.additional-items.index'));
+
+        $item->refresh();
+        $this->assertNull($item->select_options);
     }
 
     public function test_update_modifies_additional_item(): void

@@ -26,6 +26,9 @@
                 <span class="badge text-bg-light text-dark">{{ $memberProfile->member_status }}</span>
             @endif
         </p>
+        <p class="mb-4">
+            <a href="{{ route('member.profile.edit') }}">プロフィールを編集</a>
+        </p>
     @endif
 
     <div class="row g-4 mb-4">

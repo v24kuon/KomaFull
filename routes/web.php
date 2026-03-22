@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\StoreSettingsController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
+use App\Http\Controllers\Member\ProfileController as MemberProfileController;
 use App\Http\Controllers\ProgramController as PublicProgramController;
 use App\Http\Controllers\PublicStoreController;
 use App\Http\Controllers\ScheduleController;
@@ -38,6 +39,8 @@ Route::get('/legal/tokushoho', [LegalController::class, 'tokushoho'])->name('leg
 
 Route::middleware(['auth', 'verified'])->prefix('mypage')->name('member.')->group(function (): void {
     Route::get('/', MemberDashboardController::class)->name('dashboard');
+    Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [MemberProfileController::class, 'update'])->name('profile.update');
 });
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->name('admin.')->group(function (): void {
