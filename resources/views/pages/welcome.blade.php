@@ -125,5 +125,7 @@
             </div>
         </div>
     </section>
+
+    @include('partials.public.site-footer')
 </div>
 @endsection

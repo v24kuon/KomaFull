@@ -17,6 +17,70 @@
 ## Entries
 
 - date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（PublicMiscPagesTest の Mail::assertSent で phone を検証）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/PublicMiscPagesTest.php
+  notes: 指摘は有効。ContactInquiryMail の phone が送信データと一致することを assertSent コールバックで明示。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（お問い合わせフォームの email に maxlength=255 を追加）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/pages/contact/create.blade.php
+  notes: 指摘は有効。name/phone と同様、サーバー max:255 と整合する maxlength を付与。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（StoreContactRequest::labelFor の unknown を InvalidArgumentException に）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/StoreContactRequest.php, tests/Unit/StoreContactRequestTest.php
+  notes: 指摘は有効。validated 経路では到達しないが、将来の誤用で生値を返さないよう default で例外。既知4種は DataProvider で回帰確認。PHPUnit の DataProvider と #[DataProvider] を使用。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（public-misc の max-width を app.css の CSS 変数に寄せる）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/app.css, public/assets/css/pages/public-misc.css, config/app.php, .env.example
+  notes: 指摘は一部有効。ページ固有のままでも許容とあったが、既存の社長変数ゾーンに --app-page-content-max-contact / --app-page-content-max-legal を追加し public-misc は var() 参照のみ。640px/800px は 40rem/50rem（16px 基準）に相当。ASSET_VERSION を更新。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（mail.contact_to のフォールバックを config/mail.php で定義）
+  adopted: yes
+  classification: PR限定
+  targets: config/mail.php, app/Http/Controllers/ContactController.php, .env.example
+  notes: 指摘は有効。MAIL_CONTACT_TO 未設定時に null になり得た定義を、MAIL_FROM_ADDRESS デフォルトと共有する `$mailFromAddress` へ `?:` で集約。ContactController の二重フォールバックを削除。.env.example のコメントを整合。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（PublicMiscPagesTest の観点表と test-strategy.mdc §2 項4 の整合を PHPDoc で明示）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/PublicMiscPagesTest.php
+  notes: 指摘は有効。項2の「失敗系は正常系と同数以上」は項4の例外（合理的でない場合は主要エラー経路＋Notes）で説明可能と判断。表に TC-N-21 と TC-A-12 を反映し、集計行を更新。legal 店舗ありテストに TC-N-21 の PHPDoc を付与。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（POST /contact に throttle:5,1 を付与しスパム送信を抑制）
+  adopted: yes
+  classification: PR限定
+  targets: routes/web.php, tests/Feature/PublicMiscPagesTest.php
+  notes: 指摘は有効。認証不要のメール送信 POST にレート制限がなく悪用可能なため、`throttle:5,1`（Fortify ログインの 5/分 と同水準）を route のみに適用。公開 GET 他ルートは従来どおり。Feature テストで 6 回目が 429 となることを確認。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
+  scope: [PH9-2-4] その他公開ページ（Store, Contact, Legal）
+  adopted: no
+  classification: none
+  targets: routes/web.php, app/Http/Controllers/PublicStoreController.php, app/Http/Controllers/ContactController.php, app/Http/Controllers/LegalController.php, app/Http/Requests/StoreContactRequest.php, app/Mail/ContactInquiryMail.php, resources/views/pages/stores/*.blade.php, resources/views/pages/contact/create.blade.php, resources/views/pages/legal/tokushoho.blade.php, resources/views/mail/contact-inquiry.blade.php, resources/views/partials/public/site-footer.blade.php, public/assets/css/pages/public-misc.css, config/mail.php, config/app.php, .env.example, resources/views/pages/welcome.blade.php, tests/Feature/PublicMiscPagesTest.php, tests/Feature/ViewDirectoryStructureTest.php, tests/Feature/WelcomePageTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。公開 GET /stores・/stores/{code}（active のみ）、GET/POST /contact（ContactInquiryMail・mail.contact_to）、GET /legal/tokushoho。共通フッターに導線追加。お問い合わせのメール検証は DNS ルックアップを避けるため email:filter を使用。ASSET_VERSION を 20260322_5 へ。
+
+- date: 2026-03-22
   branch: feat/ph9-2-3-session-calendar
   scope: PRレビュー（schedule.css の primary 透明度を .p-schedule にカスタムプロパティ集約）
   adopted: yes

@@ -1,5 +1,7 @@
 <?php
 
+$mailFromAddress = env('MAIL_FROM_ADDRESS', 'hello@example.com');
+
 return [
 
     /*
@@ -111,8 +113,19 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'address' => $mailFromAddress,
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Contact form recipient
+    |--------------------------------------------------------------------------
+    |
+    | 公開お問い合わせフォームの宛先。MAIL_CONTACT_TO が未設定または空のときは from.address と同じ値になる。
+    |
+    */
+
+    'contact_to' => env('MAIL_CONTACT_TO') ?: $mailFromAddress,
 
 ];
