@@ -18,6 +18,22 @@
 
 - date: 2026-03-20
   branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（WelcomePageTest で管理者のログアウト導線をアサート）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/WelcomePageTest.php
+  notes: 指摘は有効。管理者向けテストが admin.dashboard と旧 /dashboard 不在のみだったため、`@else` ブロック共通の `route('logout')` POST フォーム表示を会員テストと同形式で検証し回帰保護を追加した。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（welcome の login/register を Route::has でガード）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/pages/welcome.blade.php
+  notes: 指摘は有効。Fortify で registration を外す等でルートが消えた場合に `route()` が例外となるのを防ぐため、旧 welcome と同様に `Route::has('register')` / `Route::has('login')` でリンクを条件表示に戻した（`pages/auth/login.blade.php` の register リンクと整合）。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
   scope: PRレビュー指摘対応（app.css 変更に伴う ASSET_VERSION の更新）
   adopted: yes
   classification: PR限定

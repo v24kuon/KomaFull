@@ -27,6 +27,7 @@ class WelcomePageTest extends TestCase
 
     /**
      * TC-N-03: 管理者は誤った /dashboard ではなく管理ダッシュボード導線を見ること。
+     * 併せて認証ユーザー共通のログアウト POST フォームが描画されること。
      */
     public function test_admin_user_sees_admin_dashboard_link_on_welcome_page(): void
     {
@@ -35,6 +36,7 @@ class WelcomePageTest extends TestCase
         $response->assertOk();
         $response->assertSee(route('admin.dashboard'), false);
         $response->assertDontSee('href="/dashboard"', false);
+        $response->assertSee('action="'.route('logout').'"', false);
     }
 
     /**

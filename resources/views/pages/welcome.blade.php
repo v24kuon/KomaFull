@@ -21,8 +21,12 @@
 
                     <div class="d-flex flex-wrap gap-3 align-items-center">
                         @guest
-                            <a href="{{ route('register') }}" class="btn btn-primary btn-lg">会員登録をはじめる</a>
-                            <a href="{{ route('login') }}" class="btn btn-outline-dark btn-lg">ログイン</a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="btn btn-primary btn-lg">会員登録をはじめる</a>
+                            @endif
+                            @if (Route::has('login'))
+                                <a href="{{ route('login') }}" class="btn btn-outline-dark btn-lg">ログイン</a>
+                            @endif
                         @else
                             @can('access-admin')
                                 <a href="{{ route('admin.dashboard') }}" class="btn btn-primary btn-lg">管理ダッシュボードへ</a>
