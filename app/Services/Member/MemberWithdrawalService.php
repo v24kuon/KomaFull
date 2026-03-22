@@ -22,6 +22,11 @@ use Laravel\Cashier\Subscription;
  * - 先頭の `member_status === withdrawn` で早期 return。
  * - トランザクション内で再取得した行が既に withdrawn なら更新しない（再試行・並行完了後の二重更新を避ける）。
  * - サブスクは `active()` が false なら `cancelNow()` を呼ばない（Stripe 側が既に解約済みの再試行）。
+ *
+ * Residual risk / operations:
+ * - `cancelNow()` 成功後に DB トランザクションが失敗すると、一時的に Stripe 側は解約済みだが `member_profiles` が未退会のまま残る。
+ *   再試行では `active()` が false のため二重解約は起きず、DB が利用可能になればトランザクションで withdrawn へ収束する。
+ *   長期に不整合が残るケースの検知はアプリ外の運用監視（例: サブスク状態と DB の突合）で検討する余地がある。
  */
 class MemberWithdrawalService
 {

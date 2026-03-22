@@ -18,6 +18,30 @@
 
 - date: 2026-03-22
   branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（MemberWithdrawalService の Stripe／DB 境界と残存リスクの PHPDoc 追記）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberWithdrawalService.php
+  notes: 指摘は設計理解と運用提案が中心。監視ジョブの実装は必須ではない。cancelNow 成功後の DB 失敗時の一時不整合と再試行収束・運用監視の検討余地をクラス PHPDoc に明示。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SettingsWithdrawalController::destroy を LogoutAndInvalidateSession に統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsWithdrawalController.php, app/Actions/Auth/LogoutAndInvalidateSession.php
+  notes: 指摘は有効。退会成功時の logout／invalidate／regenerateToken を共有アクションへ寄せドリフト防止。LogoutAndInvalidateSession の PHPDoc に呼び出し元を追記。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（LogoutAndInvalidateSession::__invoke にエントリーポイント用 PHPDoc）
+  adopted: yes
+  classification: PR限定
+  targets: app/Actions/Auth/LogoutAndInvalidateSession.php
+  notes: 指摘は有効。責務・前提・副作用・更新方針を __invoke に記載し、ミドルウェア／LoginResponse との境界を明示。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
   scope: PRレビュー（SettingsEmailController 未認証プロフィールなしを verification.notice へ直接リダイレクト）
   adopted: yes
   classification: PR限定

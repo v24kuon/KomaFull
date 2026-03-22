@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Member;
 
+use App\Actions\Auth\LogoutAndInvalidateSession;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Member\WithdrawMemberAccountRequest;
 use App\Models\MemberProfile;
@@ -17,6 +18,7 @@ class SettingsWithdrawalController extends Controller
 {
     public function __construct(
         private readonly MemberWithdrawalService $memberWithdrawalService,
+        private readonly LogoutAndInvalidateSession $logoutAndInvalidateSession,
     ) {}
 
     /**
@@ -47,6 +49,7 @@ class SettingsWithdrawalController extends Controller
      * 前提: `WithdrawMemberAccountRequest` で現在パスワードと確認チェック済みであること。
      *
      * `withdraw()` 内（Stripe 等）で例外が出た場合はログに記録し、退会画面へエラーを付けて戻す（未ログアウト）。
+     * 成功時のログアウト・セッション無効化は {@see LogoutAndInvalidateSession} に委ね、退会拒否系と手順を揃える。
      */
     public function destroy(WithdrawMemberAccountRequest $request): RedirectResponse
     {
@@ -68,10 +71,7 @@ class SettingsWithdrawalController extends Controller
                 ->with('error', '退会処理を完了できませんでした。時間をおいて再度お試しください。');
         }
 
-        Auth::logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        ($this->logoutAndInvalidateSession)($request);
 
         return redirect()
             ->route('home')
