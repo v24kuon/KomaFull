@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
+  scope: [PH9-2-2] プログラム一覧・詳細画面（HTMX）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/ProgramController.php, routes/web.php, resources/views/pages/programs/, resources/views/partials/programs/, resources/views/layouts/app.blade.php, resources/views/pages/welcome.blade.php, public/assets/css/pages/programs.css, config/app.php, .env.example, tests/Feature/ProgramPublicPageTest.php, tests/Feature/ViewDirectoryStructureTest.php, tests/Feature/WelcomePageTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。公開一覧は status=active のみ、カテゴリ sort_order・名称で並べ替え。詳細は code 解決、inactive は 404。HX-Request 時は一覧・詳細とも partials のみ返却し一覧モーダル埋め込みに利用。公開レイアウトに HTMX を追加し `ASSET_VERSION` を更新した。
+
 - date: 2026-03-20
   branch: feat/ph9-2-1-welcome-replace
   scope: PRレビュー指摘対応（layouts.app の body に HTMX 用 hx-headers を付与）
