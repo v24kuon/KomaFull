@@ -46,7 +46,7 @@ class SettingsPasswordController extends Controller
             abort(403);
         }
 
-        $user->forceFill([
+        $user->fill([
             'password' => $request->validated('password'),
         ])->save();
 

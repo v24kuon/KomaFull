@@ -9,11 +9,11 @@
         <p class="text-secondary mb-0">予約の予定と、回数券・ポイント・サブスク枠の残りを一覧できます。</p>
     </header>
 
-    @if ($memberProfile === null)
+    @if ($memberProfile === null && session('error') !== \App\Models\MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED)
         <div class="alert alert-warning" role="alert">
             {{ \App\Models\MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED }}
         </div>
-    @else
+    @elseif ($memberProfile !== null)
         <p class="small text-secondary mb-4">会員番号 <span class="font-monospace">{{ $memberProfile->code }}</span>
             · ステータス
             @if ($memberProfile->member_status === \App\Models\MemberProfile::STATUS_ACTIVE)

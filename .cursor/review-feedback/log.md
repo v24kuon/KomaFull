@@ -18,6 +18,22 @@
 
 - date: 2026-03-22
   branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SettingsPasswordController の password 更新を forceFill から fill へ）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsPasswordController.php
+  notes: 指摘は有効。User::$fillable に password があるため fill で十分。先行 PR の方針と整合。挙動（hashed キャスト）は変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（ダッシュボードでプロフィール未作成メッセージの二重表示を解消）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/pages/member/dashboard.blade.php, tests/Feature/Member/MemberDashboardTest.php
+  notes: 指摘は有効。member.dashboard へ FLASH_ERROR_MISSING_PROFILE_VERIFIED 付きリダイレクト時は layouts.member が既に error を表示するため、同一文言のインライン warning を出さない。直接アクセス時は従来どおり warning のみ。Feature テストで文言出現回数と alert 種別を検証。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
   scope: PRレビュー（MemberWithdrawalService の Stripe／DB 境界と残存リスクの PHPDoc 追記）
   adopted: yes
   classification: PR限定
