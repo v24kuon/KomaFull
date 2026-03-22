@@ -1,0 +1,72 @@
+/* 開催枠カレンダー（公開） */
+
+.p-schedule {
+    /* Bootstrap の RGB 変数を使う透明度付き背景（調整はこのブロックに集約） */
+    --p-schedule-muted-bg: rgba(var(--bs-secondary-rgb), 0.08);
+    --p-schedule-primary-fill-08: rgba(var(--bs-primary-rgb), 0.08);
+    --p-schedule-primary-fill-12: rgba(var(--bs-primary-rgb), 0.12);
+}
+
+.p-schedule__weekday {
+    width: 14.28%;
+    font-weight: 600;
+    background-color: var(--bs-light);
+}
+
+.p-schedule__cell {
+    min-width: 3.5rem;
+    height: 4.75rem;
+    vertical-align: middle;
+}
+
+.p-schedule__cell--muted {
+    background-color: var(--p-schedule-muted-bg);
+}
+
+.p-schedule__cell--today {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: -2px;
+}
+
+.p-schedule__cell--selected {
+    background-color: var(--p-schedule-primary-fill-12);
+}
+
+.p-schedule__daybtn {
+    width: 100%;
+    min-height: 4rem;
+    color: inherit;
+    border: 0;
+    border-radius: 0.375rem;
+}
+
+.p-schedule__daybtn:hover,
+.p-schedule__daybtn:focus-visible {
+    background-color: var(--p-schedule-primary-fill-08);
+}
+
+.p-schedule__sym {
+    font-size: 1.1rem;
+    line-height: 1.2;
+}
+
+.p-schedule__sym--best {
+    color: var(--bs-success);
+}
+
+.p-schedule__sym--ok {
+    color: var(--bs-primary);
+}
+
+.p-schedule__sym--low {
+    color: var(--bs-warning);
+}
+
+.p-schedule__sym--full {
+    color: var(--bs-danger);
+}
+
+.p-schedule__legend .p-schedule__sym {
+    font-size: 1rem;
+    margin-right: 0.15rem;
+}

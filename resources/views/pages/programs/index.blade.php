@@ -17,7 +17,10 @@
                 </ol>
             </nav>
             <h1 class="h2 mb-2">プログラム一覧</h1>
-            <p class="text-secondary mb-0">開講中のプログラムを一覧しています。カードから詳細をモーダルで確認するか、別ページで開いてください。</p>
+            <p class="text-secondary mb-0">
+                開講中のプログラムを一覧しています。カードから詳細をモーダルで確認するか、別ページで開いてください。
+                <a href="{{ route('schedule.index') }}" class="link-primary">開催枠カレンダー</a>から空き状況を月別に確認できます。
+            </p>
         </header>
 
         @include('partials.programs.list', ['programs' => $programs])

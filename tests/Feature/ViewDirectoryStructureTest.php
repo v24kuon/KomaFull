@@ -105,6 +105,17 @@ class ViewDirectoryStructureTest extends TestCase
     }
 
     /**
+     * TC-N-08: 公開の開催枠カレンダーは pages 配下の view を使うこと。
+     */
+    public function test_schedule_index_uses_pages_directory_view(): void
+    {
+        $response = $this->get(route('schedule.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('pages.schedule.index');
+    }
+
+    /**
      * @return array<string, array{0: string, 1: string}>
      */
     public static function authPageProvider(): array

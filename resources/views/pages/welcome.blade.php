@@ -20,6 +20,7 @@
                     </p>
 
                     <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <a href="{{ route('schedule.index') }}" class="btn btn-outline-primary btn-lg">開催枠カレンダー</a>
                         <a href="{{ route('programs.index') }}" class="btn btn-outline-primary btn-lg">プログラム一覧</a>
                         @guest
                             @if (Route::has('register'))
