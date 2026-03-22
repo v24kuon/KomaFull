@@ -18,6 +18,22 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-2-program-pages
+  scope: PRレビュー（ProgramPublicPageTest の各テストメソッドへ PHPDoc／Case ID 追記）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramPublicPageTest.php
+  notes: 指摘は有効。test-strategy の「テストケース ID はメソッド直上 PHPDoc」と ViewDirectoryStructureTest の TC 形式に合わせ、8 メソッドすべてに TC-N/TC-A と一行シナリオを付与。AdminProgramCrudTest 等の広範な統一は本コミット範囲外とした。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
+  scope: PRレビュー（ProgramPublicPageTest の失敗系件数と test-strategy の整合）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramPublicPageTest.php
+  notes: 指摘は一部有効。読み取り専用 GET のため意味のある HTTP 失敗経路は inactive/存在しない code の 404 のみと判断。観点表に Notes 列と test-strategy の例外（合理的でない場合の主要エラー経路優先・Notes 明示）を PHPDoc に追記。冗長な失敗テストの追加は見送り。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
   scope: PRレビュー指摘対応（Program のルートキー・admin の HTMX 読み込み順・join/with の PHPDoc・review-fix コマンド更新）
   adopted: yes
   classification: PR限定
