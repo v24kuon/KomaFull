@@ -27,6 +27,9 @@
     --app-admin-sidebar-width: 15rem;
     --app-admin-sidebar-active-bg: var(--app-brand-color);
     --app-admin-header-min-height: 3.5rem;
+    /* 公開ページの本文カラム最大幅（contact / legal 等。16px 基準の rem） */
+    --app-page-content-max-contact: 40rem;
+    --app-page-content-max-legal: 50rem;
 }
 
 /* ==========================================================

@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（public-misc の max-width を app.css の CSS 変数に寄せる）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/app.css, public/assets/css/pages/public-misc.css, config/app.php, .env.example
+  notes: 指摘は一部有効。ページ固有のままでも許容とあったが、既存の社長変数ゾーンに --app-page-content-max-contact / --app-page-content-max-legal を追加し public-misc は var() 参照のみ。640px/800px は 40rem/50rem（16px 基準）に相当。ASSET_VERSION を更新。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
   scope: PRレビュー（mail.contact_to のフォールバックを config/mail.php で定義）
   adopted: yes
   classification: PR限定

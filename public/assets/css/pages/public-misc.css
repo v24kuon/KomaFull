@@ -11,9 +11,9 @@
 }
 
 .p-public-container--contact {
-    max-width: 640px;
+    max-width: var(--app-page-content-max-contact);
 }
 
 .p-public-container--legal {
-    max-width: 800px;
+    max-width: var(--app-page-content-max-legal);
 }
