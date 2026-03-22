@@ -12,6 +12,7 @@ class WelcomePageTest extends TestCase
 
     /**
      * TC-N-01/02: 公開トップは共通レイアウト経由で描画され、ゲスト導線を持つこと。
+     * 併せて認証ユーザー向けのログアウト POST フォームは表示されないこと。
      */
     public function test_guest_welcome_page_uses_shared_layout_assets_and_guest_ctas(): void
     {
@@ -23,6 +24,7 @@ class WelcomePageTest extends TestCase
         $response->assertSee(v_asset('assets/js/app.js'), false);
         $response->assertSee(route('login'), false);
         $response->assertSee(route('register'), false);
+        $response->assertDontSee('action="'.route('logout').'"', false);
     }
 
     /**
@@ -41,6 +43,7 @@ class WelcomePageTest extends TestCase
 
     /**
      * TC-N-04: 一般会員はゲスト導線ではなくログアウト導線を見ること。
+     * 併せて管理ダッシュボード導線は表示されないこと。
      */
     public function test_member_user_sees_logout_action_instead_of_guest_auth_links(): void
     {
@@ -50,6 +53,7 @@ class WelcomePageTest extends TestCase
         $response->assertSee('action="'.route('logout').'"', false);
         $response->assertDontSee(route('login'), false);
         $response->assertDontSee(route('register'), false);
+        $response->assertDontSee(route('admin.dashboard'), false);
     }
 
     private function createUserWithRole(string $role): User

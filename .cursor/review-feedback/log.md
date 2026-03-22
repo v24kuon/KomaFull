@@ -18,6 +18,22 @@
 
 - date: 2026-03-20
   branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（WelcomePageTest でゲストのログアウトフォーム不在をアサート）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/WelcomePageTest.php
+  notes: 指摘は有効。ゲスト向け TC-N-01/02 で `route('logout')` の POST フォームが描画されないことを明示し、認証済み向け `@else` 分岐との対称性と回帰保護を追加した。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（WelcomePageTest で一般会員の admin.dashboard 非表示をアサート）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/WelcomePageTest.php
+  notes: 指摘は有効。管理者テストと対称に、一般会員向け TC-N-04 で `route('admin.dashboard')` が描画されないことを明示し、`@can('access-admin')` 分岐の回帰を補強した。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
   scope: PRレビュー指摘対応（WelcomePageTest で管理者のログアウト導線をアサート）
   adopted: yes
   classification: PR限定
