@@ -18,6 +18,70 @@
 
 - date: 2026-03-22
   branch: feat/ph10-2-1-mypage-dashboard
+  scope: PRレビュー（MemberDashboardSummary::build の PHPDoc に責務・副作用・トランザクション・冪等性を追記）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberDashboardSummary.php
+  notes: 指摘は有効。RFP-009 に沿い読み取り専用サービスの契約を明示。副作用なし・トランザクション未使用・冪等性は該当しない旨を記載。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-1-mypage-dashboard
+  scope: PRレビュー（マイページ dashboard で STATUS_WITHDRAWN を「退会済み」ラベルで明示）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/pages/member/dashboard.blade.php
+  notes: 指摘は有効。退会済みがフォールバックで生値表示されないよう MemberProfile::STATUS_WITHDRAWN を分岐。将来の未知ステータスは従来どおり @else で表示。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-1-mypage-dashboard
+  scope: PRレビュー（ViewDirectoryStructureTest の member.dashboard テストで email_verified_at を明示）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ViewDirectoryStructureTest.php
+  notes: 指摘は有効。verified ミドルウェア前提ルートのため、Factory 既定への暗黙依存を避け email_verified_at を now() で固定。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-1-mypage-dashboard
+  scope: PRレビュー（member.css のタイポグラフィを app.css デザイントークンへ寄せ、ASSET_VERSION をバンプ）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/app.css, public/assets/css/pages/member.css, config/app.php, .env.example
+  notes: 指摘は有効。既存の --app-font-size-sm を利用し、600 用に --app-font-weight-semibold を社長変数ゾーンに追加。public/assets 変更に合わせ no-build 規約どおり asset_version を 20260322_8 へ。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-1-mypage-dashboard
+  scope: PRレビュー（AuthViewsTest 会員ログインテストで role を ROLE_MEMBER 明示）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/AuthViewsTest.php
+  notes: 指摘は有効。Factory や users.role デフォルト変更時も「一般会員ログイン→member.dashboard」意図が揺れないよう createOne に role を固定。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-1-mypage-dashboard
+  scope: PRレビュー（MemberDashboardSummary の build 内で now() を単一取得に統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberDashboardSummary.php
+  notes: 指摘は有効。サブスク期間判定と upcoming 予約の基準時刻を同一インスタンスに固定し、日付境界でのわずかな不整合リスクを排除。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-1-mypage-dashboard
+  scope: PRレビュー（LoginResponse の intended 優先と管理者デフォルトの関係をテスト・PHPDocで明示）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Responses/LoginResponse.php, tests/Feature/AuthViewsTest.php
+  notes: 指摘は妥当。redirect()->intended() により url.intended がロール別フォールバックより優先されることは Laravel 仕様どおり。挙動変更はプロダクト判断のため行わず、管理者かつ url.intended=マイページのログインで member.dashboard へ遷移する Feature テストを追加。クラス PHPDoc で意図を明示。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-1-mypage-dashboard
+  scope: PRレビュー（public/assets/css/pages/member.css 追加に伴い ASSET_VERSION を 20260322_7 へ更新）
+  adopted: yes
+  classification: PR限定
+  targets: config/app.php, .env.example
+  notes: 指摘は有効。no-build 規約どおり v_asset 利用資産変更と同じリリースで asset_version のデフォルトと .env.example をバンプ。リポジトリ内に 20260322_6 の固定期待テストはなし。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-1-mypage-dashboard
   scope: [PH10-2-1] マイページ・ダッシュボード（予約状況・残高サマリ）
   adopted: no
   classification: none

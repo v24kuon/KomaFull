@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Fortify ログイン成功時のレスポンス。
+ *
+ * {@see \Illuminate\Routing\Redirector::intended()} により、セッションに `url.intended` がある場合は
+ * `redirectPath()` が返すロール別デフォルトより優先される。
+ */
 class LoginResponse implements LoginResponseContract
 {
     /**

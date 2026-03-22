@@ -157,6 +157,7 @@ class ViewDirectoryStructureTest extends TestCase
         /** @var User $user */
         $user = User::factory()->createOne([
             'role' => User::ROLE_MEMBER,
+            'email_verified_at' => now(),
         ]);
 
         MemberProfile::factory()->for($user)->createOne();

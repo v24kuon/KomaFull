@@ -20,6 +20,8 @@
                 <span class="badge text-bg-success">本会員</span>
             @elseif ($memberProfile->member_status === \App\Models\MemberProfile::STATUS_PROVISIONAL)
                 <span class="badge text-bg-secondary">仮会員</span>
+            @elseif ($memberProfile->member_status === \App\Models\MemberProfile::STATUS_WITHDRAWN)
+                <span class="badge text-bg-dark">退会済み</span>
             @else
                 <span class="badge text-bg-light text-dark">{{ $memberProfile->member_status }}</span>
             @endif

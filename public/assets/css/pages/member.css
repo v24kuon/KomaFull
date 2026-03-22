@@ -9,6 +9,6 @@
 }
 
 .p-member-dashboard .table th {
-    font-weight: 600;
-    font-size: 0.875rem;
+    font-weight: var(--app-font-weight-semibold);
+    font-size: var(--app-font-size-sm);
 }
