@@ -18,6 +18,14 @@
 
 - date: 2026-03-20
   branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（app.css 変更に伴う ASSET_VERSION の更新）
+  adopted: yes
+  classification: PR限定
+  targets: config/app.php, .env.example
+  notes: 指摘は有効。`--app-brand-rgb` を app.css に追加したため、同一 `?v=` のままだとブラウザが古い app.css を保持した場合に `welcome.css` の `rgba(var(--app-brand-rgb), …)` が未定義となり得る。no-build 規約に従い `ASSET_VERSION` を 20260319_2 へ更新し、`v_asset()` のキャッシュバスティングを揃えた。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
   scope: PRレビュー指摘対応（welcome.css のブランド色重複を CSS 変数へ統一）
   adopted: yes
   classification: PR限定
