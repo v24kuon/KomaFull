@@ -18,6 +18,14 @@
 
 - date: 2026-03-20
   branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（layouts.app の body に HTMX 用 hx-headers を付与）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/app.blade.php
+  notes: 指摘は有効。`no-build-convention.mdc` 2.2 に従い、公開レイアウトも `layouts/admin` と同様に `body` に `hx-headers` で `X-CSRF-TOKEN` を付与し、将来の公開側 HTMX 利用時の CSRF 前提を揃えた。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
   scope: PRレビュー指摘対応（layouts.app の app.name フォールバックを KomaFull に統一）
   adopted: yes
   classification: PR限定

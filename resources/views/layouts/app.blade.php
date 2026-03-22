@@ -10,7 +10,7 @@
         <link rel="stylesheet" href="{{ v_asset('assets/css/app.css') }}">
         @stack('styles')
     </head>
-    <body>
+    <body hx-headers='{"X-CSRF-TOKEN":"{{ csrf_token() }}"}'>
         @yield('content')
 
         <script defer src="{{ v_asset('assets/js/app.js') }}"></script>
