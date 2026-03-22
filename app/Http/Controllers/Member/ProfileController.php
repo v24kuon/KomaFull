@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Member\UpdateMemberProfileRequest;
 use App\Models\AdditionalItem;
+use App\Models\MemberProfile;
 use App\Models\User;
 use App\Services\Member\MemberProfileUpdateService;
 use Illuminate\Http\RedirectResponse;
@@ -34,7 +35,7 @@ class ProfileController extends Controller
         if ($memberProfile === null) {
             return redirect()
                 ->route('member.dashboard')
-                ->with('error', '会員プロフィールがまだありません。メール認証完了後に自動で作成されます。');
+                ->with('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED);
         }
 
         $additionalItems = AdditionalItem::query()
@@ -69,7 +70,7 @@ class ProfileController extends Controller
         if ($user->memberProfile === null) {
             return redirect()
                 ->route('member.dashboard')
-                ->with('error', '会員プロフィールがまだありません。メール認証完了後に自動で作成されます。');
+                ->with('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED);
         }
 
         $this->memberProfileUpdateService->update($user, $request->validated());

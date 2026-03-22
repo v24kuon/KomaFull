@@ -27,6 +27,9 @@
                             <a class="nav-link @if(request()->routeIs('member.profile.*')) active @endif" href="{{ route('member.profile.edit') }}">プロフィール</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link @if(request()->routeIs('member.settings.*')) active @endif" href="{{ route('member.settings.index') }}">会員設定</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('home') }}">ホーム</a>
                         </li>
                         <li class="nav-item">

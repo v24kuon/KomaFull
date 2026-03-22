@@ -28,6 +28,22 @@ class MemberDashboardTest extends TestCase
     }
 
     /**
+     * TC-A-01b: 管理者は会員マイページへアクセスできないこと。
+     */
+    public function test_administrator_cannot_access_member_dashboard(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('member.dashboard'));
+
+        $response->assertForbidden();
+    }
+
+    /**
      * TC-A-02: メール未認証ユーザーはマイページへアクセスできないこと。
      */
     public function test_unverified_user_is_redirected_from_member_dashboard(): void
@@ -42,6 +58,47 @@ class MemberDashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('member.dashboard'));
 
         $response->assertRedirect(route('verification.notice'));
+    }
+
+    /**
+     * プロフィール未作成でマイページに直接アクセスしたとき、未作成案内が1回だけ表示されること（インライン warning）。
+     */
+    public function test_dashboard_shows_missing_profile_inline_once_when_accessed_directly_without_flash(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_MEMBER,
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('member.dashboard'));
+
+        $response->assertOk();
+        $msg = MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED;
+        $this->assertSame(1, substr_count($response->getContent(), $msg));
+        $response->assertSee('alert-warning', false);
+    }
+
+    /**
+     * 他会員画面から同一文言の error フラッシュで遷移したとき、レイアウトの danger とダッシュボードの warning で二重表示にならないこと。
+     */
+    public function test_dashboard_shows_missing_profile_message_once_when_flashed_from_redirect(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_MEMBER,
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($user)->get(route('member.settings.index'));
+
+        $response = $this->actingAs($user)->get(route('member.dashboard'));
+
+        $response->assertOk();
+        $msg = MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED;
+        $this->assertSame(1, substr_count($response->getContent(), $msg));
+        $response->assertSee('alert-danger', false);
+        $response->assertDontSee('alert-warning', false);
     }
 
     /**

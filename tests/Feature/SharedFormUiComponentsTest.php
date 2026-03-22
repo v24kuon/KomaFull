@@ -107,6 +107,43 @@ BLADE);
     }
 
     /**
+     * TC-N-04: Fortify 等が使う名前付きエラーバッグを form-errors で描画できること（例: updateProfileInformation）。
+     */
+    public function test_form_errors_component_renders_named_error_bag(): void
+    {
+        $html = $this->renderBlade(
+            '<x-ui.form-errors bag="updateProfileInformation" />',
+            [
+                'errors' => (new ViewErrorBag)->put('updateProfileInformation', new MessageBag([
+                    'email' => ['このメールアドレスは既に使用されています。'],
+                ])),
+            ]
+        );
+
+        $this->assertStringContainsString('このメールアドレスは既に使用されています。', $html);
+        $this->assertStringContainsString('role="alert"', $html);
+    }
+
+    /**
+     * TC-N-05: field-error が名前付きバッグのフィールドエラーを描画できること。
+     */
+    public function test_field_error_component_renders_named_error_bag(): void
+    {
+        $html = $this->renderBlade(
+            '<x-ui.field-error field="email" bag="updateProfileInformation" />',
+            [
+                'errors' => (new ViewErrorBag)->put('updateProfileInformation', new MessageBag([
+                    'email' => ['このメールアドレスは既に使用されています。'],
+                ])),
+            ]
+        );
+
+        $this->assertStringContainsString('invalid-feedback', $html);
+        $this->assertStringContainsString('role="alert"', $html);
+        $this->assertStringContainsString('このメールアドレスは既に使用されています。', $html);
+    }
+
+    /**
      * @param  array<string, string|list<string>>  $messages
      */
     private function makeViewErrorBag(array $messages): ViewErrorBag

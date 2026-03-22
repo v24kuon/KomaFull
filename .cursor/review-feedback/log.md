@@ -17,6 +17,246 @@
 ## Entries
 
 - date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SettingsPasswordController の password 更新を forceFill から fill へ）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsPasswordController.php
+  notes: 指摘は有効。User::$fillable に password があるため fill で十分。先行 PR の方針と整合。挙動（hashed キャスト）は変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（ダッシュボードでプロフィール未作成メッセージの二重表示を解消）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/pages/member/dashboard.blade.php, tests/Feature/Member/MemberDashboardTest.php
+  notes: 指摘は有効。member.dashboard へ FLASH_ERROR_MISSING_PROFILE_VERIFIED 付きリダイレクト時は layouts.member が既に error を表示するため、同一文言のインライン warning を出さない。直接アクセス時は従来どおり warning のみ。Feature テストで文言出現回数と alert 種別を検証。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（MemberWithdrawalService の Stripe／DB 境界と残存リスクの PHPDoc 追記）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberWithdrawalService.php
+  notes: 指摘は設計理解と運用提案が中心。監視ジョブの実装は必須ではない。cancelNow 成功後の DB 失敗時の一時不整合と再試行収束・運用監視の検討余地をクラス PHPDoc に明示。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SettingsWithdrawalController::destroy を LogoutAndInvalidateSession に統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsWithdrawalController.php, app/Actions/Auth/LogoutAndInvalidateSession.php
+  notes: 指摘は有効。退会成功時の logout／invalidate／regenerateToken を共有アクションへ寄せドリフト防止。LogoutAndInvalidateSession の PHPDoc に呼び出し元を追記。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（LogoutAndInvalidateSession::__invoke にエントリーポイント用 PHPDoc）
+  adopted: yes
+  classification: PR限定
+  targets: app/Actions/Auth/LogoutAndInvalidateSession.php
+  notes: 指摘は有効。責務・前提・副作用・更新方針を __invoke に記載し、ミドルウェア／LoginResponse との境界を明示。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SettingsEmailController 未認証プロフィールなしを verification.notice へ直接リダイレクト）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsEmailController.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。member.dashboard は verified のため未認証だと連鎖リダイレクトで error フラッシュが失われる。未認証分岐は verification.notice へ。layouts.app が session error を表示するため案内が見える。Feature テストで文言表示まで確認。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（EnsureMemberNotWithdrawn の PHPDoc を login リダイレクトに明示）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Middleware/EnsureMemberNotWithdrawn.php
+  notes: 指摘は有効。旧来の「ホームへ」表記は既に修正済みだったが、実装どおり login 名前付きルートとし home ではない旨を PHPDoc に明記。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（退会時の logout・session invalidate を LogoutAndInvalidateSession に共通化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Actions/Auth/LogoutAndInvalidateSession.php, app/Http/Middleware/EnsureMemberNotWithdrawn.php, app/Http/Responses/LoginResponse.php
+  notes: 指摘は有効。EnsureMemberNotWithdrawn と LoginResponse の同一手順を invokable アクションへ抽出しドリフト防止。レスポンス本文・文言は経路ごとに既存のまま。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（会員マイページに member.role ミドルウェア、UpdateMemberProfileRequest の authorize 強化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Middleware/EnsureMemberRole.php, bootstrap/app.php, routes/web.php, app/Http/Requests/Member/UpdateMemberProfileRequest.php, app/Http/Middleware/EnsureMemberNotWithdrawn.php, tests/Feature/Member/MemberDashboardTest.php, tests/Feature/Member/MemberProfileTest.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。EnsureMemberNotWithdrawn が管理者を素通しするため会員 UI への侵入を member.role で拒否。/mypage 両グループに適用。UpdateMemberProfileRequest を ROLE_MEMBER + memberProfile に統一。メール設定 PHPDoc は既に PHPDoc 化済み（インライン // なし）。Feature テストで管理者 403 を追加。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（verified 配下でプロフィール未作成時の案内を障害・問い合わせ文へ）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/MemberProfile.php, app/Http/Controllers/Member/SettingsController.php, app/Http/Controllers/Member/SettingsPasswordController.php, app/Http/Controllers/Member/SettingsBillingPortalController.php, app/Http/Controllers/Member/SettingsWithdrawalController.php, app/Http/Controllers/Member/ProfileController.php, app/Http/Controllers/Member/SettingsEmailController.php, resources/views/pages/member/dashboard.blade.php, tests/Feature/Member/MemberSettingsTest.php, tests/Feature/Member/MemberProfileTest.php
+  notes: 指摘は有効。verified では「メール認証後に自動作成」を再トリガーできないため、MemberProfile にフラッシュ定数を集約。メール設定（verified 外）は hasVerifiedEmail で未認証案内と分岐。ダッシュボードは alert-warning。Feature テストを追記・強化。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（routes/web.php のメール設定ルート説明を // から PHPDoc へ）
+  adopted: yes
+  classification: PR限定
+  targets: routes/web.php
+  notes: 指摘は有効。インラインコメントをルートグループ直前の PHPDoc に移し、リポジトリの PHPDoc 優先方針に合わせた。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（請求ポータル Stripe 失敗テストを Feature 化・MemberStripeBillingPortalService 抽出）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberStripeBillingPortalService.php, app/Http/Controllers/Member/SettingsBillingPortalController.php, tests/Feature/Member/MemberSettingsTest.php, tests/Unit/Http/Controllers/Member/SettingsBillingPortalControllerTest.php（削除）
+  notes: 指摘は有効。Request::create で controller 直呼びはルート・ミドルウェア・セッションを通らない。Cashier 呼び出しを MemberStripeBillingPortalService に切り出し、Feature で actingAs+post(route)+mock を実施。Unit ファイルは削除。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（LoginResponse の toResponse / redirectPath に PHPDoc 追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Responses/LoginResponse.php
+  notes: 指摘は有効。エントリーポイントに責務・副作用・@param、プライベートヘルパーに責務・副作用なしを追記（RFP-009 整合）。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SharedFormUiComponentsTest の名前付きバッグ field-error に role="alert" アサーション追加）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/SharedFormUiComponentsTest.php
+  notes: 指摘は有効。デフォルトバッグの TC-N-02 と揃え、x-ui.field-error が bag 指定時も role="alert" を出すことを明示。コンポーネントは ui/field-error.blade.php で既に role 付与。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（UpdateMemberEmailSettingsRequest / UpdateMemberPasswordSettingsRequest の authorize を ROLE_MEMBER + memberProfile に統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Member/UpdateMemberEmailSettingsRequest.php, app/Http/Requests/Member/UpdateMemberPasswordSettingsRequest.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。EnsureMemberNotWithdrawn は管理者を素通しのため Auth::check のみでは会員専用にならない。WithdrawMemberAccountRequest と同様の認可に変更。管理者・プロフィールなしの PUT は 403 を MemberSettingsTest で追加。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（MemberWithdrawalService の PHPDoc・lockForUpdate・Stripe と DB トランザクション境界）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberWithdrawalService.php
+  notes: 指摘のうち「cancelNow をトランザクション内で実行」は現行コードでは既にトランザクション外であり対応不要。クラス・メソッド PHPDoc に lock strategy / transaction boundaries / idempotency を追記。退会確定更新で member_profiles を lockForUpdate して並行時の二重更新を抑止。MemberSettingsTest 通過。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（WithdrawMemberAccountRequest に messages() を追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Member/WithdrawMemberAccountRequest.php
+  notes: 指摘は有効。current_password と withdrawal_confirmed（required/accepted）を日本語で固定。MemberSettingsTest 退会系は通過。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（WithdrawMemberAccountRequest authorize を ROLE_MEMBER + memberProfile に限定）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Member/WithdrawMemberAccountRequest.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。/mypage はロール未強制のため Auth::check のみでは管理者も通る。admin+プロフィールあり・会員でプロフィールなしは 403 を feature test で担保。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（UpdateMemberPasswordSettingsRequest に messages() を追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Member/UpdateMemberPasswordSettingsRequest.php
+  notes: 指摘は有効。current_password と password（required/string/min/confirmed）に日本語メッセージ。Password::default は min(8) 前提。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（UpdateMemberEmailSettingsRequest に messages() を追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Member/UpdateMemberEmailSettingsRequest.php
+  notes: 指摘は有効。rules の各ルールに対応する日本語メッセージ。同一メールの closure は従来どおり $fail 文言。MemberSettingsTest 全件通過。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SettingsWithdrawalController destroy で withdraw 例外時は退会画面へ flash error・ログ）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsWithdrawalController.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。try-catch Throwable、Log::error、logout 前に return。MemberWithdrawalService を mock して例外時は認証維持・非 withdrawn を feature test で確認。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SettingsController で memberProfile 未作成時は他設定と同様ダッシュボードへ誘導）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsController.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。Verified 時 CreateProvisionalMemberProfile 失敗は AppServiceProvider で握りつぶされ得る。null チェック＋リダイレクト、未使用の memberProfile ビュー変数を削除。feature test 追加。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SettingsBillingPortalController の Stripe 例外を捕捉しログ＋会員設定へ flash error）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsBillingPortalController.php, tests/Unit/Http/Controllers/Member/SettingsBillingPortalControllerTest.php
+  notes: 指摘は有効。createOrGetStripeCustomer / redirectToBillingPortal を try-catch（Throwable）、Log::error に user_id と exception。ユニットテストは Mockery で createOrGetStripeCustomer を例外化し TestResponse で redirect と session error を検証。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー依頼（MemberSettingsTest にメール変更・退会の current_password 誤り異常系を追加）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/Member/MemberSettingsTest.php
+  notes: 依頼どおり FormRequest の current_password:web 失敗経路を追加。メールは未変更・verified 維持、退会はプロフィール非 withdrawn を検証。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（LoginResponse で wantsJson を退会済み判定より後にし、JSON は 403・logout 後 session invalidate 整合）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Responses/LoginResponse.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。wantsJson 先行で退会が素通し。退会分岐を先に統一し JSON は 403 JSON。invalidate/regenerateToken は HTML と同一。postJson で feature test 追加。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（email.blade で Fortify の updateProfileInformation バッグを form-errors / field-error / @error で表示）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/pages/member/settings/email.blade.php, tests/Feature/SharedFormUiComponentsTest.php
+  notes: 指摘は有効。validateWithBag とデフォルトバッグが不一致。既存 x-ui は bag 対応済みのため二重表示で両バッグを網羅。SharedFormUiComponentsTest に名前付きバッグの TC を追加。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（メール未変更時は確認メールを送らない挙動と整合するよう UpdateMemberEmailSettingsRequest で同一メールを拒否）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Member/UpdateMemberEmailSettingsRequest.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。Fortify は email 不変時は確認メール非送信。成功フラッシュのみ誤解を招くため、email が現在値と一致する場合はバリデーションエラー。RFP-013 観点でフォームとサーバー許容値を一致。コントローラ文言は変更なし（成功経路のみ到達）。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（メール変更後も member.settings.email を verified 外にし、成功表示・誤入力時の再編集を可能に）
+  adopted: yes
+  classification: PR限定
+  targets: routes/web.php, app/Http/Controllers/Member/SettingsEmailController.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。email_verified_at null 直後は verified が GET を verification.notice へ飛ばす。/mypage/settings/email のみ auth+member.not_withdrawn に分離。コントローラにルート意図を PHPDoc。変更後 GET と未認証+プロフィールあり GET を feature test で担保。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（MemberWithdrawalService の cancelNow を DB トランザクション外へ。Stripe 副作用と RFP-009 整合）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberWithdrawalService.php
+  notes: 指摘は有効。cancelNow は Stripe API と subscriptions 行更新を含みロールバック不能。プロフィール更新のみ connection->transaction。トランザクション内で refresh し退会済みなら no-op。再試行時は active() が false のため二重 cancel を避ける。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（LoginResponse 退会済み拒否時に Auth::logout 後の session invalidate / CSRF regenerateToken を EnsureMemberNotWithdrawn と整合）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Responses/LoginResponse.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。退会済みログイン拒否でもミドルウェア・退会コントローラと同様にセッション無効化とトークン再生成を実施。退会ログイン失敗テストに assertGuest を追加。
+
+- date: 2026-03-22
   branch: feat/ph10-2-2-profile-ui
   scope: PRレビュー（追加項目 input_type の文字列リテラルを AdditionalItemInputType enum に統一、syncAdditionalItemValue の is_scalar 削除）
   adopted: yes
@@ -1623,3 +1863,11 @@
   classification: PR限定
   targets: app/Http/Controllers/ScheduleController.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。月外パディングセルで `ymd` / `day` は null なのに `isToday` だけ真になり得た。`isToday` に `$inMonth` を併用。PHPDoc に前提を追記し、`Carbon::setTestNow` で 4 月表示かつ当日 3/31 のときに `inMonth=false && isToday=true` が無いことを Feature テストで検証した。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PH10-3-1 会員設定（パスワード・メール・カード・退会）新規実装
+  adopted: no
+  classification: none
+  targets: （該当なし）
+  notes: 外部PRレビュー指摘の採用はなし。実装時点でレビュー指摘の蓄積対象はなしと判定した。
