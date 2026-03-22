@@ -127,6 +127,7 @@ class PublicMiscPagesTest extends TestCase
         Mail::assertSent(ContactInquiryMail::class, function (ContactInquiryMail $mail): bool {
             return $mail->name === '山田太郎'
                 && $mail->email === 'yamada@example.com'
+                && $mail->phone === '03-1234-5678'
                 && $mail->inquiryType === 'reservation'
                 && str_contains($mail->body, '予約について');
         });

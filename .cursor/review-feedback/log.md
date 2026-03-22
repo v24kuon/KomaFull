@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（PublicMiscPagesTest の Mail::assertSent で phone を検証）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/PublicMiscPagesTest.php
+  notes: 指摘は有効。ContactInquiryMail の phone が送信データと一致することを assertSent コールバックで明示。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
   scope: PRレビュー（お問い合わせフォームの email に maxlength=255 を追加）
   adopted: yes
   classification: PR限定
