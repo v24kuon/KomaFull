@@ -62,15 +62,21 @@ class ScheduleIndexRequest extends FormRequest
     }
 
     /**
-     * GET のクエリ不正時も 422 を返し、Feature テストの期待と整合させる。
+     * API / XHR 等で JSON を期待するリクエストだけカスタム 422 JSON を返す。
+     *
+     * 公開 HTML（ブラウザの通常 GET）では `expectsJson()` が偽のため親の `ValidationException` に委譲し、リダイレクトとセッションエラーで扱う（生 JSON を表示しない）。
      */
     protected function failedValidation(Validator $validator): void
     {
-        throw new HttpResponseException(
-            response()->json([
-                'message' => '開催枠カレンダーの表示条件が不正です。',
-                'errors' => $validator->errors(),
-            ], 422)
-        );
+        if ($this->expectsJson()) {
+            throw new HttpResponseException(
+                response()->json([
+                    'message' => '開催枠カレンダーの表示条件が不正です。',
+                    'errors' => $validator->errors(),
+                ], 422)
+            );
+        }
+
+        parent::failedValidation($validator);
     }
 }

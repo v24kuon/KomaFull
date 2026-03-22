@@ -1375,3 +1375,19 @@
   classification: PR限定
   targets: app/Http/Requests/ScheduleIndexRequest.php, app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。2000-01 の前月・2100-12 の次月はバリデーション外の年になるため 422 になる URL を無条件生成していた。`MIN_YEAR` / `MAX_YEAR` を FormRequest に定数化し、Controller で前月・次月が範囲内のときだけ `route`、それ以外は null。Blade はリンクの代わりに disabled 風の span を表示。Feature テストで境界を追加。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（ScheduleController の残席計算を remainingSeatsBreakdown に集約）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`reserved_count` / `reserved_trial_count` からの残席が `totalRemainingSeats` と `serializeSessionRow` に重複していた。`remainingSeatsBreakdown()` で内訳と合計を一箇所で算出し、foreach では 1 枠あたり 1 回だけ呼び出して日次合計と行 JSON の両方に使うよう整理した。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（ScheduleIndexRequest の failedValidation を expectsJson のときだけ JSON 422 に限定）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/ScheduleIndexRequest.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。公開 HTML の不正クエリでも無条件 JSON 422 だとブラウザが生 JSON を表示する。`expectsJson()` が真のときだけ従来のカスタム JSON、それ以外は `parent::failedValidation` で `ValidationException`（リダイレクト＋セッションエラー）。TC-A-01/02/04/05 は `assertRedirect` と `assertSessionHasErrors`、TC-A-03 は `getJson` で JSON 本文を検証するよう更新した。

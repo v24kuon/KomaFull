@@ -19,11 +19,11 @@ use Tests\TestCase;
  * | TC-N-01 | ゲスト、クエリなし | Equivalence – normal | 200、pages.schedule.index | 当月 |
  * | TC-N-02 | active プログラムの枠が1件 | Equivalence – payload | calendarPayload.sessionsByDay に該当日の行 | Alpine 描画はブラウザ前提。サーバー payload で検証 |
  * | TC-N-03 | inactive プログラムの枠のみ | Equivalence – filter | 該当日が sessionsByDay に載らない | whereHas(active) |
- * | TC-A-01 | month=13 | Boundary – above max | 422 | |
- * | TC-A-02 | year=1999 | Boundary – below min | 422 | |
- * | TC-A-03 | month=13 | Equivalence – error shape | 422、JSON に message / errors | FormRequest 失敗時の本文 |
- * | TC-A-04 | month=0 | Boundary – min-1 | 422 | |
- * | TC-A-05 | year=abc | Boundary – 非整数 | 422 | integer ルール |
+ * | TC-A-01 | month=13 | Boundary – above max | リダイレクト、month エラー | HTML GET |
+ * | TC-A-02 | year=1999 | Boundary – below min | リダイレクト、year エラー | HTML GET |
+ * | TC-A-03 | month=13 | Equivalence – error shape | 422、JSON に message / errors | Accept: application/json |
+ * | TC-A-04 | month=0 | Boundary – min-1 | リダイレクト、month エラー | HTML GET |
+ * | TC-A-05 | year=abc | Boundary – 非整数 | リダイレクト、year エラー | HTML GET |
  * | TC-N-04 | year=2000, month=1 | Boundary – 年下限の前月 | 200、schedulePrevUrl が null | 1999-12 は 422 のため |
  * | TC-N-05 | year=2100, month=12 | Boundary – 年上限の次月 | 200、scheduleNextUrl が null | 2101-01 は 422 のため |
  *
@@ -121,7 +121,7 @@ class ScheduleSessionCalendarTest extends TestCase
     }
 
     /**
-     * TC-A-01: month が範囲外のとき 422。
+     * TC-A-01: month が範囲外のとき HTML ではリダイレクトしセッションにエラー。
      */
     public function test_schedule_index_invalid_month_unprocessable(): void
     {
@@ -130,11 +130,12 @@ class ScheduleSessionCalendarTest extends TestCase
             'month' => 13,
         ]));
 
-        $response->assertStatus(422);
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['month']);
     }
 
     /**
-     * TC-A-02: year が下限未満のとき 422。
+     * TC-A-02: year が下限未満のとき HTML ではリダイレクトしセッションにエラー。
      */
     public function test_schedule_index_invalid_year_unprocessable(): void
     {
@@ -143,15 +144,16 @@ class ScheduleSessionCalendarTest extends TestCase
             'month' => 1,
         ]));
 
-        $response->assertStatus(422);
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['year']);
     }
 
     /**
-     * TC-A-03: クエリ不正時は 422 の JSON に message と errors が含まれる。
+     * TC-A-03: JSON を期待するリクエストでは 422 の本文に message と errors が含まれる。
      */
     public function test_schedule_index_invalid_query_returns_json_error_body(): void
     {
-        $response = $this->get(route('schedule.index', [
+        $response = $this->getJson(route('schedule.index', [
             'year' => 2026,
             'month' => 13,
         ]));
@@ -163,7 +165,7 @@ class ScheduleSessionCalendarTest extends TestCase
     }
 
     /**
-     * TC-A-04: month が最小値未満（0）のとき 422。
+     * TC-A-04: month が最小値未満（0）のとき HTML ではリダイレクトしセッションにエラー。
      */
     public function test_schedule_index_month_zero_unprocessable(): void
     {
@@ -172,11 +174,12 @@ class ScheduleSessionCalendarTest extends TestCase
             'month' => 0,
         ]));
 
-        $response->assertStatus(422);
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['month']);
     }
 
     /**
-     * TC-A-05: year が整数でないとき 422。
+     * TC-A-05: year が整数でないとき HTML ではリダイレクトしセッションにエラー。
      */
     public function test_schedule_index_non_numeric_year_unprocessable(): void
     {
@@ -185,7 +188,8 @@ class ScheduleSessionCalendarTest extends TestCase
             'month' => 1,
         ]));
 
-        $response->assertStatus(422);
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['year']);
     }
 
     /**

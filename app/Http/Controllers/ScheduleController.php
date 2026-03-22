@@ -50,11 +50,12 @@ class ScheduleController extends Controller
             /** @var Carbon $starts */
             $starts = $session->starts_at->copy()->timezone($tz);
             $ymd = $starts->format('Y-m-d');
-            $totalsByDay[$ymd] = ($totalsByDay[$ymd] ?? 0) + $this->totalRemainingSeats($session);
+            $remainingSeats = $this->remainingSeatsBreakdown($session);
+            $totalsByDay[$ymd] = ($totalsByDay[$ymd] ?? 0) + $remainingSeats['totalRemaining'];
             if (! isset($sessionsByDay[$ymd])) {
                 $sessionsByDay[$ymd] = [];
             }
-            $sessionsByDay[$ymd][] = $this->serializeSessionRow($session, $starts);
+            $sessionsByDay[$ymd][] = $this->serializeSessionRow($session, $starts, $remainingSeats);
         }
 
         $weeks = $this->buildCalendarWeeks($year, $month, $totalsByDay, $tz);
@@ -156,23 +157,30 @@ class ScheduleController extends Controller
     }
 
     /**
-     * 1 開催枠あたりの一般枠・体験枠の残席合計を返す。
+     * 1 開催枠あたりの一般・体験の残席内訳と合計を返す。
      *
      * 前提: `reservation_management` はカウンタキャッシュであり、真実は `reservations` だが本画面は読み取りのみ。`reservationManagement` が未ロードまたは欠損時は予約 0 件として `capacity` / `trial_capacity` から算出する。
-     * 更新方針: 一般・体験の定義やロック順序を変える場合は `ReservationService` 等のドメイン方針と整合させ、日別一覧の `serializeSessionRow` の計算とも揃える。
+     * 更新方針: 一般・体験の定義やロック順序を変える場合は `ReservationService` 等のドメイン方針と整合させ、日次合計記号と `serializeSessionRow` の表示とも同じ helper 経由に保つ。
+     *
+     * @return array{normalRemaining: int, trialRemaining: int, totalRemaining: int}
      */
-    private function totalRemainingSeats(LessonSession $session): int
+    private function remainingSeatsBreakdown(LessonSession $session): array
     {
         $rm = $session->reservationManagement;
         $reservedNormal = $rm?->reserved_count ?? 0;
         $reservedTrial = $rm?->reserved_trial_count ?? 0;
-        $normal = max(0, $session->capacity - $reservedNormal);
-        $trial = max(0, $session->trial_capacity - $reservedTrial);
+        $normalRemaining = max(0, $session->capacity - $reservedNormal);
+        $trialRemaining = max(0, $session->trial_capacity - $reservedTrial);
 
-        return $normal + $trial;
+        return [
+            'normalRemaining' => $normalRemaining,
+            'trialRemaining' => $trialRemaining,
+            'totalRemaining' => $normalRemaining + $trialRemaining,
+        ];
     }
 
     /**
+     * @param  array{normalRemaining: int, trialRemaining: int, totalRemaining: int}  $remainingSeats
      * @return array{
      *     id: int,
      *     code: string,
@@ -187,15 +195,8 @@ class ScheduleController extends Controller
      *     totalRemaining: int
      * }
      */
-    private function serializeSessionRow(LessonSession $session, Carbon $startsLocal): array
+    private function serializeSessionRow(LessonSession $session, Carbon $startsLocal, array $remainingSeats): array
     {
-        $rm = $session->reservationManagement;
-        $reservedNormal = $rm?->reserved_count ?? 0;
-        $reservedTrial = $rm?->reserved_trial_count ?? 0;
-        $normalRemaining = max(0, $session->capacity - $reservedNormal);
-        $trialRemaining = max(0, $session->trial_capacity - $reservedTrial);
-        $totalRemaining = $normalRemaining + $trialRemaining;
-
         $program = $session->program;
         $programUrl = $program instanceof Program
             ? route('programs.show', $program)
@@ -210,9 +211,9 @@ class ScheduleController extends Controller
             'programUrl' => $programUrl,
             'locationName' => $session->location?->name ?? '—',
             'staffName' => $session->staff?->name ?? '—',
-            'normalRemaining' => $normalRemaining,
-            'trialRemaining' => $trialRemaining,
-            'totalRemaining' => $totalRemaining,
+            'normalRemaining' => $remainingSeats['normalRemaining'],
+            'trialRemaining' => $remainingSeats['trialRemaining'],
+            'totalRemaining' => $remainingSeats['totalRemaining'],
         ];
     }
 }
