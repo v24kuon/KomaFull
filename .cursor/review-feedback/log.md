@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（StoreContactRequest::labelFor の unknown を InvalidArgumentException に）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/StoreContactRequest.php, tests/Unit/StoreContactRequestTest.php
+  notes: 指摘は有効。validated 経路では到達しないが、将来の誤用で生値を返さないよう default で例外。既知4種は DataProvider で回帰確認。PHPUnit の DataProvider と #[DataProvider] を使用。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
   scope: PRレビュー（public-misc の max-width を app.css の CSS 変数に寄せる）
   adopted: yes
   classification: PR限定

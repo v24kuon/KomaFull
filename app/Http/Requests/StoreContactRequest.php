@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 
 class StoreContactRequest extends FormRequest
 {
@@ -46,6 +47,9 @@ class StoreContactRequest extends FormRequest
         ];
     }
 
+    /**
+     * @throws InvalidArgumentException `inquiry_type` が {@see self::INQUIRY_TYPES} に含まれないとき
+     */
     public static function labelFor(string $type): string
     {
         return match ($type) {
@@ -53,7 +57,7 @@ class StoreContactRequest extends FormRequest
             'billing' => '決済・請求',
             'account' => '会員アカウント',
             'other' => 'その他',
-            default => $type,
+            default => throw new InvalidArgumentException('Unsupported inquiry_type: '.$type),
         };
     }
 }
