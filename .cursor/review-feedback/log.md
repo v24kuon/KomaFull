@@ -18,6 +18,14 @@
 
 - date: 2026-03-20
   branch: feat/ph9-2-1-welcome-replace
+  scope: PRレビュー指摘対応（layouts.app の app.name フォールバックを KomaFull に統一）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/app.blade.php
+  notes: 指摘は有効。`APP_NAME` 未設定時に `layouts/app` のデフォルトタイトルだけが Laravel 表記になる不整合を解消し、`welcome`・`layouts/admin` と同じ `config('app.name', 'KomaFull')` に揃えた。
+
+- date: 2026-03-20
+  branch: feat/ph9-2-1-welcome-replace
   scope: PRレビュー指摘対応（WelcomePageTest でゲストのログアウトフォーム不在をアサート）
   adopted: yes
   classification: PR限定
