@@ -2,10 +2,10 @@
 
 namespace App\Http\Responses;
 
+use App\Actions\Auth\LogoutAndInvalidateSession;
 use App\Models\MemberProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -20,10 +20,14 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class LoginResponse implements LoginResponseContract
 {
+    public function __construct(
+        private readonly LogoutAndInvalidateSession $logoutAndInvalidateSession,
+    ) {}
+
     /**
      * Fortify のログイン成功レスポンスを返す（契約上のエントリーポイント）。
      *
-     * 退会済み会員: `Auth::logout()` の後にセッションを無効化し CSRF トークンを再生成し、JSON は 403、HTML は
+     * 退会済み会員: {@see LogoutAndInvalidateSession} でセッションを無効化し、JSON は 403、HTML は
      * ログイン画面へエラーを付与してリダイレクトする（{@see EnsureMemberNotWithdrawn} 等との整合）。
      * 通常の会員・管理者: JSON 要求なら `two_factor: false` のみ、それ以外は intended またはロール別ダッシュボードへ。
      *
@@ -37,10 +41,7 @@ class LoginResponse implements LoginResponseContract
         if ($user instanceof User && ! $user->isAdministrator()) {
             $profile = $user->memberProfile;
             if ($profile !== null && $profile->member_status === MemberProfile::STATUS_WITHDRAWN) {
-                Auth::logout();
-
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+                ($this->logoutAndInvalidateSession)($request);
 
                 if ($request->wantsJson()) {
                     return response()->json([

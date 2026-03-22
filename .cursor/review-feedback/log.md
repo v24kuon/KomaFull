@@ -18,6 +18,30 @@
 
 - date: 2026-03-22
   branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SettingsEmailController 未認証プロフィールなしを verification.notice へ直接リダイレクト）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/Member/SettingsEmailController.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。member.dashboard は verified のため未認証だと連鎖リダイレクトで error フラッシュが失われる。未認証分岐は verification.notice へ。layouts.app が session error を表示するため案内が見える。Feature テストで文言表示まで確認。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（EnsureMemberNotWithdrawn の PHPDoc を login リダイレクトに明示）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Middleware/EnsureMemberNotWithdrawn.php
+  notes: 指摘は有効。旧来の「ホームへ」表記は既に修正済みだったが、実装どおり login 名前付きルートとし home ではない旨を PHPDoc に明記。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（退会時の logout・session invalidate を LogoutAndInvalidateSession に共通化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Actions/Auth/LogoutAndInvalidateSession.php, app/Http/Middleware/EnsureMemberNotWithdrawn.php, app/Http/Responses/LoginResponse.php
+  notes: 指摘は有効。EnsureMemberNotWithdrawn と LoginResponse の同一手順を invokable アクションへ抽出しドリフト防止。レスポンス本文・文言は経路ごとに既存のまま。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
   scope: PRレビュー（会員マイページに member.role ミドルウェア、UpdateMemberProfileRequest の authorize 強化）
   adopted: yes
   classification: PR限定

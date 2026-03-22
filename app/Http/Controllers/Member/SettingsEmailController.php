@@ -23,7 +23,8 @@ class SettingsEmailController extends Controller
     /**
      * メールアドレス変更フォームを表示する。
      *
-     * プロフィール未作成時: verified 外のため、メール未認証なら「認証後に自動作成」案内、認証済みなら障害・問い合わせ案内とする。
+     * プロフィール未作成時: メール未認証ユーザーは `member.dashboard` へ送らない（`verified` により verification.notice へ連鎖し
+     * フラッシュが消える）。未認証なら `verification.notice` へ、認証済みなら `member.dashboard` へ誘導する。
      */
     public function edit(): View|RedirectResponse
     {
@@ -33,13 +34,15 @@ class SettingsEmailController extends Controller
         }
 
         if ($user->memberProfile === null) {
-            $message = $user->hasVerifiedEmail()
-                ? MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED
-                : MemberProfile::FLASH_ERROR_MISSING_PROFILE_UNVERIFIED;
+            if ($user->hasVerifiedEmail()) {
+                return redirect()
+                    ->route('member.dashboard')
+                    ->with('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED);
+            }
 
             return redirect()
-                ->route('member.dashboard')
-                ->with('error', $message);
+                ->route('verification.notice')
+                ->with('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_UNVERIFIED);
         }
 
         return view('pages.member.settings.email', [

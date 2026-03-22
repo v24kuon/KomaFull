@@ -223,7 +223,7 @@ class MemberSettingsTest extends TestCase
     }
 
     /**
-     * メール未認証かつプロフィールなしは、メール設定へ進めずダッシュボードへ（認証完了後の自動作成案内）。
+     * メール未認証かつプロフィールなしは、メール設定へ進めず認証案内へ（ダッシュボード経由にしないためフラッシュが消えない）。
      */
     public function test_unverified_member_without_profile_is_redirected_from_email_settings(): void
     {
@@ -233,8 +233,12 @@ class MemberSettingsTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('member.settings.email.edit'));
 
-        $response->assertRedirect(route('member.dashboard'));
+        $response->assertRedirect(route('verification.notice'));
         $response->assertSessionHas('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_UNVERIFIED);
+
+        $verifyPage = $this->actingAs($user)->get(route('verification.notice'));
+        $verifyPage->assertOk();
+        $verifyPage->assertSee('メール認証完了後に自動で作成', false);
     }
 
     /**
