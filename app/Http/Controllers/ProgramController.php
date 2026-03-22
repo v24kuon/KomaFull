@@ -52,6 +52,7 @@ class ProgramController extends Controller
      *
      * 責務: `Program::STATUS_ACTIVE` の行のみを対象にし、カテゴリの表示順（`categories.sort_order`、同順位は `categories.id`）で並べ、同一カテゴリ内は `programs.name` 昇順とする。一覧表示に必要な `category` / `programType` を eager load する。
      * 前提: `categories` と内部結合できること（カテゴリ未設定のプログラムは存在しない想定。存在する場合は一覧から落ちるため、データ投入ルールまたはスキーマで担保する）。
+     * 設計判断: `join` は関連テーブル列による `ORDER BY` のためのみ。結果は `select('programs.*')` で `Program` に限定し、`with(['category', 'programType'])` は Eloquent の eager load 用（リレーションの代替として join しているわけではない）。純粋なリレーション API だけでは同一の並びを簡潔に表現しにくい場合の、クエリビルダ上の合理的な選択。
      * 更新方針: 読み取り専用の SELECT 用。並び・絞り込み・結合を変える場合は公開仕様（何を「掲載」とみなすか）と HTMX 一覧の期待を同時に確認する。`select('programs.*')` は join 時の列曖昧さ解消用であり、追加カラムが必要なら `addSelect` で明示する。
      *
      * @return Builder<Program>

@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-2-program-pages
+  scope: PRレビュー指摘対応（Program のルートキー・admin の HTMX 読み込み順・join/with の PHPDoc・review-fix コマンド更新）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/Program.php, app/Http/Controllers/ProgramController.php, resources/views/layouts/admin.blade.php, .cursor/commands/review-fix.md
+  notes: 指摘は有効。`Program::getRouteKeyName()` で `code` をルートキーに統一。管理レイアウトの HTMX を `layouts.app` と同順（app.js→Alpine→Bootstrap→HTMX）に揃え初期化順の差を解消。`publicProgramsQuery` の join と `with` の役割を PHPDoc の「設計判断」で明示。`.cursor/commands/review-fix.md` は対応要否の検証をフェーズ化し Task 利用条件を追記。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
   scope: PRレビュー指摘対応（公開プログラムの PHPDoc・テスト・ホームの named route）
   adopted: yes
   classification: PR限定

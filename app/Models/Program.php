@@ -70,4 +70,15 @@ class Program extends Model
     {
         return $this->hasMany(ProgramRepetitionRule::class);
     }
+
+    /**
+     * ルートモデルバインディングおよび `route()` 生成で `code` をキーとして用いる。
+     *
+     * 前提: `programs.code` は一意であること。
+     * 更新方針: 公開・管理の両方で同一キーを使う。URL 形式を `id` に戻す場合はルート定義と本メソッドを同時に見直す。
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'code';
+    }
 }
