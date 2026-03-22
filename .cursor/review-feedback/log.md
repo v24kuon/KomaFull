@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（POST /contact に throttle:5,1 を付与しスパム送信を抑制）
+  adopted: yes
+  classification: PR限定
+  targets: routes/web.php, tests/Feature/PublicMiscPagesTest.php
+  notes: 指摘は有効。認証不要のメール送信 POST にレート制限がなく悪用可能なため、`throttle:5,1`（Fortify ログインの 5/分 と同水準）を route のみに適用。公開 GET 他ルートは従来どおり。Feature テストで 6 回目が 429 となることを確認。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
   scope: [PH9-2-4] その他公開ページ（Store, Contact, Legal）
   adopted: no
   classification: none

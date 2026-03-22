@@ -25,6 +25,7 @@ use Tests\TestCase;
  * | TC-N-11 | POST 有効入力 | Equivalence | リダイレクト、Mail 送信 | - |
  * | TC-A-10 | POST 無効（種別不正） | Boundary | セッションエラー | - |
  * | TC-A-11 | POST body 空 | Boundary | セッションエラー | - |
+ * | TC-A-12 | POST 同一分に6回目 | Boundary – throttle | 429 | 5回/分/IP |
  * | TC-N-20 | GET legal | Equivalence | 200、表記見出し | - |
  *
  * 失敗系: 店舗404×2、お問い合わせバリデーション×2。正常系6。失敗系は主要経路を優先。
@@ -157,6 +158,27 @@ class PublicMiscPagesTest extends TestCase
 
         $response->assertSessionHasErrors('body');
         Mail::assertNothingSent();
+    }
+
+    /**
+     * TC-A-12: 同一キーで 1 分あたり 5 回を超える POST は 429 となる（throttle:5,1）。
+     */
+    public function test_contact_store_returns_too_many_requests_after_fifth_submission_in_same_minute(): void
+    {
+        Mail::fake();
+
+        $payload = [
+            'name' => '山田太郎',
+            'email' => 'yamada@example.com',
+            'inquiry_type' => 'reservation',
+            'body' => '問い合わせ本文です。',
+        ];
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->from(route('contact.create'))->post(route('contact.store'), $payload)->assertRedirect(route('contact.create'));
+        }
+
+        $this->from(route('contact.create'))->post(route('contact.store'), $payload)->assertStatus(429);
     }
 
     public function test_legal_tokushoho_displays_page(): void

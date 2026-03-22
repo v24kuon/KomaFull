@@ -29,7 +29,9 @@ Route::get('/stores', [PublicStoreController::class, 'index'])->name('stores.ind
 Route::get('/stores/{location:code}', [PublicStoreController::class, 'show'])->name('stores.show');
 
 Route::get('/contact', [ContactController::class, 'create'])->name('contact.create');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contact', [ContactController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('contact.store');
 
 Route::get('/legal/tokushoho', [LegalController::class, 'tokushoho'])->name('legal.tokushoho');
 
