@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ScheduleIndexRequest;
 use App\Models\LessonSession;
 use App\Models\Program;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
 class ScheduleController extends Controller
@@ -17,20 +16,13 @@ class ScheduleController extends Controller
      * 前提: `lesson_sessions.status = active` かつ紐づく `programs.status = active` のみ。
      * 空き記号は当日の全枠の残席合計（一般＋体験）から算出する。
      * 更新方針: 読み取り専用。月はクエリ `year` / `month` で指定（未指定は現在月）。
+     * 前月・次月リンクは `ScheduleIndexRequest` の年範囲外へ跨ぐ場合は `null` とし、ビューで無効表示する。
      */
-    public function index(Request $request): View
+    public function index(ScheduleIndexRequest $request): View
     {
-        $validator = Validator::make($request->query(), [
-            'year' => ['sometimes', 'integer', 'min:2000', 'max:2100'],
-            'month' => ['sometimes', 'integer', 'min:1', 'max:12'],
-        ]);
-
-        if ($validator->fails()) {
-            abort(422);
-        }
-
-        $year = (int) $request->query('year', Carbon::now()->year);
-        $month = (int) $request->query('month', Carbon::now()->month);
+        $validated = $request->validated();
+        $year = (int) $validated['year'];
+        $month = (int) $validated['month'];
 
         $monthStart = Carbon::create($year, $month, 1)->startOfDay();
         $monthEnd = $monthStart->copy()->endOfMonth();
@@ -70,6 +62,13 @@ class ScheduleController extends Controller
         $prev = $monthStart->copy()->subMonth();
         $next = $monthStart->copy()->addMonth();
 
+        $schedulePrevUrl = $prev->year >= ScheduleIndexRequest::MIN_YEAR
+            ? route('schedule.index', ['year' => $prev->year, 'month' => $prev->month])
+            : null;
+        $scheduleNextUrl = $next->year <= ScheduleIndexRequest::MAX_YEAR
+            ? route('schedule.index', ['year' => $next->year, 'month' => $next->month])
+            : null;
+
         $calendarPayload = [
             'year' => $year,
             'month' => $month,
@@ -77,12 +76,12 @@ class ScheduleController extends Controller
             'weekdayLabels' => ['月', '火', '水', '木', '金', '土', '日'],
             'weeks' => $weeks,
             'sessionsByDay' => $sessionsByDay,
-            'prevUrl' => route('schedule.index', ['year' => $prev->year, 'month' => $prev->month]),
-            'nextUrl' => route('schedule.index', ['year' => $next->year, 'month' => $next->month]),
         ];
 
         return view('pages.schedule.index', [
             'calendarPayload' => $calendarPayload,
+            'schedulePrevUrl' => $schedulePrevUrl,
+            'scheduleNextUrl' => $scheduleNextUrl,
         ]);
     }
 
@@ -126,6 +125,15 @@ class ScheduleController extends Controller
         return $weeks;
     }
 
+    /**
+     * 当日のカレンダー用に、残席合計から空き記号（◎ / ○ / △ / ×）を返す。
+     *
+     * 前提: `$hasSessions` は、その日に掲載対象の `lesson_sessions` が 1 件以上あるとき true。記号の閾値は公開ビューの凡例（`resources/views/pages/schedule/index.blade.php`）と同じ定義とする（合計残席 10 以上 / 4〜9 / 1〜3 / 0）。
+     * 更新方針: 閾値や記号の意味を変える場合は凡例テキストと同じコミットで揃える。日別一覧の「一般/体験」内訳とは独立（ここは日単位の合計のみ）。
+     *
+     * @param  int  $total  当日の全枠の残席合計（一般＋体験）
+     * @param  bool  $hasSessions  その日に表示対象の枠が存在するか
+     */
     private function daySymbolForTotal(int $total, bool $hasSessions): ?string
     {
         if (! $hasSessions) {
@@ -147,6 +155,12 @@ class ScheduleController extends Controller
         return '△';
     }
 
+    /**
+     * 1 開催枠あたりの一般枠・体験枠の残席合計を返す。
+     *
+     * 前提: `reservation_management` はカウンタキャッシュであり、真実は `reservations` だが本画面は読み取りのみ。`reservationManagement` が未ロードまたは欠損時は予約 0 件として `capacity` / `trial_capacity` から算出する。
+     * 更新方針: 一般・体験の定義やロック順序を変える場合は `ReservationService` 等のドメイン方針と整合させ、日別一覧の `serializeSessionRow` の計算とも揃える。
+     */
     private function totalRemainingSeats(LessonSession $session): int
     {
         $rm = $session->reservationManagement;

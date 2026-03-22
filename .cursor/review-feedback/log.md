@@ -18,6 +18,62 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（schedule.css の primary 透明度を .p-schedule にカスタムプロパティ集約）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/pages/schedule.css, config/app.php, .env.example
+  notes: 指摘は有効。rgba(var(--bs-primary-rgb), …) の直書きを --p-schedule-primary-fill-08/12 と muted をルートに集約。schedule.css 変更に合わせ ASSET_VERSION を 20260322_4 へ。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（ASSET_VERSION の .env 上書き時はリリース単位で同時更新する旨を config / .env.example に明記）
+  adopted: yes
+  classification: PR限定
+  targets: config/app.php, .env.example
+  notes: 指摘は有効。`env('ASSET_VERSION', default)` は .env 指定時にデフォルトを使わないため、デプロイ運用をブロックコメントと .env.example コメントで残した。値は既に一致のため数値のみの変更はなし。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（ScheduleController の daySymbolForTotal / totalRemainingSeats に PHPDoc を追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php
+  notes: 指摘は有効。責務・前提・更新方針と閾値・凡例との対応を PHPDoc に明示し、serializeSessionRow 等と粒度を揃えた。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（ScheduleSessionCalendarTest の失敗系を正常系以上に拡充）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ScheduleSessionCalendarTest.php
+  notes: 指摘は有効。test-strategy の失敗系件数を満たすため TC-A-04（month=0）、TC-A-05（year=非整数）を追加。PHPDoc の観点表と説明を更新。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（schedule 前月・次月リンクを静的 href にし JS 無効時説明と整合）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, public/assets/js/app.js, config/app.php, .env.example, tests/Feature/ScheduleSessionCalendarTest.php
+  notes: 指摘は有効。x-bind:href だけでは JS 無効時に href が付かない。schedulePrevUrl / scheduleNextUrl を Blade で出力し、Alpine ペイロードから prevUrl・nextUrl を削除。app.js 変更に合わせ ASSET_VERSION を 20260322_3 へ。Feature テストで前後月の route を assertSee。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（.env.example の ASSET_VERSION を config/app.php のデフォルトと整合）
+  adopted: yes
+  classification: PR限定
+  targets: .env.example
+  notes: 指摘は有効。`env('ASSET_VERSION')` が .env に入ると config のデフォルトより優先されるため、新規開発者が .env.example をコピーしたときに版数が古いままになる問題を解消。ASSET_VERSION を 20260322_2 に揃えた。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（ScheduleController のインラインバリデーションを FormRequest へ移行）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/ScheduleIndexRequest.php, app/Http/Controllers/ScheduleController.php, tests/Feature/ScheduleSessionCalendarTest.php
+  notes: 指摘は有効。laravel-boost の「FormRequest で検証」に合わせ ScheduleIndexRequest を新設し rules / messages を日本語で定義。GET かつ 422 期待のため failedValidation で JSON 422 を返却。prepareForValidation で年月未指定を現在に補完。TC-A-03 で JSON 形を検証。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
   scope: [PH9-2-3] 開催枠カレンダー・日別一覧UI（Alpine.js）
   adopted: no
   classification: none
@@ -1303,3 +1359,19 @@
   classification: PR限定
   targets: tests/Feature/AppLayoutAlpineCspTest.php, .cursor/review-feedback/log.md
   notes: 指摘は一部有効。`File::get(public_path('assets/js/app.js'))` が 4 テストで重複しており、読み込み箇所を 1 か所へ寄せる問題意識は妥当だった。一方で `setUp()` へ無条件に移すと `app.js` を使わないケースまでファイル読み込みに依存し、DataProvider ケースも含めて失敗面が広がるため、その提案は採用しなかった。代わりに `applicationScript()` の lazy helper を追加し、必要なテストだけが同一ロジック経由で `app.js` を取得する最小差分へ調整した。アサーション対象の文字列や検証観点は変更していない。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（ScheduleIndexRequest の年月デフォルトを 1 回の Carbon::now と app.timezone に統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/ScheduleIndexRequest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`prepareForValidation()` で `Carbon::now()` を year / month 用に 2 回呼んでおり、境界瞬間に不整合が起こり得る。`config('app.timezone')` で `Carbon::now()` を 1 回だけ取得し、`ScheduleController::buildCalendarWeeks()` の `$timezone` と同じ基準で年月を補完するよう修正した。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（年範囲端で無効な前月・次月 URL を出さず null としビューで無効表示）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/ScheduleIndexRequest.php, app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。2000-01 の前月・2100-12 の次月はバリデーション外の年になるため 422 になる URL を無条件生成していた。`MIN_YEAR` / `MAX_YEAR` を FormRequest に定数化し、Controller で前月・次月が範囲内のときだけ `route`、それ以外は null。Blade はリンクの代わりに disabled 風の span を表示。Feature テストで境界を追加。

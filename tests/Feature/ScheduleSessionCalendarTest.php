@@ -19,10 +19,15 @@ use Tests\TestCase;
  * | TC-N-01 | ゲスト、クエリなし | Equivalence – normal | 200、pages.schedule.index | 当月 |
  * | TC-N-02 | active プログラムの枠が1件 | Equivalence – payload | calendarPayload.sessionsByDay に該当日の行 | Alpine 描画はブラウザ前提。サーバー payload で検証 |
  * | TC-N-03 | inactive プログラムの枠のみ | Equivalence – filter | 該当日が sessionsByDay に載らない | whereHas(active) |
- * | TC-A-01 | month=13 | Boundary – invalid | 422 | |
+ * | TC-A-01 | month=13 | Boundary – above max | 422 | |
  * | TC-A-02 | year=1999 | Boundary – below min | 422 | |
+ * | TC-A-03 | month=13 | Equivalence – error shape | 422、JSON に message / errors | FormRequest 失敗時の本文 |
+ * | TC-A-04 | month=0 | Boundary – min-1 | 422 | |
+ * | TC-A-05 | year=abc | Boundary – 非整数 | 422 | integer ルール |
+ * | TC-N-04 | year=2000, month=1 | Boundary – 年下限の前月 | 200、schedulePrevUrl が null | 1999-12 は 422 のため |
+ * | TC-N-05 | year=2100, month=12 | Boundary – 年上限の次月 | 200、scheduleNextUrl が null | 2101-01 は 422 のため |
  *
- * 失敗系: バリデーション失敗のみ。正常系3に対し失敗系2で同数未満だが、本画面は GET のみで追加の HTTP 失敗経路がなく、主要エラー経路はクエリ不正に限定される。
+ * 失敗系は正常系件数以上（test-strategy.mdc セクション2）。GET のみのため HTTP 失敗経路はクエリバリデーションに限定し、境界値・型不正を追加して網羅する。
  */
 class ScheduleSessionCalendarTest extends TestCase
 {
@@ -71,6 +76,8 @@ class ScheduleSessionCalendarTest extends TestCase
         ]));
 
         $response->assertOk();
+        $response->assertViewHas('schedulePrevUrl', route('schedule.index', ['year' => 2026, 'month' => 2]));
+        $response->assertViewHas('scheduleNextUrl', route('schedule.index', ['year' => 2026, 'month' => 4]));
         $response->assertViewHas('calendarPayload', function (array $payload) {
             $day = $payload['sessionsByDay']['2026-03-15'] ?? [];
 
@@ -137,5 +144,83 @@ class ScheduleSessionCalendarTest extends TestCase
         ]));
 
         $response->assertStatus(422);
+    }
+
+    /**
+     * TC-A-03: クエリ不正時は 422 の JSON に message と errors が含まれる。
+     */
+    public function test_schedule_index_invalid_query_returns_json_error_body(): void
+    {
+        $response = $this->get(route('schedule.index', [
+            'year' => 2026,
+            'month' => 13,
+        ]));
+
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['message', 'errors']);
+        $this->assertIsArray($response->json('errors.month'));
+        $this->assertNotEmpty($response->json('errors.month'));
+    }
+
+    /**
+     * TC-A-04: month が最小値未満（0）のとき 422。
+     */
+    public function test_schedule_index_month_zero_unprocessable(): void
+    {
+        $response = $this->get(route('schedule.index', [
+            'year' => 2026,
+            'month' => 0,
+        ]));
+
+        $response->assertStatus(422);
+    }
+
+    /**
+     * TC-A-05: year が整数でないとき 422。
+     */
+    public function test_schedule_index_non_numeric_year_unprocessable(): void
+    {
+        $response = $this->get(route('schedule.index', [
+            'year' => 'abc',
+            'month' => 1,
+        ]));
+
+        $response->assertStatus(422);
+    }
+
+    /**
+     * TC-N-04: 年下限の 1 月では前月ナビ URL を出さない（1999 年は 422）。
+     */
+    public function test_schedule_nav_prev_url_null_at_minimum_year_january(): void
+    {
+        $response = $this->get(route('schedule.index', [
+            'year' => 2000,
+            'month' => 1,
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('schedulePrevUrl', null);
+        $response->assertViewHas('scheduleNextUrl', route('schedule.index', [
+            'year' => 2000,
+            'month' => 2,
+        ]));
+    }
+
+    /**
+     * TC-N-05: 年上限の 12 月では次月ナビ URL を出さない（2101 年は 422）。
+     */
+    public function test_schedule_nav_next_url_null_at_maximum_year_december(): void
+    {
+        $response = $this->get(route('schedule.index', [
+            'year' => 2100,
+            'month' => 12,
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('schedulePrevUrl', route('schedule.index', [
+            'year' => 2100,
+            'month' => 11,
+        ]));
+        $response->assertViewHas('scheduleNextUrl', null);
     }
 }

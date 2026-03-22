@@ -28,8 +28,16 @@
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
             <h2 class="h5 mb-0" x-text="monthLabel"></h2>
             <div class="btn-group" role="group" aria-label="月の切り替え">
-                <a class="btn btn-outline-secondary btn-sm" x-bind:href="prevUrl">前月</a>
-                <a class="btn btn-outline-secondary btn-sm" x-bind:href="nextUrl">次月</a>
+                @if ($schedulePrevUrl)
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ $schedulePrevUrl }}">前月</a>
+                @else
+                    <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">前月</span>
+                @endif
+                @if ($scheduleNextUrl)
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ $scheduleNextUrl }}">次月</a>
+                @else
+                    <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">次月</span>
+                @endif
             </div>
         </div>
 

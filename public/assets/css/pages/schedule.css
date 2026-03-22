@@ -1,7 +1,10 @@
 /* 開催枠カレンダー（公開） */
 
-.p-schedule__cal {
+.p-schedule {
+    /* Bootstrap の RGB 変数を使う透明度付き背景（調整はこのブロックに集約） */
     --p-schedule-muted-bg: rgba(var(--bs-secondary-rgb), 0.08);
+    --p-schedule-primary-fill-08: rgba(var(--bs-primary-rgb), 0.08);
+    --p-schedule-primary-fill-12: rgba(var(--bs-primary-rgb), 0.12);
 }
 
 .p-schedule__weekday {
@@ -26,7 +29,7 @@
 }
 
 .p-schedule__cell--selected {
-    background-color: rgba(var(--bs-primary-rgb), 0.12);
+    background-color: var(--p-schedule-primary-fill-12);
 }
 
 .p-schedule__daybtn {
@@ -39,7 +42,7 @@
 
 .p-schedule__daybtn:hover,
 .p-schedule__daybtn:focus-visible {
-    background-color: rgba(var(--bs-primary-rgb), 0.08);
+    background-color: var(--p-schedule-primary-fill-08);
 }
 
 .p-schedule__sym {

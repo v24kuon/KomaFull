@@ -54,7 +54,19 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'asset_version' => env('ASSET_VERSION', '20260322_2'),
+    /*
+    |--------------------------------------------------------------------------
+    | Static asset version (v_asset cache buster)
+    |--------------------------------------------------------------------------
+    |
+    | Increment the default when `public/assets/` changes (JS/CSS/vendor).
+    | Deployments that set ASSET_VERSION in `.env` must bump that value in the
+    | same release; otherwise browsers may keep stale files because env()
+    | overrides this default.
+    |
+    */
+
+    'asset_version' => env('ASSET_VERSION', '20260322_4'),
 
     /*
     |--------------------------------------------------------------------------

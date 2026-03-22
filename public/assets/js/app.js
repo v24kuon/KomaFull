@@ -48,8 +48,6 @@ document.addEventListener('alpine:init', () => {
      * @param {string[]} payload.weekdayLabels
      * @param {Array<Array<{ ymd: string|null, day: number|null, inMonth: boolean, symbol: string|null, isToday: boolean, hasSessions: boolean }>>} payload.weeks
      * @param {Record<string, Array<object>>} payload.sessionsByDay
-     * @param {string} payload.prevUrl
-     * @param {string} payload.nextUrl
      */
     Alpine.data('sessionCalendar', (payload) => ({
         year: payload.year,
@@ -58,8 +56,6 @@ document.addEventListener('alpine:init', () => {
         weekdayLabels: payload.weekdayLabels,
         weeks: payload.weeks,
         sessionsByDay: payload.sessionsByDay,
-        prevUrl: payload.prevUrl,
-        nextUrl: payload.nextUrl,
         selectedYmd: null,
         selectDay(cell) {
             if (!cell || !cell.inMonth || !cell.ymd) {
