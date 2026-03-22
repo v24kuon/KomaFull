@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
+  scope: [PH9-2-4] その他公開ページ（Store, Contact, Legal）
+  adopted: no
+  classification: none
+  targets: routes/web.php, app/Http/Controllers/PublicStoreController.php, app/Http/Controllers/ContactController.php, app/Http/Controllers/LegalController.php, app/Http/Requests/StoreContactRequest.php, app/Mail/ContactInquiryMail.php, resources/views/pages/stores/*.blade.php, resources/views/pages/contact/create.blade.php, resources/views/pages/legal/tokushoho.blade.php, resources/views/mail/contact-inquiry.blade.php, resources/views/partials/public/site-footer.blade.php, public/assets/css/pages/public-misc.css, config/mail.php, config/app.php, .env.example, resources/views/pages/welcome.blade.php, tests/Feature/PublicMiscPagesTest.php, tests/Feature/ViewDirectoryStructureTest.php, tests/Feature/WelcomePageTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。公開 GET /stores・/stores/{code}（active のみ）、GET/POST /contact（ContactInquiryMail・mail.contact_to）、GET /legal/tokushoho。共通フッターに導線追加。お問い合わせのメール検証は DNS ルックアップを避けるため email:filter を使用。ASSET_VERSION を 20260322_5 へ。
+
+- date: 2026-03-22
   branch: feat/ph9-2-3-session-calendar
   scope: PRレビュー（schedule.css の primary 透明度を .p-schedule にカスタムプロパティ集約）
   adopted: yes

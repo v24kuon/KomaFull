@@ -1,0 +1,19 @@
+/**
+ * 公開ページ（店舗 / お問い合わせ / 法務表記）の軽微な上書き。
+ */
+
+.c-site-footer a {
+    text-decoration: none;
+}
+
+.c-site-footer a:hover {
+    text-decoration: underline;
+}
+
+.p-public-container--contact {
+    max-width: 640px;
+}
+
+.p-public-container--legal {
+    max-width: 800px;
+}

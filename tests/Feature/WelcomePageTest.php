@@ -24,6 +24,9 @@ class WelcomePageTest extends TestCase
         $response->assertSee(v_asset('assets/js/app.js'), false);
         $response->assertSee(route('schedule.index'), false);
         $response->assertSee(route('programs.index'), false);
+        $response->assertSee(route('stores.index'), false);
+        $response->assertSee(route('contact.create'), false);
+        $response->assertSee(route('legal.tokushoho'), false);
         $response->assertSee(route('login'), false);
         $response->assertSee(route('register'), false);
         $response->assertDontSee('action="'.route('logout').'"', false);

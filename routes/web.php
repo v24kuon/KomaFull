@@ -9,7 +9,10 @@ use App\Http\Controllers\Admin\ProgramRepetitionRuleGenerationController;
 use App\Http\Controllers\Admin\ProgramTypeController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\StoreSettingsController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ProgramController as PublicProgramController;
+use App\Http\Controllers\PublicStoreController;
 use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +24,14 @@ Route::get('/programs', [PublicProgramController::class, 'index'])->name('progra
 Route::get('/programs/{program:code}', [PublicProgramController::class, 'show'])->name('programs.show');
 
 Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+
+Route::get('/stores', [PublicStoreController::class, 'index'])->name('stores.index');
+Route::get('/stores/{location:code}', [PublicStoreController::class, 'show'])->name('stores.show');
+
+Route::get('/contact', [ContactController::class, 'create'])->name('contact.create');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+Route::get('/legal/tokushoho', [LegalController::class, 'tokushoho'])->name('legal.tokushoho');
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/', 'pages.admin.dashboard')->name('dashboard');

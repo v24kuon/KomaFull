@@ -116,6 +116,39 @@ class ViewDirectoryStructureTest extends TestCase
     }
 
     /**
+     * TC-N-09: 公開店舗一覧は pages 配下の view を使うこと。
+     */
+    public function test_stores_index_uses_pages_directory_view(): void
+    {
+        $response = $this->get(route('stores.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('pages.stores.index');
+    }
+
+    /**
+     * TC-N-10: 公開お問い合わせは pages 配下の view を使うこと。
+     */
+    public function test_contact_create_uses_pages_directory_view(): void
+    {
+        $response = $this->get(route('contact.create'));
+
+        $response->assertOk();
+        $response->assertViewIs('pages.contact.create');
+    }
+
+    /**
+     * TC-N-11: 特定商取引法表記は pages 配下の view を使うこと。
+     */
+    public function test_legal_tokushoho_uses_pages_directory_view(): void
+    {
+        $response = $this->get(route('legal.tokushoho'));
+
+        $response->assertOk();
+        $response->assertViewIs('pages.legal.tokushoho');
+    }
+
+    /**
      * @return array<string, array{0: string, 1: string}>
      */
     public static function authPageProvider(): array
