@@ -17,6 +17,14 @@
 ## Entries
 
 - date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: [PH9-2-3] 開催枠カレンダー・日別一覧UI（Alpine.js）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/ScheduleController.php, routes/web.php, resources/views/pages/schedule/index.blade.php, public/assets/js/app.js, public/assets/css/pages/schedule.css, resources/views/pages/welcome.blade.php, resources/views/pages/programs/index.blade.php, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php, tests/Feature/ViewDirectoryStructureTest.php, tests/Feature/WelcomePageTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。公開 GET /schedule で月別グリッド（月〜日）と空き記号を表示し、日別一覧は Alpine `sessionCalendar` で選択日のみ表示。残席は一般・体験を分けて表示。`programs.status=active` の枠のみ。クエリ year/month は 422。ASSET_VERSION を更新。
+
+- date: 2026-03-22
   branch: feat/ph9-2-2-program-pages
   scope: PRレビュー（ProgramPublicPageTest の各テストメソッドへ PHPDoc／Case ID 追記）
   adopted: yes

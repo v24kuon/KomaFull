@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ProgramTypeController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\StoreSettingsController;
 use App\Http\Controllers\ProgramController as PublicProgramController;
+use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -18,6 +19,8 @@ Route::get('/', function () {
 
 Route::get('/programs', [PublicProgramController::class, 'index'])->name('programs.index');
 Route::get('/programs/{program:code}', [PublicProgramController::class, 'show'])->name('programs.show');
+
+Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/', 'pages.admin.dashboard')->name('dashboard');
