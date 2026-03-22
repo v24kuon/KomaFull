@@ -32,11 +32,11 @@
                     <p class="small text-secondary mb-0">トライアル中です。</p>
                 @elseif ($subscription->onGracePeriod())
                     <p class="small text-warning mb-0">
-                        <span class="fw-semibold">解約予約中</span>です。次回請求日まで（{{ $subscription->ends_at?->timezone(config('app.timezone'))?->format('Y/m/d') }}）までご利用いただけます。
+                        <span class="fw-semibold">解約予約中</span>です。次回請求日（{{ $subscription->ends_at?->timezone(config('app.timezone'))?->format('Y/m/d') }}）までご利用いただけます。
                     </p>
-                @elseif ($subscription->currentPeriodEnd())
+                @elseif ($subscriptionCurrentPeriodEnd)
                     <p class="small text-secondary mb-0">
-                        次回請求日の目安: {{ $subscription->currentPeriodEnd()->timezone(config('app.timezone'))->format('Y/m/d') }}
+                        次回請求日の目安: {{ $subscriptionCurrentPeriodEnd->timezone(config('app.timezone'))->format('Y/m/d') }}
                     </p>
                 @endif
             </div>

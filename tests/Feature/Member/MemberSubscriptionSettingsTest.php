@@ -20,7 +20,8 @@ class MemberSubscriptionSettingsTest extends TestCase
     /**
      * テスト観点（抜粋）: ゲスト拒否 / 管理者403 / プロフィールなしリダイレクト /
      * 有効サブスクなしメッセージ / プラン名表示 / swap バリデーション・成功（mock）/ cancel・resume 成功（mock）/
-     * swap 失敗時フラッシュエラー（mock）。
+     * swap・cancel・resume 失敗時フラッシュエラー（サービス例外 mock）/ cancel・resume の確認チェック必須 /
+     * cancel・resume の after バリデーション（解約不可・猶予外）。
      */
     private function createVerifiedMemberWithProfile(): User
     {
@@ -101,6 +102,24 @@ class MemberSubscriptionSettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('テスト月額プラン', false);
+    }
+
+    public function test_member_with_subscription_sees_inactive_plan_name_for_display(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        CoursePlan::factory()->inactive()->createOne([
+            'name' => '旧プラン（販売終了）',
+            'stripe_price_id' => 'price_inactive_display_001',
+        ]);
+
+        Subscription::factory()->for($user)->withPrice('price_inactive_display_001')->create();
+
+        $response = $this->actingAs($user)->get(route('member.settings.subscription.edit'));
+
+        $response->assertOk();
+        $response->assertSee('旧プラン（販売終了）', false);
+        $response->assertDontSee('プラン（マスタ未登録の料金）', false);
     }
 
     public function test_swap_rejects_unknown_stripe_price_id(): void
@@ -208,7 +227,30 @@ class MemberSubscriptionSettingsTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('member.settings.subscription.cancel'), []);
 
-        $response->assertSessionHasErrors('cancellation_confirmed');
+        $response->assertSessionHasErrors([
+            'cancellation_confirmed' => '解約の内容を確認し、チェックを入れてください。',
+        ]);
+    }
+
+    public function test_resume_requires_confirmation(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_resume_req_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        Subscription::factory()->for($user)->withPrice('price_resume_req_001')->create([
+            'ends_at' => now()->addWeek(),
+            'stripe_status' => StripeSubscription::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('member.settings.subscription.resume'), []);
+
+        $response->assertSessionHasErrors([
+            'resume_confirmed' => '内容を確認し、チェックを入れてください。',
+        ]);
     }
 
     public function test_cancel_redirects_with_success_when_service_succeeds(): void
@@ -223,6 +265,7 @@ class MemberSubscriptionSettingsTest extends TestCase
         Subscription::factory()->for($user)->withPrice('price_cancel_ok_001')->create();
 
         $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canCancelAtPeriodEnd')->once()->andReturn(true);
             $mock->shouldReceive('cancelAtPeriodEnd')->once();
         });
 
@@ -232,6 +275,30 @@ class MemberSubscriptionSettingsTest extends TestCase
 
         $response->assertRedirect(route('member.settings.subscription.edit'));
         $response->assertSessionHas('success');
+    }
+
+    public function test_cancel_redirects_with_error_when_service_throws(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_cancel_throw_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        Subscription::factory()->for($user)->withPrice('price_cancel_throw_001')->create();
+
+        $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canCancelAtPeriodEnd')->once()->andReturn(true);
+            $mock->shouldReceive('cancelAtPeriodEnd')->once()->andThrow(new RuntimeException('Stripe down'));
+        });
+
+        $response = $this->actingAs($user)->post(route('member.settings.subscription.cancel'), [
+            'cancellation_confirmed' => '1',
+        ]);
+
+        $response->assertRedirect(route('member.settings.subscription.edit'));
+        $response->assertSessionHas('error', '解約手続きを完了できませんでした。時間をおいて再度お試しください。');
     }
 
     public function test_resume_redirects_with_success_when_service_succeeds(): void
@@ -249,6 +316,7 @@ class MemberSubscriptionSettingsTest extends TestCase
         ]);
 
         $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canResume')->once()->andReturn(true);
             $mock->shouldReceive('resume')->once();
         });
 
@@ -258,5 +326,70 @@ class MemberSubscriptionSettingsTest extends TestCase
 
         $response->assertRedirect(route('member.settings.subscription.edit'));
         $response->assertSessionHas('success');
+    }
+
+    public function test_resume_redirects_with_error_when_service_throws(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_resume_throw_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        Subscription::factory()->for($user)->withPrice('price_resume_throw_001')->create([
+            'ends_at' => now()->addWeek(),
+            'stripe_status' => StripeSubscription::STATUS_ACTIVE,
+        ]);
+
+        $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canResume')->once()->andReturn(true);
+            $mock->shouldReceive('resume')->once()->andThrow(new RuntimeException('Stripe down'));
+        });
+
+        $response = $this->actingAs($user)->post(route('member.settings.subscription.resume'), [
+            'resume_confirmed' => '1',
+        ]);
+
+        $response->assertRedirect(route('member.settings.subscription.edit'));
+        $response->assertSessionHas('error', '解約の取り消しを完了できませんでした。時間をおいて再度お試しください。');
+    }
+
+    public function test_cancel_fails_validation_when_no_cancelable_subscription(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        $response = $this->actingAs($user)
+            ->from(route('member.settings.subscription.edit'))
+            ->post(route('member.settings.subscription.cancel'), [
+                'cancellation_confirmed' => '1',
+            ]);
+
+        $response->assertRedirect(route('member.settings.subscription.edit'));
+        $response->assertSessionHasErrors('cancellation_confirmed');
+    }
+
+    public function test_resume_fails_validation_when_not_on_grace_period(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_resume_invalid_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        Subscription::factory()->for($user)->withPrice('price_resume_invalid_001')->create([
+            'ends_at' => null,
+            'stripe_status' => StripeSubscription::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('member.settings.subscription.edit'))
+            ->post(route('member.settings.subscription.resume'), [
+                'resume_confirmed' => '1',
+            ]);
+
+        $response->assertRedirect(route('member.settings.subscription.edit'));
+        $response->assertSessionHasErrors('resume_confirmed');
     }
 }

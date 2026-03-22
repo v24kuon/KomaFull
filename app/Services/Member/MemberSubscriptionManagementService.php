@@ -18,6 +18,10 @@ class MemberSubscriptionManagementService
 {
     /**
      * `course_plans.stripe_price_id` から表示用プランを解決する（単一価格サブスク想定）。
+     *
+     * まず `status=active` の行を返し、無い場合は同一 `stripe_price_id` の非アクティブ行も返す。
+     * 管理者がプランを無効化したあとも、契約中ユーザーにはマスタ上のプラン名を示すため。
+     * 切替候補は {@see swapCandidates} が active のみを対象とする。
      */
     public function resolveCoursePlan(?Subscription $subscription): ?CoursePlan
     {
@@ -38,9 +42,17 @@ class MemberSubscriptionManagementService
             return null;
         }
 
-        return CoursePlan::query()
+        $active = CoursePlan::query()
             ->where('stripe_price_id', $priceId)
             ->where('status', CoursePlan::STATUS_ACTIVE)
+            ->first();
+
+        if ($active !== null) {
+            return $active;
+        }
+
+        return CoursePlan::query()
+            ->where('stripe_price_id', $priceId)
             ->first();
     }
 
@@ -68,17 +80,23 @@ class MemberSubscriptionManagementService
      */
     public function canSwap(Subscription $subscription): bool
     {
-        if ($subscription->hasIncompletePayment()) {
-            return false;
-        }
-
-        return $subscription->active() && ! $subscription->canceled();
+        return $this->subscriptionEligibleForSwapOrCancelAtPeriodEnd($subscription);
     }
 
     /**
      * 請求期間末の解約予約が可能か（未解約のうち）。
      */
     public function canCancelAtPeriodEnd(Subscription $subscription): bool
+    {
+        return $this->subscriptionEligibleForSwapOrCancelAtPeriodEnd($subscription);
+    }
+
+    /**
+     * プラン変更と請求期間末解約の共通前提。現時点では同一条件。
+     *
+     * ビジネス上は別概念のため公開メソッドは分離したままとし、条件が分岐したら本メソッドを廃止して各 {@see canSwap} / {@see canCancelAtPeriodEnd} に実装を分ける。
+     */
+    private function subscriptionEligibleForSwapOrCancelAtPeriodEnd(Subscription $subscription): bool
     {
         if ($subscription->hasIncompletePayment()) {
             return false;

@@ -9,6 +9,7 @@ use App\Http\Requests\Member\SwapMemberSubscriptionRequest;
 use App\Models\MemberProfile;
 use App\Models\User;
 use App\Services\Member\MemberSubscriptionManagementService;
+use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -60,6 +61,8 @@ class SettingsSubscriptionController extends Controller
             }
         }
 
+        $subscriptionCurrentPeriodEnd = $this->resolveSubscriptionCurrentPeriodEndForDisplay($subscription);
+
         return view('pages.member.settings.subscription', [
             'user' => $user,
             'subscription' => $subscription,
@@ -70,6 +73,7 @@ class SettingsSubscriptionController extends Controller
             'canCancel' => $canCancel,
             'canResume' => $canResume,
             'hasActiveLikeSubscription' => $subscription !== null && $subscription->valid(),
+            'subscriptionCurrentPeriodEnd' => $subscriptionCurrentPeriodEnd,
         ]);
     }
 
@@ -158,5 +162,34 @@ class SettingsSubscriptionController extends Controller
         return redirect()
             ->route('member.settings.subscription.edit')
             ->with('success', '解約予約を取り消しました。');
+    }
+
+    /**
+     * 表示用の請求期間終了日時を1回だけ解決する。
+     *
+     * `Subscription::currentPeriodEnd()` は内部で Stripe API を参照し得るため、ビューで複数回呼ばない。
+     * 取得失敗時は画面全体を落とさず、目安行を出さない。
+     */
+    private function resolveSubscriptionCurrentPeriodEndForDisplay(?Subscription $subscription): ?CarbonInterface
+    {
+        if ($subscription === null || ! $subscription->valid()) {
+            return null;
+        }
+
+        if ($subscription->onTrial() || $subscription->onGracePeriod()) {
+            return null;
+        }
+
+        try {
+            return $subscription->currentPeriodEnd();
+        } catch (Throwable $e) {
+            Log::warning('Subscription currentPeriodEnd failed while rendering subscription settings', [
+                'user_id' => $subscription->user_id,
+                'subscription_id' => $subscription->getKey(),
+                'exception' => $e,
+            ]);
+
+            return null;
+        }
     }
 }
