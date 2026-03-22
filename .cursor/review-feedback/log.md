@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（MemberProfileUpdateService の additional_item_type を TYPE_MEMBER_PROFILE に統一、syncAdditionalItemValue に責務 PHPDoc）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberProfileUpdateService.php
+  notes: 指摘は有効。Controller/FormRequest と同様に定数参照でタイポ時の静かな空結果を避ける。RFP-009 に沿い private ヘルパーに前提・更新方針・副作用を記載。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
   scope: PRレビュー（additional_item_type の member_profile を AdditionalItem::TYPE_MEMBER_PROFILE に定数化）
   adopted: yes
   classification: PR限定

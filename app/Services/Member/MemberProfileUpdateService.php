@@ -43,7 +43,7 @@ class MemberProfileUpdateService
             ]);
 
             $items = AdditionalItem::query()
-                ->where('additional_item_type', 'member_profile')
+                ->where('additional_item_type', AdditionalItem::TYPE_MEMBER_PROFILE)
                 ->where('status', AdditionalItem::STATUS_ACTIVE)
                 ->orderBy('id')
                 ->get();
@@ -57,6 +57,15 @@ class MemberProfileUpdateService
         });
     }
 
+    /**
+     * 1 件の追加項目マスタに対し、会員プロフィール上の `member_additional_item_values` を同期する。
+     *
+     * 前提: `$profile` は更新対象の会員プロフィール、`$item` は `update()` 側で取得した有効マスタ行であること。
+     * 更新方針: チェックボックスは未送信を false とみなし、常に値行を upsert して `'0'` / `'1'` を保持する。
+     * それ以外の入力型では、`$raw` が null または空文字のときは任意項目として値行を削除し、値があるときは文字列化して upsert する。
+     *
+     * 副作用: `member_additional_item_values` への `INSERT` / `UPDATE`（updateOrCreate）または該当行の `DELETE` を行う。呼び出し元のトランザクション内で実行される。
+     */
     private function syncAdditionalItemValue(MemberProfile $profile, AdditionalItem $item, mixed $raw): void
     {
         if ($item->input_type === 'checkbox') {
