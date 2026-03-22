@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-4-public-pages-misc
+  scope: PRレビュー（mail.contact_to のフォールバックを config/mail.php で定義）
+  adopted: yes
+  classification: PR限定
+  targets: config/mail.php, app/Http/Controllers/ContactController.php, .env.example
+  notes: 指摘は有効。MAIL_CONTACT_TO 未設定時に null になり得た定義を、MAIL_FROM_ADDRESS デフォルトと共有する `$mailFromAddress` へ `?:` で集約。ContactController の二重フォールバックを削除。.env.example のコメントを整合。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-4-public-pages-misc
   scope: PRレビュー（PublicMiscPagesTest の観点表と test-strategy.mdc §2 項4 の整合を PHPDoc で明示）
   adopted: yes
   classification: PR限定

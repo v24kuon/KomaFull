@@ -14,7 +14,7 @@ class ContactController extends Controller
      * お問い合わせフォームを表示する。
      *
      * 前提: ゲスト・会員いずれも利用可能。
-     * 更新方針: 送信先は `config('mail.contact_to')` が空のとき `mail.from.address` にフォールバックする。
+     * 更新方針: 送信先は `config('mail.contact_to')`（config/mail.php で from.address へフォールバック済み）。
      */
     public function create(): View
     {
@@ -30,9 +30,8 @@ class ContactController extends Controller
     public function store(StoreContactRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $recipient = config('mail.contact_to') ?: config('mail.from.address');
 
-        Mail::to($recipient)->send(new ContactInquiryMail(
+        Mail::to(config('mail.contact_to'))->send(new ContactInquiryMail(
             name: $validated['name'],
             email: $validated['email'],
             phone: $validated['phone'] ?? null,
