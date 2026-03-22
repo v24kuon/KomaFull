@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Admin\Concerns;
 
+use App\Enums\AdditionalItemInputType;
+
 /**
  * 追加項目マスタの select_options_lines（改行区切り）を select_options 配列へ正規化する。
  *
@@ -11,7 +13,7 @@ trait PreparesAdditionalItemSelectOptions
 {
     protected function prepareForValidation(): void
     {
-        if ($this->input('input_type') !== 'select') {
+        if ($this->input('input_type') !== AdditionalItemInputType::Select->value) {
             $this->merge(['select_options' => null]);
 
             return;

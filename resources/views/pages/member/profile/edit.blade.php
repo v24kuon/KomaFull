@@ -1,5 +1,7 @@
 @extends('layouts.member')
 
+@use('App\Enums\AdditionalItemInputType')
+
 @section('title', 'プロフィール')
 
 @section('content')
@@ -56,13 +58,13 @@
                         @endphp
 
                         <div class="mb-1">
-                            @if ($item->input_type === 'text')
+                            @if ($item->input_type === AdditionalItemInputType::Text->value)
                                 <label for="ai_{{ $item->id }}" class="form-label">{{ $item->label_name }}</label>
                                 <input type="text" class="form-control @error('additional_items.'.$item->id) is-invalid @enderror" id="ai_{{ $item->id }}" name="additional_items[{{ $item->id }}]" value="{{ $oldVal !== null ? $oldVal : ($value?->value) }}">
-                            @elseif ($item->input_type === 'number')
+                            @elseif ($item->input_type === AdditionalItemInputType::Number->value)
                                 <label for="ai_{{ $item->id }}" class="form-label">{{ $item->label_name }}</label>
                                 <input type="number" class="form-control @error('additional_items.'.$item->id) is-invalid @enderror" id="ai_{{ $item->id }}" name="additional_items[{{ $item->id }}]" value="{{ $oldVal !== null ? $oldVal : ($value?->value) }}" min="0">
-                            @elseif ($item->input_type === 'select')
+                            @elseif ($item->input_type === AdditionalItemInputType::Select->value)
                                 <label for="ai_{{ $item->id }}" class="form-label">{{ $item->label_name }}</label>
                                 <select class="form-select @error('additional_items.'.$item->id) is-invalid @enderror" id="ai_{{ $item->id }}" name="additional_items[{{ $item->id }}]">
                                     <option value="">選択してください</option>
@@ -74,7 +76,7 @@
                                         <option value="{{ $optStr }}" @selected($current === $optStr)>{{ $optStr }}</option>
                                     @endforeach
                                 </select>
-                            @elseif ($item->input_type === 'checkbox')
+                            @elseif ($item->input_type === AdditionalItemInputType::Checkbox->value)
                                 @php
                                     $checked = $oldVal !== null ? filter_var($oldVal, FILTER_VALIDATE_BOOLEAN) : (($value?->value ?? '0') === '1');
                                 @endphp

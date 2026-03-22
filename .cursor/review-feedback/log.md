@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph10-2-2-profile-ui
+  scope: PRレビュー（追加項目 input_type の文字列リテラルを AdditionalItemInputType enum に統一、syncAdditionalItemValue の is_scalar 削除）
+  adopted: yes
+  classification: PR限定
+  targets: app/Enums/AdditionalItemInputType.php, app/Http/Requests/Admin/StoreAdditionalItemRequest.php, app/Http/Requests/Admin/UpdateAdditionalItemRequest.php, app/Http/Requests/Admin/Concerns/PreparesAdditionalItemSelectOptions.php, app/Http/Requests/Member/UpdateMemberProfileRequest.php, app/Services/Member/MemberProfileUpdateService.php, database/factories/AdditionalItemFactory.php, resources/views/pages/member/profile/edit.blade.php, resources/views/partials/admin/additional-items/form.blade.php
+  notes: 指摘は有効。PrepaidType と同様の backed enum。Rule::in(values()) でバリデーションと単一情報源を整合。UpdateMemberProfileRequest 検証済みデータ前提で (string) キャストに簡略化し PHPDoc で意図を明示。
+
+- date: 2026-03-22
+  branch: feat/ph10-2-2-profile-ui
   scope: PRレビュー（MemberProfileUpdateService の additional_item_type を TYPE_MEMBER_PROFILE に統一、syncAdditionalItemValue に責務 PHPDoc）
   adopted: yes
   classification: PR限定

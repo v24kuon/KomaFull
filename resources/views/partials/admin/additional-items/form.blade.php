@@ -1,3 +1,5 @@
+@use('App\Enums\AdditionalItemInputType')
+
 @php
     $model = $additionalItem ?? null;
     $linesDefault = old('select_options_lines');
@@ -31,10 +33,10 @@
     <div class="col-md-4">
         <label for="input_type" class="form-label">入力形式 <span class="text-danger">*</span></label>
         <select class="form-select @error('input_type') is-invalid @enderror" id="input_type" name="input_type" required>
-            <option value="text" @selected(old('input_type', $model?->input_type) === 'text')>テキスト</option>
-            <option value="number" @selected(old('input_type', $model?->input_type) === 'number')>数値</option>
-            <option value="select" @selected(old('input_type', $model?->input_type) === 'select')>セレクト</option>
-            <option value="checkbox" @selected(old('input_type', $model?->input_type) === 'checkbox')>チェックボックス</option>
+            <option value="{{ AdditionalItemInputType::Text->value }}" @selected(old('input_type', $model?->input_type) === AdditionalItemInputType::Text->value)>テキスト</option>
+            <option value="{{ AdditionalItemInputType::Number->value }}" @selected(old('input_type', $model?->input_type) === AdditionalItemInputType::Number->value)>数値</option>
+            <option value="{{ AdditionalItemInputType::Select->value }}" @selected(old('input_type', $model?->input_type) === AdditionalItemInputType::Select->value)>セレクト</option>
+            <option value="{{ AdditionalItemInputType::Checkbox->value }}" @selected(old('input_type', $model?->input_type) === AdditionalItemInputType::Checkbox->value)>チェックボックス</option>
         </select>
         <x-ui.field-error field="input_type" />
     </div>
@@ -45,7 +47,7 @@
     </div>
 </div>
 
-<div class="row mb-3" x-show="inputType === 'select'">
+<div class="row mb-3" x-show="inputType === '{{ AdditionalItemInputType::Select->value }}'">
     <div class="col-12">
         <label for="select_options_lines" class="form-label">セレクト候補（1行に1つ）</label>
         <textarea class="form-control @error('select_options') is-invalid @enderror" id="select_options_lines" name="select_options_lines" rows="4">{{ $linesDefault }}</textarea>

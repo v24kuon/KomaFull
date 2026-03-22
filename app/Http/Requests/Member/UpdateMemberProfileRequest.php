@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Member;
 
+use App\Enums\AdditionalItemInputType;
 use App\Models\AdditionalItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Collection;
@@ -61,7 +62,7 @@ class UpdateMemberProfileRequest extends FormRequest
         }
 
         foreach ($this->activeAdditionalItems() as $item) {
-            if ($item->input_type !== 'checkbox') {
+            if ($item->input_type !== AdditionalItemInputType::Checkbox->value) {
                 continue;
             }
 
@@ -82,14 +83,14 @@ class UpdateMemberProfileRequest extends FormRequest
     private function rulesForAdditionalItem(AdditionalItem $item): array
     {
         return match ($item->input_type) {
-            'text' => [
+            AdditionalItemInputType::Text->value => [
                 'nullable',
                 'string',
                 'max:'.($item->digits !== null ? max(1, min(65535, $item->digits)) : 255),
             ],
-            'number' => $this->numberRules($item),
-            'select' => $this->selectRules($item),
-            'checkbox' => ['boolean'],
+            AdditionalItemInputType::Number->value => $this->numberRules($item),
+            AdditionalItemInputType::Select->value => $this->selectRules($item),
+            AdditionalItemInputType::Checkbox->value => ['boolean'],
             default => ['nullable', 'string', 'max:255'],
         };
     }

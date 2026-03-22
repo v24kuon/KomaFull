@@ -2,6 +2,7 @@
 
 namespace App\Services\Member;
 
+use App\Enums\AdditionalItemInputType;
 use App\Models\AdditionalItem;
 use App\Models\MemberAdditionalItemValue;
 use App\Models\MemberProfile;
@@ -63,12 +64,13 @@ class MemberProfileUpdateService
      * 前提: `$profile` は更新対象の会員プロフィール、`$item` は `update()` 側で取得した有効マスタ行であること。
      * 更新方針: チェックボックスは未送信を false とみなし、常に値行を upsert して `'0'` / `'1'` を保持する。
      * それ以外の入力型では、`$raw` が null または空文字のときは任意項目として値行を削除し、値があるときは文字列化して upsert する。
+     * `UpdateMemberProfileRequest` により text/number/select は string または int に型制限されるため、チェックボックス分岐後の `$raw` は非スカラーにならない想定である。
      *
      * 副作用: `member_additional_item_values` への `INSERT` / `UPDATE`（updateOrCreate）または該当行の `DELETE` を行う。呼び出し元のトランザクション内で実行される。
      */
     private function syncAdditionalItemValue(MemberProfile $profile, AdditionalItem $item, mixed $raw): void
     {
-        if ($item->input_type === 'checkbox') {
+        if ($item->input_type === AdditionalItemInputType::Checkbox->value) {
             $checked = $raw === true || $raw === 1 || $raw === '1';
             $value = $checked ? '1' : '0';
 
@@ -92,7 +94,7 @@ class MemberProfileUpdateService
             return;
         }
 
-        $value = is_scalar($raw) ? (string) $raw : '';
+        $value = (string) $raw;
 
         MemberAdditionalItemValue::query()->updateOrCreate(
             [
