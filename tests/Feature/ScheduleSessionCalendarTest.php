@@ -26,6 +26,7 @@ use Tests\TestCase;
  * | TC-A-05 | year=abc | Boundary – 非整数 | リダイレクト、year エラー | HTML GET |
  * | TC-N-04 | year=2000, month=1 | Boundary – 年下限の前月 | 200、schedulePrevUrl が null | 1999-12 は 422 のため |
  * | TC-N-05 | year=2100, month=12 | Boundary – 年上限の次月 | 200、scheduleNextUrl が null | 2101-01 は 422 のため |
+ * | TC-N-06 | 表示月≠今日の日付がパディングに載る | Boundary – isToday と inMonth | 月外セルは isToday=false | Carbon::setTestNow |
  *
  * 失敗系は正常系件数以上（test-strategy.mdc セクション2）。GET のみのため HTTP 失敗経路はクエリバリデーションに限定し、境界値・型不正を追加して網羅する。
  */
@@ -226,5 +227,36 @@ class ScheduleSessionCalendarTest extends TestCase
             'month' => 11,
         ]));
         $response->assertViewHas('scheduleNextUrl', null);
+    }
+
+    /**
+     * TC-N-06: グリッドのパディング日（隣月）では「今日」フラグを立てない。
+     */
+    public function test_calendar_payload_padding_cells_never_mark_today_when_outside_display_month(): void
+    {
+        $tz = config('app.timezone');
+        Carbon::setTestNow(Carbon::create(2026, 3, 31, 12, 0, 0, $tz)->startOfDay());
+
+        try {
+            $response = $this->get(route('schedule.index', [
+                'year' => 2026,
+                'month' => 4,
+            ]));
+
+            $response->assertOk();
+            $response->assertViewHas('calendarPayload', function (array $payload) {
+                foreach ($payload['weeks'] as $week) {
+                    foreach ($week as $cell) {
+                        if ($cell['inMonth'] === false && $cell['isToday'] === true) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            });
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 }

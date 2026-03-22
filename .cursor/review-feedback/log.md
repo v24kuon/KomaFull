@@ -1391,3 +1391,19 @@
   classification: PR限定
   targets: app/Http/Requests/ScheduleIndexRequest.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。公開 HTML の不正クエリでも無条件 JSON 422 だとブラウザが生 JSON を表示する。`expectsJson()` が真のときだけ従来のカスタム JSON、それ以外は `parent::failedValidation` で `ValidationException`（リダイレクト＋セッションエラー）。TC-A-01/02/04/05 は `assertRedirect` と `assertSessionHasErrors`、TC-A-03 は `getJson` で JSON 本文を検証するよう更新した。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（ScheduleController の buildCalendarWeeks / serializeSessionRow に PHPDoc を追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`daySymbolForTotal` / `remainingSeatsBreakdown` と比べ週グリッド生成と view 行ペイロードの private helper に責務・前提・更新方針がなく粒度が分かれていた。週境界・`totalsByDay` の意味・Alpine/Blade との整合、および `remainingSeats` の受け渡し方を PHPDoc に明示した。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-3-session-calendar
+  scope: PRレビュー（buildCalendarWeeks の isToday を当月セルに限定）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。月外パディングセルで `ymd` / `day` は null なのに `isToday` だけ真になり得た。`isToday` に `$inMonth` を併用。PHPDoc に前提を追記し、`Carbon::setTestNow` で 4 月表示かつ当日 3/31 のときに `inMonth=false && isToday=true` が無いことを Feature テストで検証した。
