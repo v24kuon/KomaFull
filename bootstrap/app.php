@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             AddContentSecurityPolicyReportOnly::class,
         ]);
 
+        $middleware->alias([
+            'member.not_withdrawn' => \App\Http\Middleware\EnsureMemberNotWithdrawn::class,
+        ]);
+
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
         ]);

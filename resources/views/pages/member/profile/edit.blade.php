@@ -30,7 +30,7 @@
                     <div class="col-md-6">
                         <label for="email" class="form-label">メールアドレス</label>
                         <input type="email" class="form-control bg-light" id="email" value="{{ $user->email }}" readonly disabled autocomplete="email">
-                        <p class="form-text small mb-0">メールアドレスの変更は別メニューから行います。</p>
+                        <p class="form-text small mb-0"><a href="{{ route('member.settings.email.edit') }}">メールアドレスの変更</a>は会員設定から行えます。</p>
                     </div>
                 </div>
 

@@ -11,6 +11,22 @@
         @stack('styles')
     </head>
     <body hx-headers='{"X-CSRF-TOKEN":"{{ csrf_token() }}"}'>
+        @if (session('success'))
+            <div class="container pt-3">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                </div>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="container pt-3">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                </div>
+            </div>
+        @endif
         @yield('content')
 
         <script defer src="{{ v_asset('assets/js/app.js') }}"></script>

@@ -2,8 +2,10 @@
 
 namespace App\Http\Responses;
 
+use App\Models\MemberProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -22,6 +24,21 @@ class LoginResponse implements LoginResponseContract
     {
         if ($request->wantsJson()) {
             return response()->json(['two_factor' => false]);
+        }
+
+        $user = $request->user();
+
+        if ($user instanceof User && ! $user->isAdministrator()) {
+            $profile = $user->memberProfile;
+            if ($profile !== null && $profile->member_status === MemberProfile::STATUS_WITHDRAWN) {
+                Auth::logout();
+
+                return redirect()
+                    ->route('login')
+                    ->withErrors([
+                        'email' => 'このアカウントは退会済みです。',
+                    ]);
+            }
         }
 
         return redirect()->intended($this->redirectPath($request));

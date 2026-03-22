@@ -13,6 +13,11 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
 use App\Http\Controllers\Member\ProfileController as MemberProfileController;
+use App\Http\Controllers\Member\SettingsBillingPortalController;
+use App\Http\Controllers\Member\SettingsController;
+use App\Http\Controllers\Member\SettingsEmailController;
+use App\Http\Controllers\Member\SettingsPasswordController;
+use App\Http\Controllers\Member\SettingsWithdrawalController;
 use App\Http\Controllers\ProgramController as PublicProgramController;
 use App\Http\Controllers\PublicStoreController;
 use App\Http\Controllers\ScheduleController;
@@ -37,10 +42,21 @@ Route::post('/contact', [ContactController::class, 'store'])
 
 Route::get('/legal/tokushoho', [LegalController::class, 'tokushoho'])->name('legal.tokushoho');
 
-Route::middleware(['auth', 'verified'])->prefix('mypage')->name('member.')->group(function (): void {
+Route::middleware(['auth', 'verified', 'member.not_withdrawn'])->prefix('mypage')->name('member.')->group(function (): void {
     Route::get('/', MemberDashboardController::class)->name('dashboard');
     Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [MemberProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/settings', SettingsController::class)->name('settings.index');
+    Route::get('/settings/password', [SettingsPasswordController::class, 'edit'])->name('settings.password.edit');
+    Route::put('/settings/password', [SettingsPasswordController::class, 'update'])->name('settings.password.update');
+    Route::get('/settings/email', [SettingsEmailController::class, 'edit'])->name('settings.email.edit');
+    Route::put('/settings/email', [SettingsEmailController::class, 'update'])->name('settings.email.update');
+    Route::post('/settings/billing-portal', SettingsBillingPortalController::class)
+        ->middleware('throttle:10,1')
+        ->name('settings.billing-portal');
+    Route::get('/settings/withdraw', [SettingsWithdrawalController::class, 'edit'])->name('settings.withdraw.edit');
+    Route::post('/settings/withdraw', [SettingsWithdrawalController::class, 'destroy'])->name('settings.withdraw.destroy');
 });
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->name('admin.')->group(function (): void {

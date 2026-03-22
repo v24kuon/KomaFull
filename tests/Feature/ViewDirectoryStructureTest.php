@@ -188,6 +188,25 @@ class ViewDirectoryStructureTest extends TestCase
     }
 
     /**
+     * TC-N-14: 会員設定ハブは pages/member 配下の view を使うこと。
+     */
+    public function test_member_settings_index_uses_pages_directory_view(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_MEMBER,
+            'email_verified_at' => now(),
+        ]);
+
+        MemberProfile::factory()->for($user)->createOne();
+
+        $response = $this->actingAs($user)->get(route('member.settings.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('pages.member.settings.index');
+    }
+
+    /**
      * @return array<string, array{0: string, 1: string}>
      */
     public static function authPageProvider(): array

@@ -1623,3 +1623,11 @@
   classification: PR限定
   targets: app/Http/Controllers/ScheduleController.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。月外パディングセルで `ymd` / `day` は null なのに `isToday` だけ真になり得た。`isToday` に `$inMonth` を併用。PHPDoc に前提を追記し、`Carbon::setTestNow` で 4 月表示かつ当日 3/31 のときに `inMonth=false && isToday=true` が無いことを Feature テストで検証した。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PH10-3-1 会員設定（パスワード・メール・カード・退会）新規実装
+  adopted: no
+  classification: none
+  targets: （該当なし）
+  notes: 外部PRレビュー指摘の採用はなし。実装時点でレビュー指摘の蓄積対象はなしと判定した。
