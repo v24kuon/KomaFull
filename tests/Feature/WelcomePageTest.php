@@ -22,6 +22,7 @@ class WelcomePageTest extends TestCase
         $response->assertSee(v_asset('assets/vendor/bootstrap/bootstrap.min.css'), false);
         $response->assertSee(v_asset('assets/css/app.css'), false);
         $response->assertSee(v_asset('assets/js/app.js'), false);
+        $response->assertSee(route('programs.index'), false);
         $response->assertSee(route('login'), false);
         $response->assertSee(route('register'), false);
         $response->assertDontSee('action="'.route('logout').'"', false);

@@ -103,10 +103,10 @@
             </div>
         </div>
 
-        <script defer src="{{ v_asset('assets/vendor/htmx/htmx.min.js') }}"></script>
         <script defer src="{{ v_asset('assets/js/app.js') }}"></script>
         <script defer src="{{ v_asset('assets/vendor/alpine/alpine.csp.min.js') }}"></script>
         <script defer src="{{ v_asset('assets/vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+        <script defer src="{{ v_asset('assets/vendor/htmx/htmx.min.js') }}"></script>
         @stack('scripts')
     </body>
 </html>

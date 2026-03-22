@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -72,6 +73,34 @@ class ViewDirectoryStructureTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('partials.admin.categories.table');
+        $response->assertDontSee('<!DOCTYPE html>', false);
+    }
+
+    /**
+     * TC-N-07: 公開プログラム一覧の通常表示は pages 配下の view を使うこと。
+     */
+    public function test_programs_index_uses_pages_directory_view(): void
+    {
+        Program::factory()->createOne(['status' => Program::STATUS_ACTIVE]);
+
+        $response = $this->get(route('programs.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('pages.programs.index');
+    }
+
+    /**
+     * TC-A-02: HTMX 公開プログラム一覧は partials 配下の view のみを返すこと。
+     */
+    public function test_programs_index_htmx_request_uses_partials_directory_view(): void
+    {
+        Program::factory()->createOne(['status' => Program::STATUS_ACTIVE]);
+
+        $response = $this->withHeader('HX-Request', 'true')
+            ->get(route('programs.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('partials.programs.list');
         $response->assertDontSee('<!DOCTYPE html>', false);
     }
 

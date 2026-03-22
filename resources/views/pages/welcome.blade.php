@@ -20,6 +20,7 @@
                     </p>
 
                     <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <a href="{{ route('programs.index') }}" class="btn btn-outline-primary btn-lg">プログラム一覧</a>
                         @guest
                             @if (Route::has('register'))
                                 <a href="{{ route('register') }}" class="btn btn-primary btn-lg">会員登録をはじめる</a>

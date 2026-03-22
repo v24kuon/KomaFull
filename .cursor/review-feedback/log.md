@@ -16,6 +16,46 @@
 
 ## Entries
 
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
+  scope: PRレビュー（ProgramPublicPageTest の各テストメソッドへ PHPDoc／Case ID 追記）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramPublicPageTest.php
+  notes: 指摘は有効。test-strategy の「テストケース ID はメソッド直上 PHPDoc」と ViewDirectoryStructureTest の TC 形式に合わせ、8 メソッドすべてに TC-N/TC-A と一行シナリオを付与。AdminProgramCrudTest 等の広範な統一は本コミット範囲外とした。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
+  scope: PRレビュー（ProgramPublicPageTest の失敗系件数と test-strategy の整合）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/ProgramPublicPageTest.php
+  notes: 指摘は一部有効。読み取り専用 GET のため意味のある HTTP 失敗経路は inactive/存在しない code の 404 のみと判断。観点表に Notes 列と test-strategy の例外（合理的でない場合の主要エラー経路優先・Notes 明示）を PHPDoc に追記。冗長な失敗テストの追加は見送り。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
+  scope: PRレビュー指摘対応（Program のルートキー・admin の HTMX 読み込み順・join/with の PHPDoc・review-fix コマンド更新）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/Program.php, app/Http/Controllers/ProgramController.php, resources/views/layouts/admin.blade.php, .cursor/commands/review-fix.md
+  notes: 指摘は有効。`Program::getRouteKeyName()` で `code` をルートキーに統一。管理レイアウトの HTMX を `layouts.app` と同順（app.js→Alpine→Bootstrap→HTMX）に揃え初期化順の差を解消。`publicProgramsQuery` の join と `with` の役割を PHPDoc の「設計判断」で明示。`.cursor/commands/review-fix.md` は対応要否の検証をフェーズ化し Task 利用条件を追記。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
+  scope: PRレビュー指摘対応（公開プログラムの PHPDoc・テスト・ホームの named route）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ProgramController.php, routes/web.php, resources/views/pages/programs/index.blade.php, resources/views/pages/programs/show.blade.php, tests/Feature/ProgramPublicPageTest.php
+  notes: 指摘は有効。`publicProgramsQuery()` に責務・前提・更新方針を追記。空一覧（active 0 件）の表示と `@forelse` 空メッセージをテスト追加。存在しない code の GET を `route('programs.show', ['program' => …])` に統一。`/` に `home` を付与し、パンくずのホームを `route('home')` に統一してルート変更に追従しやすくした。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
+  scope: [PH9-2-2] プログラム一覧・詳細画面（HTMX）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/ProgramController.php, routes/web.php, resources/views/pages/programs/, resources/views/partials/programs/, resources/views/layouts/app.blade.php, resources/views/pages/welcome.blade.php, public/assets/css/pages/programs.css, config/app.php, .env.example, tests/Feature/ProgramPublicPageTest.php, tests/Feature/ViewDirectoryStructureTest.php, tests/Feature/WelcomePageTest.php
+  notes: 新規実装のため採用レビュー指摘はなし。公開一覧は status=active のみ、カテゴリ sort_order・名称で並べ替え。詳細は code 解決、inactive は 404。HX-Request 時は一覧・詳細とも partials のみ返却し一覧モーダル埋め込みに利用。公開レイアウトに HTMX を追加し `ASSET_VERSION` を更新した。
+
 - date: 2026-03-20
   branch: feat/ph9-2-1-welcome-replace
   scope: PRレビュー指摘対応（layouts.app の body に HTMX 用 hx-headers を付与）
