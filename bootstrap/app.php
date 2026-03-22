@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'member.not_withdrawn' => \App\Http\Middleware\EnsureMemberNotWithdrawn::class,
+            'member.role' => \App\Http\Middleware\EnsureMemberRole::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

@@ -4,6 +4,7 @@ namespace Tests\Feature\Member;
 
 use App\Models\MemberProfile;
 use App\Models\User;
+use App\Services\Member\MemberStripeBillingPortalService;
 use App\Services\Member\MemberWithdrawalService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -18,7 +19,9 @@ class MemberSettingsTest extends TestCase
      * テスト観点（抜粋）: ゲストは会員設定へアクセスできない / プロフィールなしは設定ハブからダッシュボードへ /
      * パスワード変更の成功・現在パスワード誤り /
      * メール変更の成功・重複拒否・同一メール拒否・現在パスワード誤り /
-     * 退会の成功・管理者/プロフィールなしは 403・確認なし・現在パスワード誤り / 退会済みはマイページ不可・ログイン不可。
+     * 退会の成功・管理者/プロフィールなしは 403・確認なし・現在パスワード誤り / 退会済みはマイページ不可・ログイン不可 /
+     * メール・パスワード更新も管理者・プロフィールなしは 403 /
+     * 請求ポータルは Stripe 失敗時にフラッシュエラー（MemberStripeBillingPortalService を mock）。
      */
     private function createVerifiedMemberWithProfile(): User
     {
@@ -53,7 +56,46 @@ class MemberSettingsTest extends TestCase
     }
 
     /**
+     * 管理者は会員設定ハブへアクセスできないこと（member.role ミドルウェア）。
+     */
+    public function test_administrator_cannot_access_member_settings_hub(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+
+        MemberProfile::factory()->for($admin)->createOne();
+
+        $response = $this->actingAs($admin)->get(route('member.settings.index'));
+
+        $response->assertForbidden();
+    }
+
+    /**
+     * 管理者は会員向けメール設定 GET へアクセスできないこと。
+     */
+    public function test_administrator_cannot_access_member_email_settings_edit(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+
+        MemberProfile::factory()->for($admin)->createOne();
+
+        $response = $this->actingAs($admin)->get(route('member.settings.email.edit'));
+
+        $response->assertForbidden();
+    }
+
+    /**
      * メール認証後のプロビジョニング失敗などで member_profiles が無い場合、設定ハブで null 参照しないこと。
+     * verified 配下のため、フラッシュは「認証待ち」ではなく問い合わせ案内とする。
      */
     public function test_member_without_profile_is_redirected_from_settings_hub(): void
     {
@@ -67,7 +109,7 @@ class MemberSettingsTest extends TestCase
         $response = $this->actingAs($user)->get(route('member.settings.index'));
 
         $response->assertRedirect(route('member.dashboard'));
-        $response->assertSessionHas('error');
+        $response->assertSessionHas('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED);
     }
 
     public function test_member_can_change_password_with_valid_current_password(): void
@@ -180,6 +222,38 @@ class MemberSettingsTest extends TestCase
         $response->assertSee('メールアドレス変更', false);
     }
 
+    /**
+     * メール未認証かつプロフィールなしは、メール設定へ進めずダッシュボードへ（認証完了後の自動作成案内）。
+     */
+    public function test_unverified_member_without_profile_is_redirected_from_email_settings(): void
+    {
+        $user = User::factory()->unverified()->createOne([
+            'role' => User::ROLE_MEMBER,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('member.settings.email.edit'));
+
+        $response->assertRedirect(route('member.dashboard'));
+        $response->assertSessionHas('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_UNVERIFIED);
+    }
+
+    /**
+     * メール認証済みだがプロフィール未作成のとき、メール設定ルートでも問い合わせ案内とする。
+     */
+    public function test_verified_member_without_profile_is_redirected_from_email_settings(): void
+    {
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_MEMBER,
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('member.settings.email.edit'));
+
+        $response->assertRedirect(route('member.dashboard'));
+        $response->assertSessionHas('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED);
+    }
+
     public function test_email_change_fails_when_new_email_is_not_unique(): void
     {
         $other = $this->createVerifiedMemberWithProfile();
@@ -265,6 +339,90 @@ class MemberSettingsTest extends TestCase
         ]);
 
         $response->assertForbidden();
+    }
+
+    public function test_email_update_is_forbidden_for_admin_even_with_member_profile(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+
+        MemberProfile::factory()->for($user)->createOne();
+
+        $response = $this->actingAs($user)->put(route('member.settings.email.update'), [
+            'current_password' => 'password',
+            'email' => 'new-email@example.com',
+        ]);
+
+        $response->assertForbidden();
+        $user->refresh();
+        $this->assertNotSame('new-email@example.com', $user->email);
+    }
+
+    public function test_password_update_is_forbidden_for_admin_even_with_member_profile(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+
+        MemberProfile::factory()->for($user)->createOne();
+
+        $response = $this->actingAs($user)->put(route('member.settings.password.update'), [
+            'current_password' => 'password',
+            'password' => 'new-password-9',
+            'password_confirmation' => 'new-password-9',
+        ]);
+
+        $response->assertForbidden();
+        $user->refresh();
+        $this->assertTrue(Hash::check('password', (string) $user->password));
+    }
+
+    public function test_email_update_is_forbidden_when_member_profile_is_missing(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_MEMBER,
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+
+        $originalEmail = $user->email;
+
+        $response = $this->actingAs($user)->put(route('member.settings.email.update'), [
+            'current_password' => 'password',
+            'email' => 'new-email@example.com',
+        ]);
+
+        $response->assertForbidden();
+        $user->refresh();
+        $this->assertSame($originalEmail, $user->email);
+    }
+
+    public function test_password_update_is_forbidden_when_member_profile_is_missing(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne([
+            'role' => User::ROLE_MEMBER,
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+
+        $response = $this->actingAs($user)->put(route('member.settings.password.update'), [
+            'current_password' => 'password',
+            'password' => 'new-password-9',
+            'password_confirmation' => 'new-password-9',
+        ]);
+
+        $response->assertForbidden();
+        $user->refresh();
+        $this->assertTrue(Hash::check('password', (string) $user->password));
     }
 
     public function test_withdrawal_fails_without_confirmation(): void
@@ -388,5 +546,23 @@ class MemberSettingsTest extends TestCase
         $response = $this->post(route('member.settings.billing-portal'));
 
         $response->assertRedirect(route('login'));
+    }
+
+    /**
+     * createOrGetStripeCustomer / redirectToBillingPortal 経路で例外が出たとき、500 にせず会員設定へエラーを付けて戻すこと。
+     * HTTP カーネル・ルート・セッションを通す（コントローラ直呼びの Unit では代替しにくい回帰を拾う）。
+     */
+    public function test_billing_portal_redirects_with_flash_error_when_stripe_step_throws(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        $this->mock(MemberStripeBillingPortalService::class, function ($mock): void {
+            $mock->shouldReceive('redirectToBillingPortal')->once()->andThrow(new RuntimeException('Stripe API unavailable'));
+        });
+
+        $response = $this->actingAs($user)->post(route('member.settings.billing-portal'));
+
+        $response->assertRedirect(route('member.settings.index'));
+        $response->assertSessionHas('error');
     }
 }

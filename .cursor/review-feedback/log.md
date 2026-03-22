@@ -18,6 +18,62 @@
 
 - date: 2026-03-22
   branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（会員マイページに member.role ミドルウェア、UpdateMemberProfileRequest の authorize 強化）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Middleware/EnsureMemberRole.php, bootstrap/app.php, routes/web.php, app/Http/Requests/Member/UpdateMemberProfileRequest.php, app/Http/Middleware/EnsureMemberNotWithdrawn.php, tests/Feature/Member/MemberDashboardTest.php, tests/Feature/Member/MemberProfileTest.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。EnsureMemberNotWithdrawn が管理者を素通しするため会員 UI への侵入を member.role で拒否。/mypage 両グループに適用。UpdateMemberProfileRequest を ROLE_MEMBER + memberProfile に統一。メール設定 PHPDoc は既に PHPDoc 化済み（インライン // なし）。Feature テストで管理者 403 を追加。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（verified 配下でプロフィール未作成時の案内を障害・問い合わせ文へ）
+  adopted: yes
+  classification: PR限定
+  targets: app/Models/MemberProfile.php, app/Http/Controllers/Member/SettingsController.php, app/Http/Controllers/Member/SettingsPasswordController.php, app/Http/Controllers/Member/SettingsBillingPortalController.php, app/Http/Controllers/Member/SettingsWithdrawalController.php, app/Http/Controllers/Member/ProfileController.php, app/Http/Controllers/Member/SettingsEmailController.php, resources/views/pages/member/dashboard.blade.php, tests/Feature/Member/MemberSettingsTest.php, tests/Feature/Member/MemberProfileTest.php
+  notes: 指摘は有効。verified では「メール認証後に自動作成」を再トリガーできないため、MemberProfile にフラッシュ定数を集約。メール設定（verified 外）は hasVerifiedEmail で未認証案内と分岐。ダッシュボードは alert-warning。Feature テストを追記・強化。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（routes/web.php のメール設定ルート説明を // から PHPDoc へ）
+  adopted: yes
+  classification: PR限定
+  targets: routes/web.php
+  notes: 指摘は有効。インラインコメントをルートグループ直前の PHPDoc に移し、リポジトリの PHPDoc 優先方針に合わせた。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（請求ポータル Stripe 失敗テストを Feature 化・MemberStripeBillingPortalService 抽出）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Member/MemberStripeBillingPortalService.php, app/Http/Controllers/Member/SettingsBillingPortalController.php, tests/Feature/Member/MemberSettingsTest.php, tests/Unit/Http/Controllers/Member/SettingsBillingPortalControllerTest.php（削除）
+  notes: 指摘は有効。Request::create で controller 直呼びはルート・ミドルウェア・セッションを通らない。Cashier 呼び出しを MemberStripeBillingPortalService に切り出し、Feature で actingAs+post(route)+mock を実施。Unit ファイルは削除。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（LoginResponse の toResponse / redirectPath に PHPDoc 追加）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Responses/LoginResponse.php
+  notes: 指摘は有効。エントリーポイントに責務・副作用・@param、プライベートヘルパーに責務・副作用なしを追記（RFP-009 整合）。挙動変更なし。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（SharedFormUiComponentsTest の名前付きバッグ field-error に role="alert" アサーション追加）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/SharedFormUiComponentsTest.php
+  notes: 指摘は有効。デフォルトバッグの TC-N-02 と揃え、x-ui.field-error が bag 指定時も role="alert" を出すことを明示。コンポーネントは ui/field-error.blade.php で既に role 付与。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
+  scope: PRレビュー（UpdateMemberEmailSettingsRequest / UpdateMemberPasswordSettingsRequest の authorize を ROLE_MEMBER + memberProfile に統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Requests/Member/UpdateMemberEmailSettingsRequest.php, app/Http/Requests/Member/UpdateMemberPasswordSettingsRequest.php, tests/Feature/Member/MemberSettingsTest.php
+  notes: 指摘は有効。EnsureMemberNotWithdrawn は管理者を素通しのため Auth::check のみでは会員専用にならない。WithdrawMemberAccountRequest と同様の認可に変更。管理者・プロフィールなしの PUT は 403 を MemberSettingsTest で追加。
+
+- date: 2026-03-22
+  branch: feat/ph10-3-1-member-settings
   scope: PRレビュー（MemberWithdrawalService の PHPDoc・lockForUpdate・Stripe と DB トランザクション境界）
   adopted: yes
   classification: PR限定

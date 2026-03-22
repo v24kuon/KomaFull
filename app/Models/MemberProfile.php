@@ -18,6 +18,17 @@ class MemberProfile extends Model
 
     public const STATUS_WITHDRAWN = 'withdrawn';
 
+    /**
+     * verified 配下・またはメール認証済みで member_profiles が無い場合のフラッシュ。
+     * この状態では「メール認証後に自動作成」を再トリガーできないため、問い合わせ導線を示す。
+     */
+    public const FLASH_ERROR_MISSING_PROFILE_VERIFIED = '会員プロフィールがまだありません。自動作成に失敗している可能性があります。お問い合わせページからご連絡をお願いします。';
+
+    /**
+     * メール未認証のまま member_profiles が無い場合のフラッシュ（verified 外ルートなど）。
+     */
+    public const FLASH_ERROR_MISSING_PROFILE_UNVERIFIED = '会員プロフィールがまだありません。メール認証完了後に自動で作成されます。';
+
     protected $table = 'member_profiles';
 
     /**

@@ -14,7 +14,7 @@ class EnsureMemberNotWithdrawn
     /**
      * 退会済み会員のマイページ利用を拒否する。
      *
-     * 前提: `auth` 済みであること。管理者は対象外。
+     * 前提: `auth` 済みであること。管理者は退会チェック対象外（会員ロールの境界は {@see EnsureMemberRole}）。
      * 更新方針: `member_profiles.member_status=withdrawn` のときセッションを破棄しホームへ誘導する。
      */
     public function handle(Request $request, Closure $next): Response

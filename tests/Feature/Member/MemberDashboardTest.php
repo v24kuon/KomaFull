@@ -28,6 +28,22 @@ class MemberDashboardTest extends TestCase
     }
 
     /**
+     * TC-A-01b: 管理者は会員マイページへアクセスできないこと。
+     */
+    public function test_administrator_cannot_access_member_dashboard(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('member.dashboard'));
+
+        $response->assertForbidden();
+    }
+
+    /**
      * TC-A-02: メール未認証ユーザーはマイページへアクセスできないこと。
      */
     public function test_unverified_user_is_redirected_from_member_dashboard(): void

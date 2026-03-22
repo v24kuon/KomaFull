@@ -41,6 +41,40 @@ class MemberProfileTest extends TestCase
     }
 
     /**
+     * TC-A-03b: 管理者は会員プロフィール編集へアクセスできないこと。
+     */
+    public function test_administrator_cannot_access_member_profile_edit(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('member.profile.edit'));
+
+        $response->assertForbidden();
+    }
+
+    /**
+     * TC-A-03c: 管理者は会員プロフィールを更新できないこと。
+     */
+    public function test_administrator_cannot_update_member_profile(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->createOne([
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('member.profile.update'), [
+            'name' => '管理者',
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    /**
      * TC-A-03: 会員プロフィールがない場合はダッシュボードへ誘導されること。
      */
     public function test_user_without_member_profile_is_redirected_from_profile_edit(): void
@@ -53,7 +87,7 @@ class MemberProfileTest extends TestCase
         $response = $this->actingAs($user)->get(route('member.profile.edit'));
 
         $response->assertRedirect(route('member.dashboard'));
-        $response->assertSessionHas('error');
+        $response->assertSessionHas('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED);
     }
 
     /**

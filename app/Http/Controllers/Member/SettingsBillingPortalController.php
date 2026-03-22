@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\MemberProfile;
 use App\Models\User;
+use App\Services\Member\MemberStripeBillingPortalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -11,6 +13,10 @@ use Throwable;
 
 class SettingsBillingPortalController extends Controller
 {
+    public function __construct(
+        private readonly MemberStripeBillingPortalService $billingPortal,
+    ) {}
+
     /**
      * Stripe Customer Portal へリダイレクトし、カード情報の更新・削除を行う。
      *
@@ -29,13 +35,11 @@ class SettingsBillingPortalController extends Controller
         if ($user->memberProfile === null) {
             return redirect()
                 ->route('member.dashboard')
-                ->with('error', '会員プロフィールがまだありません。メール認証完了後に自動で作成されます。');
+                ->with('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED);
         }
 
         try {
-            $user->createOrGetStripeCustomer();
-
-            return $user->redirectToBillingPortal(route('member.settings.index'));
+            return $this->billingPortal->redirectToBillingPortal($user, route('member.settings.index'));
         } catch (Throwable $e) {
             Log::error('Stripe billing portal session failed', [
                 'user_id' => $user->getKey(),

@@ -10,8 +10,8 @@
     </header>
 
     @if ($memberProfile === null)
-        <div class="alert alert-info" role="alert">
-            会員プロフィールを準備中です。メール認証完了後に自動で作成されます。
+        <div class="alert alert-warning" role="alert">
+            {{ \App\Models\MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED }}
         </div>
     @else
         <p class="small text-secondary mb-4">会員番号 <span class="font-monospace">{{ $memberProfile->code }}</span>

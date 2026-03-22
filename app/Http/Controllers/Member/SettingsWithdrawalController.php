@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Member\WithdrawMemberAccountRequest;
+use App\Models\MemberProfile;
 use App\Models\User;
 use App\Services\Member\MemberWithdrawalService;
 use Illuminate\Http\RedirectResponse;
@@ -31,7 +32,7 @@ class SettingsWithdrawalController extends Controller
         if ($user->memberProfile === null) {
             return redirect()
                 ->route('member.dashboard')
-                ->with('error', '会員プロフィールがまだありません。メール認証完了後に自動で作成されます。');
+                ->with('error', MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED);
         }
 
         return view('pages.member.settings.withdraw', [

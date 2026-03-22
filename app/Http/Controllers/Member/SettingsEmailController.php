@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Member\UpdateMemberEmailSettingsRequest;
+use App\Models\MemberProfile;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,8 @@ class SettingsEmailController extends Controller
 
     /**
      * メールアドレス変更フォームを表示する。
+     *
+     * プロフィール未作成時: verified 外のため、メール未認証なら「認証後に自動作成」案内、認証済みなら障害・問い合わせ案内とする。
      */
     public function edit(): View|RedirectResponse
     {
@@ -30,9 +33,13 @@ class SettingsEmailController extends Controller
         }
 
         if ($user->memberProfile === null) {
+            $message = $user->hasVerifiedEmail()
+                ? MemberProfile::FLASH_ERROR_MISSING_PROFILE_VERIFIED
+                : MemberProfile::FLASH_ERROR_MISSING_PROFILE_UNVERIFIED;
+
             return redirect()
                 ->route('member.dashboard')
-                ->with('error', '会員プロフィールがまだありません。メール認証完了後に自動で作成されます。');
+                ->with('error', $message);
         }
 
         return view('pages.member.settings.email', [

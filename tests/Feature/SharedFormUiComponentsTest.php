@@ -139,6 +139,7 @@ BLADE);
         );
 
         $this->assertStringContainsString('invalid-feedback', $html);
+        $this->assertStringContainsString('role="alert"', $html);
         $this->assertStringContainsString('このメールアドレスは既に使用されています。', $html);
     }
 

@@ -4,9 +4,9 @@ namespace App\Http\Requests\Member;
 
 use App\Enums\AdditionalItemInputType;
 use App\Models\AdditionalItem;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class UpdateMemberProfileRequest extends FormRequest
@@ -16,9 +16,18 @@ class UpdateMemberProfileRequest extends FormRequest
      */
     private ?Collection $cachedActiveAdditionalItems = null;
 
+    /**
+     * 会員向けプロフィール更新のみ許可する（管理者セッションやプロフィール未作成ユーザーを拒否）。
+     *
+     * {@see EnsureMemberNotWithdrawn} は管理者を対象外とするため、ルート単体では会員専用を保証できない。
+     */
     public function authorize(): bool
     {
-        return Auth::check();
+        $user = $this->user();
+
+        return $user instanceof User
+            && $user->getAttribute('role') === User::ROLE_MEMBER
+            && $user->memberProfile !== null;
     }
 
     /**
