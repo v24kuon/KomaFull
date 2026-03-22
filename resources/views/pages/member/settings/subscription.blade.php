@@ -32,7 +32,7 @@
                     <p class="small text-secondary mb-0">トライアル中です。</p>
                 @elseif ($subscription->onGracePeriod())
                     <p class="small text-warning mb-0">
-                        <span class="fw-semibold">解約予約中</span>です。次回請求日（{{ $subscription->ends_at?->timezone(config('app.timezone'))?->format('Y/m/d') }}）までご利用いただけます。
+                        <span class="fw-semibold">解約予約中</span>です。解約予定日（{{ $subscription->ends_at?->timezone(config('app.timezone'))?->format('Y/m/d') }}）までご利用いただけます。
                     </p>
                 @elseif ($subscriptionCurrentPeriodEnd)
                     <p class="small text-secondary mb-0">
@@ -47,13 +47,13 @@
                 <div class="card-body">
                     <h2 class="h6 card-title">解約の取り消し</h2>
                     <p class="card-text small text-secondary mb-3">解約予約を取り消し、継続課金を再開します。</p>
-                    <x-ui.form-errors />
+                    <x-ui.form-errors bag="resume" />
                     <form method="POST" action="{{ route('member.settings.subscription.resume') }}" class="d-inline" x-data="submitState()" x-on:submit="startSubmitting($event)">
                         @csrf
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input @error('resume_confirmed') is-invalid @enderror" id="resume_confirmed" name="resume_confirmed" value="1" {{ old('resume_confirmed') ? 'checked' : '' }}>
+                            <input type="checkbox" class="form-check-input @error('resume_confirmed', 'resume') is-invalid @enderror" id="resume_confirmed" name="resume_confirmed" value="1" {{ old('resume_confirmed') ? 'checked' : '' }}>
                             <label class="form-check-label" for="resume_confirmed">解約予約を取り消し、継続する</label>
-                            <x-ui.field-error field="resume_confirmed" />
+                            <x-ui.field-error field="resume_confirmed" bag="resume" />
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm" data-testid="subscription-resume-button">解約を取り消す</button>
                     </form>
@@ -79,7 +79,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <x-ui.field-error field="stripe_price_id" />
+                            <x-ui.field-error field="stripe_price_id" bag="swap" />
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm" data-testid="subscription-swap-submit">プランを変更する</button>
                     </form>
@@ -96,13 +96,13 @@
                 <div class="card-body">
                     <h2 class="h6 card-title text-danger">請求期間末での解約</h2>
                     <p class="card-text small text-secondary mb-3">いまの請求期間の終了日に解約するよう予約します。期間内は利用可能です。</p>
-                    <x-ui.form-errors />
+                    <x-ui.form-errors bag="cancel" />
                     <form method="POST" action="{{ route('member.settings.subscription.cancel') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                         @csrf
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input @error('cancellation_confirmed') is-invalid @enderror" id="cancellation_confirmed" name="cancellation_confirmed" value="1" {{ old('cancellation_confirmed') ? 'checked' : '' }}>
+                            <input type="checkbox" class="form-check-input @error('cancellation_confirmed', 'cancel') is-invalid @enderror" id="cancellation_confirmed" name="cancellation_confirmed" value="1" {{ old('cancellation_confirmed') ? 'checked' : '' }}>
                             <label class="form-check-label" for="cancellation_confirmed">請求期間末に解約する内容を理解した</label>
-                            <x-ui.field-error field="cancellation_confirmed" />
+                            <x-ui.field-error field="cancellation_confirmed" bag="cancel" />
                         </div>
                         <button type="submit" class="btn btn-outline-danger btn-sm" data-testid="subscription-cancel-button">請求期間末で解約する</button>
                     </form>

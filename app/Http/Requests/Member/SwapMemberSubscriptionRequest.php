@@ -4,12 +4,18 @@ namespace App\Http\Requests\Member;
 
 use App\Models\CoursePlan;
 use App\Models\User;
+use App\Services\Member\MemberSubscriptionManagementService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class SwapMemberSubscriptionRequest extends FormRequest
 {
+    /**
+     * サブスク管理画面は複数フォームを同時表示するため、default バッグと重複表示しない。
+     */
+    protected $errorBag = 'swap';
+
     /**
      * 会員向けプラン変更のみ許可する。
      */
@@ -49,6 +55,9 @@ class SwapMemberSubscriptionRequest extends FormRequest
         ];
     }
 
+    /**
+     * サブスク存在・同一価格チェックに加え、{@see MemberSubscriptionManagementService::canSwap()} でプラン変更可否を検証する。
+     */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
@@ -60,6 +69,16 @@ class SwapMemberSubscriptionRequest extends FormRequest
             $subscription = $user->subscription('default');
             if ($subscription === null) {
                 $validator->errors()->add('stripe_price_id', '有効なサブスクリプションが見つかりません。');
+
+                return;
+            }
+
+            $management = app(MemberSubscriptionManagementService::class);
+            if (! $management->canSwap($subscription)) {
+                $validator->errors()->add(
+                    'stripe_price_id',
+                    '現在、プランを変更できる状態ではありません。'
+                );
 
                 return;
             }

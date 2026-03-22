@@ -10,6 +10,11 @@ use Illuminate\Validation\Validator;
 class ResumeMemberSubscriptionRequest extends FormRequest
 {
     /**
+     * サブスク管理画面は複数フォームを同時表示するため、default バッグと重複表示しない。
+     */
+    protected $errorBag = 'resume';
+
+    /**
      * 会員向け解約取り消しのみ許可する。
      */
     public function authorize(): bool

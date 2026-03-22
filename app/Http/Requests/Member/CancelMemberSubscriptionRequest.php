@@ -10,6 +10,11 @@ use Illuminate\Validation\Validator;
 class CancelMemberSubscriptionRequest extends FormRequest
 {
     /**
+     * サブスク管理画面は複数フォームを同時表示するため、default バッグと重複表示しない。
+     */
+    protected $errorBag = 'cancel';
+
+    /**
      * 会員向け解約予約のみ許可する。
      */
     public function authorize(): bool

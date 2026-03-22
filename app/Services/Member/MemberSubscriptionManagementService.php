@@ -29,16 +29,8 @@ class MemberSubscriptionManagementService
             return null;
         }
 
-        $priceId = $subscription->stripe_price;
-        if ($priceId === null && $subscription->relationLoaded('items') === false) {
-            $subscription->load('items');
-        }
-
-        if ($priceId === null && $subscription->items->isNotEmpty()) {
-            $priceId = $subscription->items->first()->stripe_price;
-        }
-
-        if ($priceId === null || $priceId === '') {
+        $priceId = $this->resolveStripePriceIdFromSubscription($subscription);
+        if ($priceId === null) {
             return null;
         }
 
@@ -118,8 +110,19 @@ class MemberSubscriptionManagementService
      */
     public function currentStripePriceId(Subscription $subscription): ?string
     {
-        if ($subscription->stripe_price !== null) {
-            return $subscription->stripe_price;
+        return $this->resolveStripePriceIdFromSubscription($subscription);
+    }
+
+    /**
+     * 単一価格サブスク想定で、サブスクの `stripe_price` または最初の item の Stripe Price ID を返す。
+     *
+     * 空文字は null とみなす（{@see resolveCoursePlan} のマスタ解決と {@see swapCandidates} の除外条件と整合）。
+     */
+    private function resolveStripePriceIdFromSubscription(Subscription $subscription): ?string
+    {
+        $direct = $subscription->stripe_price;
+        if ($direct !== null && $direct !== '') {
+            return $direct;
         }
 
         if ($subscription->relationLoaded('items') === false) {
@@ -130,7 +133,13 @@ class MemberSubscriptionManagementService
             return null;
         }
 
-        return $subscription->items->first()->stripe_price;
+        $fromItem = $subscription->items->first()->stripe_price;
+
+        if ($fromItem === null || $fromItem === '') {
+            return null;
+        }
+
+        return $fromItem;
     }
 
     /**

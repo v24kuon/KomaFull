@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Member\MemberSubscriptionManagementService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use InvalidArgumentException;
 use Laravel\Cashier\Subscription;
 use RuntimeException;
 use Stripe\Subscription as StripeSubscription;
@@ -21,7 +22,7 @@ class MemberSubscriptionSettingsTest extends TestCase
      * テスト観点（抜粋）: ゲスト拒否 / 管理者403 / プロフィールなしリダイレクト /
      * 有効サブスクなしメッセージ / プラン名表示 / swap バリデーション・成功（mock）/ cancel・resume 成功（mock）/
      * swap・cancel・resume 失敗時フラッシュエラー（サービス例外 mock）/ cancel・resume の確認チェック必須 /
-     * cancel・resume の after バリデーション（解約不可・猶予外）。
+     * cancel・resume の after バリデーション（解約不可・猶予外）/ swap の canSwap 不可。
      */
     private function createVerifiedMemberWithProfile(): User
     {
@@ -137,7 +138,7 @@ class MemberSubscriptionSettingsTest extends TestCase
             'stripe_price_id' => 'price_not_in_database',
         ]);
 
-        $response->assertSessionHasErrors('stripe_price_id');
+        $response->assertSessionHasErrorsIn('swap', 'stripe_price_id');
     }
 
     public function test_swap_rejects_same_price_as_current(): void
@@ -155,7 +156,7 @@ class MemberSubscriptionSettingsTest extends TestCase
             'stripe_price_id' => 'price_same_001',
         ]);
 
-        $response->assertSessionHasErrors('stripe_price_id');
+        $response->assertSessionHasErrorsIn('swap', 'stripe_price_id');
     }
 
     public function test_swap_redirects_with_success_when_service_succeeds(): void
@@ -175,6 +176,7 @@ class MemberSubscriptionSettingsTest extends TestCase
         Subscription::factory()->for($user)->withPrice('price_from_001')->create();
 
         $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canSwap')->once()->andReturn(true);
             $mock->shouldReceive('swapToPrice')->once();
         });
 
@@ -203,6 +205,7 @@ class MemberSubscriptionSettingsTest extends TestCase
         Subscription::factory()->for($user)->withPrice('price_from_throw_001')->create();
 
         $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canSwap')->once()->andReturn(true);
             $mock->shouldReceive('swapToPrice')->once()->andThrow(new RuntimeException('Stripe down'));
         });
 
@@ -212,6 +215,67 @@ class MemberSubscriptionSettingsTest extends TestCase
 
         $response->assertRedirect(route('member.settings.subscription.edit'));
         $response->assertSessionHas('error');
+    }
+
+    public function test_swap_redirects_with_business_message_when_service_throws_invalid_argument(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_from_ia_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_to_ia_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        Subscription::factory()->for($user)->withPrice('price_from_ia_001')->create();
+
+        $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canSwap')->once()->andReturn(true);
+            $mock->shouldReceive('swapToPrice')->once()->andThrow(new InvalidArgumentException('Invalid course plan.'));
+        });
+
+        $response = $this->actingAs($user)->post(route('member.settings.subscription.swap'), [
+            'stripe_price_id' => 'price_to_ia_001',
+        ]);
+
+        $response->assertRedirect(route('member.settings.subscription.edit'));
+        $response->assertSessionHas('error', '選択したプランは現在ご利用できません。');
+    }
+
+    public function test_swap_fails_validation_when_subscription_cannot_be_swapped(): void
+    {
+        $user = $this->createVerifiedMemberWithProfile();
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_swap_blocked_from_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        CoursePlan::factory()->createOne([
+            'stripe_price_id' => 'price_swap_blocked_to_001',
+            'status' => CoursePlan::STATUS_ACTIVE,
+        ]);
+
+        Subscription::factory()->for($user)->withPrice('price_swap_blocked_from_001')->create();
+
+        $this->mock(MemberSubscriptionManagementService::class, function ($mock): void {
+            $mock->shouldReceive('canSwap')->once()->andReturn(false);
+        });
+
+        $response = $this->actingAs($user)
+            ->from(route('member.settings.subscription.edit'))
+            ->post(route('member.settings.subscription.swap'), [
+                'stripe_price_id' => 'price_swap_blocked_to_001',
+            ]);
+
+        $response->assertRedirect(route('member.settings.subscription.edit'));
+        $response->assertSessionHasErrorsIn('swap', [
+            'stripe_price_id' => '現在、プランを変更できる状態ではありません。',
+        ]);
     }
 
     public function test_cancel_requires_confirmation(): void
@@ -227,7 +291,7 @@ class MemberSubscriptionSettingsTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('member.settings.subscription.cancel'), []);
 
-        $response->assertSessionHasErrors([
+        $response->assertSessionHasErrorsIn('cancel', [
             'cancellation_confirmed' => '解約の内容を確認し、チェックを入れてください。',
         ]);
     }
@@ -248,7 +312,7 @@ class MemberSubscriptionSettingsTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('member.settings.subscription.resume'), []);
 
-        $response->assertSessionHasErrors([
+        $response->assertSessionHasErrorsIn('resume', [
             'resume_confirmed' => '内容を確認し、チェックを入れてください。',
         ]);
     }
@@ -366,7 +430,7 @@ class MemberSubscriptionSettingsTest extends TestCase
             ]);
 
         $response->assertRedirect(route('member.settings.subscription.edit'));
-        $response->assertSessionHasErrors('cancellation_confirmed');
+        $response->assertSessionHasErrorsIn('cancel', 'cancellation_confirmed');
     }
 
     public function test_resume_fails_validation_when_not_on_grace_period(): void
@@ -390,6 +454,6 @@ class MemberSubscriptionSettingsTest extends TestCase
             ]);
 
         $response->assertRedirect(route('member.settings.subscription.edit'));
-        $response->assertSessionHasErrors('resume_confirmed');
+        $response->assertSessionHasErrorsIn('resume', 'resume_confirmed');
     }
 }

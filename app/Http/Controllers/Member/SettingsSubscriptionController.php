@@ -14,7 +14,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use InvalidArgumentException;
+use Laravel\Cashier\Exceptions\IncompletePayment;
+use Laravel\Cashier\Exceptions\SubscriptionUpdateFailure;
 use Laravel\Cashier\Subscription;
+use LogicException;
 use Throwable;
 
 class SettingsSubscriptionController extends Controller
@@ -91,8 +95,38 @@ class SettingsSubscriptionController extends Controller
 
         try {
             $this->subscriptionManagement->swapToPrice($user, $stripePriceId);
+        } catch (InvalidArgumentException $e) {
+            Log::warning('Member subscription swap rejected (business rule)', [
+                'user_id' => $user->getKey(),
+                'stripe_price_id' => $stripePriceId,
+                'exception' => $e,
+            ]);
+
+            return redirect()
+                ->route('member.settings.subscription.edit')
+                ->with('error', $this->memberSubscriptionInvalidArgumentUserMessage($e));
+        } catch (IncompletePayment $e) {
+            Log::warning('Member subscription swap incomplete payment', [
+                'user_id' => $user->getKey(),
+                'stripe_price_id' => $stripePriceId,
+                'exception' => $e,
+            ]);
+
+            return redirect()
+                ->route('member.settings.subscription.edit')
+                ->with('error', 'お支払いの確認が必要です。カード情報を更新してから再度お試しください。');
+        } catch (SubscriptionUpdateFailure $e) {
+            Log::error('Member subscription swap failed (Stripe update)', [
+                'user_id' => $user->getKey(),
+                'stripe_price_id' => $stripePriceId,
+                'exception' => $e,
+            ]);
+
+            return redirect()
+                ->route('member.settings.subscription.edit')
+                ->with('error', 'プラン変更を完了できませんでした。時間をおいて再度お試しください。');
         } catch (Throwable $e) {
-            Log::error('Member subscription swap failed', [
+            Log::error('Member subscription swap failed (unexpected)', [
                 'user_id' => $user->getKey(),
                 'stripe_price_id' => $stripePriceId,
                 'exception' => $e,
@@ -120,8 +154,17 @@ class SettingsSubscriptionController extends Controller
 
         try {
             $this->subscriptionManagement->cancelAtPeriodEnd($user);
+        } catch (InvalidArgumentException $e) {
+            Log::warning('Member subscription cancel-at-period-end rejected (business rule)', [
+                'user_id' => $user->getKey(),
+                'exception' => $e,
+            ]);
+
+            return redirect()
+                ->route('member.settings.subscription.edit')
+                ->with('error', $this->memberSubscriptionInvalidArgumentUserMessage($e));
         } catch (Throwable $e) {
-            Log::error('Member subscription cancel-at-period-end failed', [
+            Log::error('Member subscription cancel-at-period-end failed (unexpected)', [
                 'user_id' => $user->getKey(),
                 'exception' => $e,
             ]);
@@ -148,8 +191,26 @@ class SettingsSubscriptionController extends Controller
 
         try {
             $this->subscriptionManagement->resume($user);
+        } catch (InvalidArgumentException $e) {
+            Log::warning('Member subscription resume rejected (business rule)', [
+                'user_id' => $user->getKey(),
+                'exception' => $e,
+            ]);
+
+            return redirect()
+                ->route('member.settings.subscription.edit')
+                ->with('error', $this->memberSubscriptionInvalidArgumentUserMessage($e));
+        } catch (LogicException $e) {
+            Log::warning('Member subscription resume rejected (Cashier)', [
+                'user_id' => $user->getKey(),
+                'exception' => $e,
+            ]);
+
+            return redirect()
+                ->route('member.settings.subscription.edit')
+                ->with('error', '解約予約を取り消せませんでした。状態をご確認のうえ、再度お試しください。');
         } catch (Throwable $e) {
-            Log::error('Member subscription resume failed', [
+            Log::error('Member subscription resume failed (unexpected)', [
                 'user_id' => $user->getKey(),
                 'exception' => $e,
             ]);
@@ -170,6 +231,22 @@ class SettingsSubscriptionController extends Controller
      * `Subscription::currentPeriodEnd()` は内部で Stripe API を参照し得るため、ビューで複数回呼ばない。
      * 取得失敗時は画面全体を落とさず、目安行を出さない。
      */
+    /**
+     * {@see MemberSubscriptionManagementService} が投げる {@see InvalidArgumentException} のメッセージを会員向け文言へマップする。
+     */
+    private function memberSubscriptionInvalidArgumentUserMessage(InvalidArgumentException $e): string
+    {
+        return match ($e->getMessage()) {
+            'Subscription not found.' => '有効なサブスクリプションが見つかりません。',
+            'Subscription cannot be swapped.' => '現在、プランを変更できる状態ではありません。',
+            'Already on this price.' => 'すでに同じプランです。',
+            'Invalid course plan.' => '選択したプランは現在ご利用できません。',
+            'Subscription cannot be canceled.' => '現在、請求期間末での解約を予約できる状態ではありません。',
+            'Subscription cannot be resumed.' => '現在、解約の取り消しができる状態ではありません。',
+            default => '操作を完了できませんでした。内容をご確認のうえ、再度お試しください。',
+        };
+    }
+
     private function resolveSubscriptionCurrentPeriodEndForDisplay(?Subscription $subscription): ?CarbonInterface
     {
         if ($subscription === null || ! $subscription->valid()) {
