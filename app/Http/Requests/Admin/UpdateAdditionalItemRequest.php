@@ -2,35 +2,18 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Http\Requests\Admin\Concerns\PreparesAdditionalItemSelectOptions;
 use App\Models\AdditionalItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateAdditionalItemRequest extends FormRequest
 {
+    use PreparesAdditionalItemSelectOptions;
+
     public function authorize(): bool
     {
         return true;
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $lines = $this->input('select_options_lines');
-        if (! is_string($lines)) {
-            $this->merge(['select_options' => null]);
-
-            return;
-        }
-
-        $trimmed = trim($lines);
-        if ($trimmed === '') {
-            $this->merge(['select_options' => null]);
-
-            return;
-        }
-
-        $arr = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $lines))));
-        $this->merge(['select_options' => $arr]);
     }
 
     /**

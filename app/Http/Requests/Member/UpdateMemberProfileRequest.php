@@ -4,11 +4,17 @@ namespace App\Http\Requests\Member;
 
 use App\Models\AdditionalItem;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class UpdateMemberProfileRequest extends FormRequest
 {
+    /**
+     * @var Collection<int, AdditionalItem>|null
+     */
+    private ?Collection $cachedActiveAdditionalItems = null;
+
     public function authorize(): bool
     {
         return Auth::check();
@@ -119,14 +125,20 @@ class UpdateMemberProfileRequest extends FormRequest
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, AdditionalItem>
+     * 同一リクエスト内では結果を再利用し、active な追加項目の SELECT を複数回走らせない。
+     *
+     * @return Collection<int, AdditionalItem>
      */
-    private function activeAdditionalItems()
+    private function activeAdditionalItems(): Collection
     {
-        return AdditionalItem::query()
-            ->where('additional_item_type', 'member_profile')
-            ->where('status', AdditionalItem::STATUS_ACTIVE)
-            ->orderBy('id')
-            ->get();
+        if ($this->cachedActiveAdditionalItems === null) {
+            $this->cachedActiveAdditionalItems = AdditionalItem::query()
+                ->where('additional_item_type', AdditionalItem::TYPE_MEMBER_PROFILE)
+                ->where('status', AdditionalItem::STATUS_ACTIVE)
+                ->orderBy('id')
+                ->get();
+        }
+
+        return $this->cachedActiveAdditionalItems;
     }
 }

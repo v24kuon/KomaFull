@@ -11,6 +11,8 @@ class AdditionalItem extends Model
     /** @use HasFactory<\Database\Factories\AdditionalItemFactory> */
     use HasFactory;
 
+    public const TYPE_MEMBER_PROFILE = 'member_profile';
+
     public const STATUS_ACTIVE = 'active';
 
     public const STATUS_INACTIVE = 'inactive';

@@ -25,7 +25,7 @@ class MemberProfileUpdateService
     public function update(User $user, array $validated): void
     {
         $this->connection->transaction(function () use ($user, $validated): void {
-            $user->forceFill([
+            $user->fill([
                 'name' => $validated['name'],
             ])->save();
 

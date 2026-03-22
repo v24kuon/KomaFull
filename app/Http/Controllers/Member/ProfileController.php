@@ -38,7 +38,7 @@ class ProfileController extends Controller
         }
 
         $additionalItems = AdditionalItem::query()
-            ->where('additional_item_type', 'member_profile')
+            ->where('additional_item_type', AdditionalItem::TYPE_MEMBER_PROFILE)
             ->where('status', AdditionalItem::STATUS_ACTIVE)
             ->orderBy('id')
             ->get();
