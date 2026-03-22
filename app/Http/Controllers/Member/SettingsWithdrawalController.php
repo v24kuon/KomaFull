@@ -8,7 +8,9 @@ use App\Models\User;
 use App\Services\Member\MemberWithdrawalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Throwable;
 
 class SettingsWithdrawalController extends Controller
 {
@@ -42,6 +44,8 @@ class SettingsWithdrawalController extends Controller
      * 退会処理を実行し、ログアウトする。
      *
      * 前提: `WithdrawMemberAccountRequest` で現在パスワードと確認チェック済みであること。
+     *
+     * `withdraw()` 内（Stripe 等）で例外が出た場合はログに記録し、退会画面へエラーを付けて戻す（未ログアウト）。
      */
     public function destroy(WithdrawMemberAccountRequest $request): RedirectResponse
     {
@@ -50,7 +54,18 @@ class SettingsWithdrawalController extends Controller
             abort(403);
         }
 
-        $this->memberWithdrawalService->withdraw($user);
+        try {
+            $this->memberWithdrawalService->withdraw($user);
+        } catch (Throwable $e) {
+            Log::error('Member withdrawal failed', [
+                'user_id' => $user->getKey(),
+                'exception' => $e,
+            ]);
+
+            return redirect()
+                ->route('member.settings.withdraw.edit')
+                ->with('error', '退会処理を完了できませんでした。時間をおいて再度お試しください。');
+        }
 
         Auth::logout();
 

@@ -18,6 +18,8 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <x-ui.form-errors />
+            {{-- FormRequest は default バッグ、Fortify UpdateUserProfileInformation は updateProfileInformation バッグ --}}
+            <x-ui.form-errors bag="updateProfileInformation" />
 
             <form method="POST" action="{{ route('member.settings.email.update') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                 @csrf
@@ -31,8 +33,9 @@
 
                 <div class="mb-4">
                     <label for="email" class="form-label">新しいメールアドレス <span class="text-danger">*</span></label>
-                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $user->email) }}" required autocomplete="email">
+                    <input type="email" class="form-control @error('email') is-invalid @enderror @error('email', 'updateProfileInformation') is-invalid @enderror" id="email" name="email" value="{{ old('email', $user->email) }}" required autocomplete="email">
                     <x-ui.field-error field="email" />
+                    <x-ui.field-error field="email" bag="updateProfileInformation" />
                 </div>
 
                 <div class="d-flex flex-wrap gap-2">

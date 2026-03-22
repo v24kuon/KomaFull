@@ -42,6 +42,13 @@ Route::post('/contact', [ContactController::class, 'store'])
 
 Route::get('/legal/tokushoho', [LegalController::class, 'tokushoho'])->name('legal.tokushoho');
 
+// メール変更後は email_verified_at が null になるため、verified 配下だと変更直後の GET が認証通知へ飛び
+// 成功メッセージが表示されず、誤入力時もメール設定へ戻れない。メール設定のみ verified を外す。
+Route::middleware(['auth', 'member.not_withdrawn'])->prefix('mypage')->name('member.')->group(function (): void {
+    Route::get('/settings/email', [SettingsEmailController::class, 'edit'])->name('settings.email.edit');
+    Route::put('/settings/email', [SettingsEmailController::class, 'update'])->name('settings.email.update');
+});
+
 Route::middleware(['auth', 'verified', 'member.not_withdrawn'])->prefix('mypage')->name('member.')->group(function (): void {
     Route::get('/', MemberDashboardController::class)->name('dashboard');
     Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
@@ -50,8 +57,6 @@ Route::middleware(['auth', 'verified', 'member.not_withdrawn'])->prefix('mypage'
     Route::get('/settings', SettingsController::class)->name('settings.index');
     Route::get('/settings/password', [SettingsPasswordController::class, 'edit'])->name('settings.password.edit');
     Route::put('/settings/password', [SettingsPasswordController::class, 'update'])->name('settings.password.update');
-    Route::get('/settings/email', [SettingsEmailController::class, 'edit'])->name('settings.email.edit');
-    Route::put('/settings/email', [SettingsEmailController::class, 'update'])->name('settings.email.update');
     Route::post('/settings/billing-portal', SettingsBillingPortalController::class)
         ->middleware('throttle:10,1')
         ->name('settings.billing-portal');

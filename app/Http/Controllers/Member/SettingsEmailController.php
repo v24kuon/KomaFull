@@ -10,6 +10,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
+/**
+ * メールアドレス変更。ルートは `verified` 外（変更直後は未認証のため）— 定義は routes/web.php を参照。
+ */
 class SettingsEmailController extends Controller
 {
     public function __construct(

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class SettingsBillingPortalController extends Controller
 {
@@ -14,6 +16,8 @@ class SettingsBillingPortalController extends Controller
      *
      * 前提: Cashier の Stripe Customer が存在すること（未作成時は作成する）。
      * 副作用: Stripe API を呼び出しセッション URL へリダイレクトする。
+     *
+     * 外部 API 失敗時はログに記録し、会員設定へフラッシュエラーで戻す（未処理例外による 500 を避ける）。
      */
     public function __invoke(Request $request): RedirectResponse
     {
@@ -28,8 +32,19 @@ class SettingsBillingPortalController extends Controller
                 ->with('error', '会員プロフィールがまだありません。メール認証完了後に自動で作成されます。');
         }
 
-        $user->createOrGetStripeCustomer();
+        try {
+            $user->createOrGetStripeCustomer();
 
-        return $user->redirectToBillingPortal(route('member.settings.index'));
+            return $user->redirectToBillingPortal(route('member.settings.index'));
+        } catch (Throwable $e) {
+            Log::error('Stripe billing portal session failed', [
+                'user_id' => $user->getKey(),
+                'exception' => $e,
+            ]);
+
+            return redirect()
+                ->route('member.settings.index')
+                ->with('error', 'お支払い情報の画面を開けませんでした。時間をおいて再度お試しください。');
+        }
     }
 }
