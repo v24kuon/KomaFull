@@ -18,6 +18,14 @@
 
 - date: 2026-03-22
   branch: feat/ph9-2-2-program-pages
+  scope: PRレビュー指摘対応（公開プログラムの PHPDoc・テスト・ホームの named route）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ProgramController.php, routes/web.php, resources/views/pages/programs/index.blade.php, resources/views/pages/programs/show.blade.php, tests/Feature/ProgramPublicPageTest.php
+  notes: 指摘は有効。`publicProgramsQuery()` に責務・前提・更新方針を追記。空一覧（active 0 件）の表示と `@forelse` 空メッセージをテスト追加。存在しない code の GET を `route('programs.show', ['program' => …])` に統一。`/` に `home` を付与し、パンくずのホームを `route('home')` に統一してルート変更に追従しやすくした。
+
+- date: 2026-03-22
+  branch: feat/ph9-2-2-program-pages
   scope: [PH9-2-2] プログラム一覧・詳細画面（HTMX）
   adopted: no
   classification: none

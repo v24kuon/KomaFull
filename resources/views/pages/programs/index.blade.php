@@ -12,7 +12,7 @@
         <header class="mb-4">
             <nav aria-label="パンくず">
                 <ol class="breadcrumb mb-2">
-                    <li class="breadcrumb-item"><a href="{{ url('/') }}">ホーム</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('home') }}">ホーム</a></li>
                     <li class="breadcrumb-item active" aria-current="page">プログラム</li>
                 </ol>
             </nav>

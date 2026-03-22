@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('pages.welcome');
-});
+})->name('home');
 
 Route::get('/programs', [PublicProgramController::class, 'index'])->name('programs.index');
 Route::get('/programs/{program:code}', [PublicProgramController::class, 'show'])->name('programs.show');

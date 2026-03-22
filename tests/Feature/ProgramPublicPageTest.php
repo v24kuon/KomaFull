@@ -16,6 +16,7 @@ use Tests\TestCase;
  * | TC-N-01   | ゲスト、active プログラム1件 | Equivalence – normal     | 一覧 200、pages.programs.index           |
  * | TC-N-02   | HX-Request で一覧           | Equivalence – HTMX       | partials.programs.list、DOCTYPE なし       |
  * | TC-N-03   | active と inactive が混在   | Equivalence – filter     | 一覧に active のみ                       |
+ * | TC-N-06   | active 0 件（inactive のみ） | Boundary – empty list    | 一覧 200、空状態メッセージ表示            |
  * | TC-N-04   | active プログラムの show    | Equivalence – normal     | 200、pages.programs.show                 |
  * | TC-N-05   | HX-Request で show        | Equivalence – HTMX       | partials.programs.detail、DOCTYPE なし |
  * | TC-A-01   | inactive の show URL        | Boundary – inactive      | 404                                      |
@@ -72,6 +73,22 @@ class ProgramPublicPageTest extends TestCase
             && $programs->first()->is($active));
     }
 
+    public function test_index_displays_empty_state_when_no_active_programs(): void
+    {
+        Program::factory()->createOne([
+            'status' => Program::STATUS_INACTIVE,
+            'name' => '一覧に出ないプログラム',
+        ]);
+
+        $response = $this->get(route('programs.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('pages.programs.index');
+        $response->assertSee('現在表示できるプログラムはありません。', false);
+        $response->assertViewHas('programs', fn ($programs) => $programs->isEmpty());
+        $response->assertDontSee('一覧に出ないプログラム', false);
+    }
+
     public function test_show_displays_program_detail_for_active_program(): void
     {
         $program = Program::factory()->createOne([
@@ -116,7 +133,7 @@ class ProgramPublicPageTest extends TestCase
 
     public function test_show_returns_not_found_for_unknown_code(): void
     {
-        $response = $this->get('/programs/PRG000000');
+        $response = $this->get(route('programs.show', ['program' => 'PRG000000']));
 
         $response->assertNotFound();
     }

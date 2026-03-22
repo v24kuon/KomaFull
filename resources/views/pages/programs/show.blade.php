@@ -11,7 +11,7 @@
     <div class="container p-programs__container">
         <nav aria-label="パンくず">
             <ol class="breadcrumb mb-4">
-                <li class="breadcrumb-item"><a href="{{ url('/') }}">ホーム</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('home') }}">ホーム</a></li>
                 <li class="breadcrumb-item"><a href="{{ route('programs.index') }}">プログラム</a></li>
                 <li class="breadcrumb-item active" aria-current="page">{{ $program->name }}</li>
             </ol>
