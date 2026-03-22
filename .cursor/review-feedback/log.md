@@ -1871,3 +1871,11 @@
   classification: none
   targets: （該当なし）
   notes: 外部PRレビュー指摘の採用はなし。実装時点でレビュー指摘の蓄積対象はなしと判定した。
+
+- date: 2026-03-23
+  branch: feat/ph10-3-2-subscription-ui
+  scope: PH10-3-2 サブスク管理画面・README 更新・関連テスト
+  adopted: no
+  classification: none
+  targets: （該当なし）
+  notes: 外部PRレビュー指摘の採用はなし。コミット時点でレビュー指摘の蓄積対象はなしと判定した。

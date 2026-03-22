@@ -31,6 +31,15 @@
         <div class="col-md-6">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
+                    <h2 class="h6 card-title">サブスク</h2>
+                    <p class="card-text small text-secondary mb-3">プランの変更や、請求期間末での解約を行えます。</p>
+                    <a class="btn btn-outline-primary btn-sm" href="{{ route('member.settings.subscription.edit') }}" data-testid="settings-subscription-link">サブスクを管理</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
                     <h2 class="h6 card-title">お支払いカード</h2>
                     <p class="card-text small text-secondary mb-3">Stripe の安全な画面でカード情報の更新・削除ができます。</p>
                     <form method="POST" action="{{ route('member.settings.billing-portal') }}" class="d-inline" x-data="submitState()" x-on:submit="startSubmitting($event)">
