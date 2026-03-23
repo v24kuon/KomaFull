@@ -1,0 +1,45 @@
+/* =============================================================================
+   公開レイアウト用フォント（自己ホスト）
+   - no-build-convention 4.1: Google Fonts CDN は SRI 不可のため利用しない
+   - 元: npm @fontsource/noto-sans-jp@5.2.5 / @fontsource/zen-kaku-gothic-new@5.2.5（日本語サブセット woff2）
+   ============================================================================= */
+
+@font-face {
+    font-family: 'Noto Sans JP';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('./noto-sans-jp-japanese-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Noto Sans JP';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('./noto-sans-jp-japanese-500-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Noto Sans JP';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('./noto-sans-jp-japanese-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Zen Kaku Gothic New';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('./zen-kaku-gothic-new-japanese-500-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Zen Kaku Gothic New';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('./zen-kaku-gothic-new-japanese-700-normal.woff2') format('woff2');
+}

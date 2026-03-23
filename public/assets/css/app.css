@@ -15,6 +15,8 @@
     --app-brand-color: var(--bs-primary, #0d6efd);
     --app-brand-rgb: 13, 110, 253;
     --app-brand-color-contrast: #ffffff;
+    /* 中立な白（グラデーション・半透明パネル等）。rgba(var(--app-white-rgb), α) で利用 */
+    --app-white-rgb: 255, 255, 255;
     --app-surface-color: var(--bs-light, #f8f9fa);
     --app-text-color: var(--bs-body-color, #212529);
     --app-space-xs: 0.25rem;

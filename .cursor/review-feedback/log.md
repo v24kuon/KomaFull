@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（DatabaseSeeder から DemoStoreDataSeeder を外し明示実行のみに）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DatabaseSeeder.php, database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`php artisan db:seed` デフォルトでデモ店舗・開催枠等が入るのは本番誤実行時のリスクが大きい。`DemoStoreDataSeeder` は `--class` のみ。PHPDoc で意図を明示。
+
 - date: 2026-03-22
   branch: feat/ph10-3-1-member-settings
   scope: PRレビュー（SettingsPasswordController の password 更新を forceFill から fill へ）
@@ -1935,3 +1943,27 @@
   classification: none
   targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, resources/views/partials/schedule/interactive.blade.php, public/assets/css/pages/schedule.css, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php, tests/Feature/ViewDirectoryStructureTest.php, .cursor/review-feedback/log.md
   notes: 外部PRレビュー指摘の採用はなし。HX-Request で部分テンプレートのみ返却。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（welcome.css の白色を app.css トークンに統一）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/app.css, public/assets/css/pages/welcome.css, config/app.php
+  notes: 指摘は有効。`#ffffff` と `rgba(255,255,255,0.95)` を `--app-white-rgb`（`--app-brand-rgb` と同型）に集約し、ヒーローグラデとパネル背景を `rgb(var(--app-white-rgb))` / `rgba(var(--app-white-rgb), 0.95)` に変更。`asset_version` を更新。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（Google Fonts CDN をやめ public/assets/vendor/fonts に自己ホスト）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/app.blade.php, public/assets/vendor/fonts/, config/app.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。no-build-convention 4.1 により SRI 不可の Google Fonts CDN を廃止。Fontsource 由来の日本語 woff2（Noto Sans JP 400/500/600、Zen Kaku Gothic New 500/700）を vendor/fonts に配置し vendor-fonts.css で @font-face。preconnect 削除。CSP style-src/font-src の self のみと整合。`asset_version` 更新。WelcomePage・CSP ReportOnly の Feature テストを実行。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（ScheduleController の「今日」を Carbon::now 1 回に統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`index()` で `$todayStart = Carbon::now($tz)->startOfDay()` を1回だけ取得し `$todayYmd` と `buildCalendarWeeks(..., $todayStart)` で共有。境界時刻の理論的不整合を排除。PHPDoc 更新。ScheduleSessionCalendarTest を実行。

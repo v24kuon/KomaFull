@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * デモ・開発用: 店舗設定・各種マスタ・開催枠（当月・翌月）を埋め、公開カレンダーに表示される状態にする。
  *
+ * `DatabaseSeeder` からは呼ばない（デフォルトの `db:seed` で大量デモが入らないようにする）。
  * 実行: php artisan db:seed --class=DemoStoreDataSeeder
  */
 class DemoStoreDataSeeder extends Seeder

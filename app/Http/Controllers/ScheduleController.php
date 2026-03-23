@@ -19,6 +19,7 @@ class ScheduleController extends Controller
      * 選択日は `selected=Y-m-d`（表示中の月内かつ今日以降のみ有効。過去日は予約不可のため UI ・サーバー双方で拒否）。
      * 前月・次月リンクは `ScheduleIndexRequest` の年範囲外へ跨ぐ場合は `null` とし、ビューで無効表示する。
      * HTMX（`HX-Request`）のときは `partials.schedule.interactive` のみ返し、カレンダー操作でフルリロードしない。
+     * 「今日」はリクエスト処理内で `Carbon::now($tz)->startOfDay()` を1回だけ取得し、`$todayYmd`・`buildCalendarWeeks()` の `isToday` で共有する。
      */
     public function index(ScheduleIndexRequest $request): View
     {
@@ -26,7 +27,8 @@ class ScheduleController extends Controller
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
         $tz = config('app.timezone');
-        $todayYmd = Carbon::now($tz)->format('Y-m-d');
+        $todayStart = Carbon::now($tz)->startOfDay();
+        $todayYmd = $todayStart->format('Y-m-d');
         $selectedYmd = $this->normalizeSelectedYmd($request->query('selected'), $year, $month, $todayYmd);
 
         $monthStart = Carbon::create($year, $month, 1)->startOfDay();
@@ -62,7 +64,7 @@ class ScheduleController extends Controller
             $sessionsByDay[$ymd][] = $this->serializeSessionRow($session, $starts, $remainingSeats);
         }
 
-        $weeks = $this->buildCalendarWeeks($year, $month, $totalsByDay, $tz);
+        $weeks = $this->buildCalendarWeeks($year, $month, $totalsByDay, $tz, $todayStart);
 
         $prev = $monthStart->copy()->subMonth();
         $next = $monthStart->copy()->addMonth();
@@ -137,19 +139,19 @@ class ScheduleController extends Controller
      * 指定月の週行カレンダーグリッドを組み立て、各セルに日付・当月内フラグ・空き記号・当日フラグを付与する。
      *
      * 前提: `$totalsByDay` のキーは `$timezone` 上の `Y-m-d` で、その日の全枠の残席合計（一般＋体験）が入る（`index()` で `remainingSeatsBreakdown` を合算したもの）。月の前後にまたがる日は `inMonth: false` とし、記号は付けない。週の区切りは月曜始まり（`Carbon::MONDAY`）とし、当月の第 1 週前・最終週後のパディング日を含む。`isToday` は当月セルかつその日が今日のときだけ true（パディング日では false。`ymd` / `day` が null のセルで「今日」扱いにならないようにする）。
-     * 更新方針: 週始め曜日やグリッドの取り方を変える場合は `pages/schedule/index.blade.php` の表構造と同じコミットで揃える。記号の閾値は `daySymbolForTotal()` に委譲し、ここでは日次合計の参照のみとする。
+     * 更新方針: `Carbon::now()` は `index()` で1回だけ呼び、`$todayStart` を本メソッドへ渡す（`$todayYmd` との日付境界の不整合を避ける）。週始め曜日やグリッドの取り方を変える場合は `pages/schedule/index.blade.php` の表構造と同じコミットで揃える。記号の閾値は `daySymbolForTotal()` に委譲し、ここでは日次合計の参照のみとする。
      *
      * @param  array<string, int>  $totalsByDay
+     * @param  Carbon  $todayStart  `index()` で取得した当日 0 時（アプリタイムゾーン）。`normalizeSelectedYmd` の `$todayYmd` と同一の「今日」基準。
      * @return list<list<array{ymd: string|null, day: int|null, inMonth: bool, symbol: string|null, isToday: bool, hasSessions: bool}>>
      */
-    private function buildCalendarWeeks(int $year, int $month, array $totalsByDay, string $timezone): array
+    private function buildCalendarWeeks(int $year, int $month, array $totalsByDay, string $timezone, Carbon $todayStart): array
     {
         $first = Carbon::create($year, $month, 1, 0, 0, 0, $timezone);
         $last = $first->copy()->endOfMonth();
         $gridStart = $first->copy()->startOfWeek(Carbon::MONDAY);
         $gridEnd = $last->copy()->endOfWeek(Carbon::SUNDAY);
 
-        $today = Carbon::now($timezone)->startOfDay();
         $weeks = [];
         $cursor = $gridStart->copy();
 
@@ -167,7 +169,7 @@ class ScheduleController extends Controller
                     'day' => $inMonth ? (int) $cursor->format('j') : null,
                     'inMonth' => $inMonth,
                     'symbol' => $symbol,
-                    'isToday' => $inMonth && $cursor->equalTo($today),
+                    'isToday' => $inMonth && $cursor->equalTo($todayStart),
                     'hasSessions' => $hasSessions,
                 ];
                 $cursor->addDay();
