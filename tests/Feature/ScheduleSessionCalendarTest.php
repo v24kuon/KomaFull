@@ -16,15 +16,16 @@ use Tests\TestCase;
  *
  * | Case ID | Input / Precondition | Perspective (Equivalence / Boundary) | Expected Result | Notes |
  * |---------|----------------------|----------------------------------------|-----------------|-------|
- * | TC-N-01 | ゲスト、クエリなし | Equivalence – normal | 200、pages.schedule.index | 当月 |
+ * | TC-N-01 | ゲスト、クエリなし | Equivalence – normal | 200、pages.schedule.index、`Vary: HX-Request` | 当月 |
  * | TC-N-02 | active プログラムの枠が1件 | Equivalence – payload | calendarPayload.sessionsByDay に該当日の行 | Blade で日別一覧を描画。payload で検証 |
  * | TC-N-07 | selected=Y-m-d で枠あり | Equivalence – HTML | プログラム名・時刻が本文に含まれる | GET `selected` |
  * | TC-N-08 | selected なし | Equivalence – HTML | 「日付を選択すると一覧が表示されます」 | selectedYmd null |
  * | TC-N-09 | selected が表示月外 | Boundary – ignore | selectedYmd null、案内のみ | 正規化で月外は無効 |
  * | TC-N-10 | selected 日に枠なし | Equivalence – empty | 「この日に表示できる開催枠はありません」 |  |
  * | TC-N-11 | selected が今日より前 | Boundary – past | selectedYmd null | 手動 URL でも拒否 |
+ * | TC-A-06 | selected が暦上無効（Carbon オーバーフロー） | Boundary – invalid date | selectedYmd null | 例: 2026-02-30→3/2 繰上でも raw は却下 |
  * | TC-N-12 | 過去日セル | Equivalence – UI | リンクなし・past クラス | TestNow で今日を固定 |
- * | TC-N-13 | HX-Request | Equivalence – HTMX | partials.schedule.interactive、DOCTYPE なし | - |
+ * | TC-N-13 | HX-Request | Equivalence – HTMX | partials.schedule.interactive、DOCTYPE なし、`Vary: HX-Request` | - |
  * | TC-N-03 | inactive プログラムの枠のみ | Equivalence – filter | 該当日が sessionsByDay に載らない | whereHas(active) |
  * | TC-A-01 | month=13 | Boundary – above max | リダイレクト、month エラー | HTML GET |
  * | TC-A-02 | year=1999 | Boundary – below min | リダイレクト、year エラー | HTML GET |
@@ -51,6 +52,7 @@ class ScheduleSessionCalendarTest extends TestCase
         $response->assertOk();
         $response->assertViewIs('pages.schedule.index');
         $response->assertViewHas('calendarPayload');
+        $response->assertHeader('Vary', 'HX-Request');
     }
 
     /**
@@ -365,6 +367,29 @@ class ScheduleSessionCalendarTest extends TestCase
     }
 
     /**
+     * TC-A-06: `selected` が暦上無効で Carbon が別日に繰り上げる場合は null（例: 2026-02-30）。
+     */
+    public function test_schedule_index_selected_invalid_calendar_date_overflow_is_rejected(): void
+    {
+        $tz = config('app.timezone');
+        Carbon::setTestNow(Carbon::create(2026, 2, 15, 12, 0, 0, $tz));
+
+        try {
+            $response = $this->get(route('schedule.index', [
+                'year' => 2026,
+                'month' => 3,
+                'selected' => '2026-02-30',
+            ]));
+
+            $response->assertOk();
+            $response->assertViewHas('selectedYmd', null);
+            $response->assertSee('日付を選択すると一覧が表示されます。', false);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    /**
      * TC-N-11: `selected` が今日より前のとき正規化で null（クエリ改ざんでも過去日は選べない）。
      */
     public function test_schedule_index_selected_past_date_is_rejected(): void
@@ -401,6 +426,7 @@ class ScheduleSessionCalendarTest extends TestCase
         $response->assertOk();
         $response->assertViewIs('partials.schedule.interactive');
         $response->assertDontSee('<!DOCTYPE html>', false);
+        $response->assertHeader('Vary', 'HX-Request');
     }
 
     /**

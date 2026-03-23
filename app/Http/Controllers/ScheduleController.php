@@ -6,6 +6,7 @@ use App\Http\Requests\ScheduleIndexRequest;
 use App\Models\LessonSession;
 use App\Models\Program;
 use Carbon\Carbon;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class ScheduleController extends Controller
@@ -19,9 +20,10 @@ class ScheduleController extends Controller
      * 選択日は `selected=Y-m-d`（表示中の月内かつ今日以降のみ有効。過去日は予約不可のため UI ・サーバー双方で拒否）。
      * 前月・次月リンクは `ScheduleIndexRequest` の年範囲外へ跨ぐ場合は `null` とし、ビューで無効表示する。
      * HTMX（`HX-Request`）のときは `partials.schedule.interactive` のみ返し、カレンダー操作でフルリロードしない。
+     * 同一 URL がフルページと HTMX 断片の 2 表現を返すため、レスポンスに `Vary: HX-Request` を付与し下流キャッシュの取り違えを防ぐ。
      * 「今日」はリクエスト処理内で `Carbon::now($tz)->startOfDay()` を1回だけ取得し、`$todayYmd`・`buildCalendarWeeks()` の `isToday` で共有する。
      */
-    public function index(ScheduleIndexRequest $request): View
+    public function index(ScheduleIndexRequest $request): View|Response
     {
         $validated = $request->validated();
         $year = (int) $validated['year'];
@@ -94,14 +96,25 @@ class ScheduleController extends Controller
         ];
 
         if ($request->header('HX-Request')) {
-            return view('partials.schedule.interactive', $viewData);
+            return response()
+                ->view('partials.schedule.interactive', $viewData)
+                ->header('Vary', 'HX-Request');
         }
 
-        return view('pages.schedule.index', $viewData);
+        return response()
+            ->view('pages.schedule.index', $viewData)
+            ->header('Vary', 'HX-Request');
     }
 
     /**
      * クエリ `selected` を表示月内の Y-m-d に正規化する。不正・月外・今日より前は null。
+     *
+     * 責務: クエリ改ざんや手入力の `selected` を、日別一覧の表示対象として許容する日付のみに絞る。`null` は「日付未選択」扱い（`index()` の `selectedYmd` が null）。
+     * 前提: `$year` / `$month` は `ScheduleIndexRequest` で検証済みの表示年月。`$todayYmd` は `index()` 内の `Carbon::now($tz)->startOfDay()` と同一基準の文字列。`$raw` はクエリ `selected` の生値。
+     * 更新方針: 受理条件（月内・今日以降・形式）を変えるときは `ScheduleIndexRequest` のクエリ規則や `pages/schedule/index.blade.php` の日付リンク（`selected` 付与）と同じコミットで揃える。暦日の妥当性は Carbon のラウンドトリップで担保する。
+     *
+     * `Carbon::createFromFormat('Y-m-d', …)` は存在しない日付を例外にせず翌日等へ繰り上げることがあるため、
+     * `$d->format('Y-m-d') === $raw` でラウンドトリップ検証し、暦上無効な文字列は null にする。
      *
      * @param  string  $todayYmd  `config('app.timezone')` 上の当日（Y-m-d）
      */
@@ -118,6 +131,10 @@ class ScheduleController extends Controller
         try {
             $d = Carbon::createFromFormat('Y-m-d', $raw)->startOfDay();
         } catch (\Throwable) {
+            return null;
+        }
+
+        if ($d->format('Y-m-d') !== $raw) {
             return null;
         }
 

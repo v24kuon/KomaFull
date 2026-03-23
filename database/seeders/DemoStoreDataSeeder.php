@@ -25,6 +25,15 @@ use Illuminate\Support\Facades\DB;
  */
 class DemoStoreDataSeeder extends Seeder
 {
+    /**
+     * デモ用の店舗設定・マスタ・開催枠（当月・翌月）を一括で投入する。
+     *
+     * 責務: `config('app.timezone')` 基準の「今月」「翌月」に、公開カレンダーへ載る active 開催枠と `reservation_management` カウンタを揃える。
+     *
+     * トランザクション境界: 全体を `DB::transaction` 1 回に包み、途中で例外が出た場合は当該実行の変更をすべてロールバックする。
+     *
+     * 再実行・冪等性: 内部は `updateOrCreate` 中心。`code` / `singleton_key` / `LS-DEMO-{Ymd-Hi}` などの自然キーで行を特定し、再実行時は同一キーに対してデモ既定値へ上書きする（手動変更や本番データ混入を想定しない。開発・デモ DB での再実行向け）。`ReservationManagement` は `lesson_session_id` に対する行が無いときだけ `firstOrCreate` で 0 初期化し、既存行の `reserved_count` / `reserved_trial_count` は上書きしない（実予約とカウンタの整合を壊さない）。
+     */
     public function run(): void
     {
         DB::transaction(function (): void {
@@ -295,9 +304,18 @@ class DemoStoreDataSeeder extends Seeder
     }
 
     /**
+     * 指定オフセット月について、平日（月〜土）の固定時刻に開催枠と `ReservationManagement` を生成する。
+     *
+     * 生成対象日: `Carbon::now($tz)->startOfMonth()->addMonths($monthOffset)` からその月末までを日単位で走査し、`dayOfWeekIso` が 1〜6（月〜土）の日のみ対象とする（日曜はスキップ）。
+     *
+     * 各対象日について 10:00 / 14:00 / 18:00 の 3 枠を作る。`lesson_sessions.code` は `LS-DEMO-{Ymd-Hi}` で一意（例: `LS-DEMO-20260315-1000`）。
+     *
+     * 既存データ更新方針: `LessonSession::updateOrCreate(['code' => $code], …)` により、同一 `code` の行があれば `program_id` / `location_id` / `staff_id` / `starts_at` / 定員などをデモ既定へ上書きする。`ReservationManagement` は `firstOrCreate(['lesson_session_id' => …], [初期値 0])` とし、行が既にあれば件数は変更しない（欠損時のみ作成）。
+     *
      * @param  array<int, Program>  $programs
      * @param  array<int, Location>  $locations
      * @param  array<int, Staff>  $staffMembers
+     * @param  int  $monthOffset  0 = 当月、`config('app.timezone')` 上の現在月の月初から
      */
     private function seedLessonSessionsForMonthRange(array $programs, array $locations, array $staffMembers, int $monthOffset): void
     {
@@ -330,7 +348,7 @@ class DemoStoreDataSeeder extends Seeder
                         ]
                     );
 
-                    ReservationManagement::query()->updateOrCreate(
+                    ReservationManagement::query()->firstOrCreate(
                         ['lesson_session_id' => $session->id],
                         [
                             'reserved_count' => 0,

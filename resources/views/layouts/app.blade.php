@@ -32,7 +32,7 @@
             </div>
         @endif
 
-        <main id="main-content" class="flex-grow-1">
+        <main id="main-content" class="flex-grow-1 d-flex flex-column">
             @yield('content')
         </main>
 

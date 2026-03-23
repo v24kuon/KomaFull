@@ -18,6 +18,62 @@
 
 - date: 2026-03-23
   branch: design/ui-fixes
+  scope: PRレビュー（DemoStoreDataSeeder の ReservationManagement を firstOrCreate に）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`updateOrCreate` で件数を毎回 0 に戻すと実予約とカウンタが不整合になる。欠損時のみ `firstOrCreate` で作成し既存行は上書きしない。run / seedLessonSessionsForMonthRange の PHPDoc を整合。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（DemoStoreDataSeeder の run / seedLessonSessionsForMonthRange に PHPDoc）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。トランザクション境界・冪等性・再実行時の上書き、対象曜日・時刻・code 形式・updateOrCreate 方針を PHPDoc に明示。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（ScheduleController: normalizeSelectedYmd PHPDoc・Vary: HX-Request）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。normalizeSelectedYmd に責務・前提・更新方針を追記。同一 URL のフル/HTMX 2 表現に `Vary: HX-Request`。ScheduleSessionCalendarTest でヘッダ検証。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（review-feedback log の開催枠カレンダー none エントリ4件の統合）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/review-feedback/log.md
+  notes: 任意提案を採用。同一 branch・日付・adopted:none の重複4件を1エントリに統合し、元トピックの内訳は統合先の notes に記載。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（認証ページの縦中央を main 領域基準に揃える）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/app.blade.php, resources/views/pages/auth/*.blade.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。サイトヘッダー追加後も `min-vh-100` がビューポート基準のままだと中央がずれる。`main` を `d-flex flex-column` にし、認証系は `container` を `flex-grow-1` + `align-items-center` に変更（ヘッダーは維持）。AuthViewsTest 等を実行。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（normalizeSelectedYmd の暦無効日をラウンドトリップで却下）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`Carbon::createFromFormat` が 2026-02-30 を翌日へ繰り上げる場合でも raw を返していた。`$d->format('Y-m-d') === $raw` で却下。TC-A-06 を追加。ScheduleSessionCalendarTest を実行。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（app.css のフォント読み込みコメントを自己ホスト実装に整合）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/app.css, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`:root` のコメントが Google Fonts 読込と記載されていたが、同一PRで vendor-fonts.css + woff2 に切替済み。layouts.app / vendor-fonts.css の事実に合わせて文言を修正。挙動変更なし。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
   scope: PRレビュー（DatabaseSeeder から DemoStoreDataSeeder を外し明示実行のみに）
   adopted: yes
   classification: PR限定
@@ -1914,35 +1970,11 @@
 
 - date: 2026-03-23
   branch: design/ui-fixes
-  scope: 開催枠カレンダー日別一覧（GET selected・Blade 描画・Alpine sessionCalendarRoot 削除）
+  scope: 開催枠カレンダー（selected 日別一覧・過去日不可・視覚・HTMX 部分更新）
   adopted: no
   classification: none
-  targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, public/assets/js/app.js, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php
-  notes: 外部PRレビュー指摘の採用はなし。CSP 版 Alpine による日別一覧非表示の修正のため。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
-
-- date: 2026-03-23
-  branch: design/ui-fixes
-  scope: 開催枠カレンダー過去日の選択不可（UI・normalizeSelectedYmd）
-  adopted: no
-  classification: none
-  targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, public/assets/css/pages/schedule.css, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
-  notes: 外部PRレビュー指摘の採用はなし。予約不可の過去日をリンク化しない・クエリ selected も拒否。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
-
-- date: 2026-03-23
-  branch: design/ui-fixes
-  scope: 開催枠カレンダー過去日の視覚・pointer-events（クリック不可の明示）
-  adopted: no
-  classification: none
-  targets: resources/views/pages/schedule/index.blade.php, public/assets/css/pages/schedule.css, config/app.php, .cursor/review-feedback/log.md
-  notes: 外部PRレビュー指摘の採用はなし。過去日から daybtn 相当の見た目を外し muted 固定・pointer-events none。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
-
-- date: 2026-03-23
-  branch: design/ui-fixes
-  scope: 開催枠カレンダー HTMX 部分更新（partials.schedule.interactive）
-  adopted: no
-  classification: none
-  targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, resources/views/partials/schedule/interactive.blade.php, public/assets/css/pages/schedule.css, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php, tests/Feature/ViewDirectoryStructureTest.php, .cursor/review-feedback/log.md
-  notes: 外部PRレビュー指摘の採用はなし。HX-Request で部分テンプレートのみ返却。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
+  targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, resources/views/partials/schedule/interactive.blade.php, public/assets/js/app.js, public/assets/css/pages/schedule.css, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php, tests/Feature/ViewDirectoryStructureTest.php, .cursor/review-feedback/log.md
+  notes: 外部PRレビュー指摘の採用はなし。同一ブランチ・同日の記録を可読化のため1件に統合。内訳: (1) GET selected 日別一覧・CSP 版 Alpine による非表示対策・sessionCalendarRoot 削除 (2) 過去日の normalizeSelectedYmd と UI でリンク・クエリ拒否 (3) 過去日セルの muted・pointer-events (4) HX-Request で partials.schedule.interactive のみ返却。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
 
 - date: 2026-03-23
   branch: design/ui-fixes
