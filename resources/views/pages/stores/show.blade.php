@@ -53,7 +53,5 @@
             <a href="{{ route('stores.index') }}" class="link-primary">店舗一覧へ戻る</a>
         </p>
     </div>
-
-    @include('partials.public.site-footer')
 </div>
 @endsection

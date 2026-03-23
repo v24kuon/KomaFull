@@ -16,13 +16,18 @@ class ScheduleController extends Controller
      * 前提: `lesson_sessions.status = active` かつ紐づく `programs.status = active` のみ。
      * 空き記号は当日の全枠の残席合計（一般＋体験）から算出する。
      * 更新方針: 読み取り専用。月はクエリ `year` / `month` で指定（未指定は現在月）。
+     * 選択日は `selected=Y-m-d`（表示中の月内かつ今日以降のみ有効。過去日は予約不可のため UI ・サーバー双方で拒否）。
      * 前月・次月リンクは `ScheduleIndexRequest` の年範囲外へ跨ぐ場合は `null` とし、ビューで無効表示する。
+     * HTMX（`HX-Request`）のときは `partials.schedule.interactive` のみ返し、カレンダー操作でフルリロードしない。
      */
     public function index(ScheduleIndexRequest $request): View
     {
         $validated = $request->validated();
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
+        $tz = config('app.timezone');
+        $todayYmd = Carbon::now($tz)->format('Y-m-d');
+        $selectedYmd = $this->normalizeSelectedYmd($request->query('selected'), $year, $month, $todayYmd);
 
         $monthStart = Carbon::create($year, $month, 1)->startOfDay();
         $monthEnd = $monthStart->copy()->endOfMonth();
@@ -42,7 +47,6 @@ class ScheduleController extends Controller
             ->orderBy('lesson_sessions.starts_at')
             ->get();
 
-        $tz = config('app.timezone');
         $sessionsByDay = [];
         $totalsByDay = [];
 
@@ -79,18 +83,61 @@ class ScheduleController extends Controller
             'sessionsByDay' => $sessionsByDay,
         ];
 
-        return view('pages.schedule.index', [
+        $viewData = [
             'calendarPayload' => $calendarPayload,
             'schedulePrevUrl' => $schedulePrevUrl,
             'scheduleNextUrl' => $scheduleNextUrl,
-        ]);
+            'selectedYmd' => $selectedYmd,
+            'todayYmd' => $todayYmd,
+        ];
+
+        if ($request->header('HX-Request')) {
+            return view('partials.schedule.interactive', $viewData);
+        }
+
+        return view('pages.schedule.index', $viewData);
+    }
+
+    /**
+     * クエリ `selected` を表示月内の Y-m-d に正規化する。不正・月外・今日より前は null。
+     *
+     * @param  string  $todayYmd  `config('app.timezone')` 上の当日（Y-m-d）
+     */
+    private function normalizeSelectedYmd(mixed $raw, int $year, int $month, string $todayYmd): ?string
+    {
+        if (! is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
+            return null;
+        }
+
+        try {
+            $d = Carbon::createFromFormat('Y-m-d', $raw)->startOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $start = Carbon::create($year, $month, 1)->startOfDay();
+        $end = $start->copy()->endOfMonth();
+
+        if ($d->lt($start) || $d->gt($end)) {
+            return null;
+        }
+
+        if ($raw < $todayYmd) {
+            return null;
+        }
+
+        return $raw;
     }
 
     /**
      * 指定月の週行カレンダーグリッドを組み立て、各セルに日付・当月内フラグ・空き記号・当日フラグを付与する。
      *
      * 前提: `$totalsByDay` のキーは `$timezone` 上の `Y-m-d` で、その日の全枠の残席合計（一般＋体験）が入る（`index()` で `remainingSeatsBreakdown` を合算したもの）。月の前後にまたがる日は `inMonth: false` とし、記号は付けない。週の区切りは月曜始まり（`Carbon::MONDAY`）とし、当月の第 1 週前・最終週後のパディング日を含む。`isToday` は当月セルかつその日が今日のときだけ true（パディング日では false。`ymd` / `day` が null のセルで「今日」扱いにならないようにする）。
-     * 更新方針: 週始め曜日やグリッドの取り方を変える場合は Alpine の `sessionCalendar` と `pages/schedule/index.blade.php` の表構造と同じコミットで揃える。記号の閾値は `daySymbolForTotal()` に委譲し、ここでは日次合計の参照のみとする。
+     * 更新方針: 週始め曜日やグリッドの取り方を変える場合は `pages/schedule/index.blade.php` の表構造と同じコミットで揃える。記号の閾値は `daySymbolForTotal()` に委譲し、ここでは日次合計の参照のみとする。
      *
      * @param  array<string, int>  $totalsByDay
      * @return list<list<array{ymd: string|null, day: int|null, inMonth: bool, symbol: string|null, isToday: bool, hasSessions: bool}>>
@@ -185,10 +232,10 @@ class ScheduleController extends Controller
     }
 
     /**
-     * 日別一覧に載せる開催枠 1 行分の view / Alpine 用ペイロードを組み立てる。
+     * 日別一覧に載せる開催枠 1 行分の view 用ペイロードを組み立てる。
      *
      * 前提: `$startsLocal` は `config('app.timezone')` に正規化した枠の開始日時。`$remainingSeats` は `remainingSeatsBreakdown()` の戻りと同一キーであること（再計算しない）。`program` が解決できない場合の `programUrl` は `#`。表示対象の枠は `index()` のクエリで既に active プログラムに限定済み。
-     * 更新方針: キー名や表示用フィールドを増減する場合は `resources/views/pages/schedule/index.blade.php` の日別一覧（Alpine テンプレート）と同じコミットで揃える。残席の意味・算出は `remainingSeatsBreakdown()` を正とし、ここでは受け取った内訳をそのまま載せる。
+     * 更新方針: キー名や表示用フィールドを増減する場合は `resources/views/pages/schedule/index.blade.php` の日別一覧と同じコミットで揃える。残席の意味・算出は `remainingSeatsBreakdown()` を正とし、ここでは受け取った内訳をそのまま載せる。
      *
      * @param  array{normalRemaining: int, trialRemaining: int, totalRemaining: int}  $remainingSeats
      * @return array{

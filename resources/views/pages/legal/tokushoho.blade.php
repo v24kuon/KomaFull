@@ -93,7 +93,5 @@
             </table>
         </div>
     </div>
-
-    @include('partials.public.site-footer')
 </div>
 @endsection

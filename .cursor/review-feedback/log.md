@@ -1903,3 +1903,35 @@
   classification: PR限定
   targets: app/Http/Controllers/Member/SettingsSubscriptionController.php, app/Http/Requests/Member/{Swap,Cancel,Resume}MemberSubscriptionRequest.php, resources/views/pages/member/settings/subscription.blade.php, tests/Feature/Member/MemberSubscriptionSettingsTest.php, .cursor/review-feedback/log.md
   notes: レビュー反映。Cancel/Resume/Swap の withValidator で基礎ルール失敗時は after の状態検証をスキップ。swap フォームの form-errors と @error に bag=swap。SettingsSubscriptionController で resolveSubscriptionCurrentPeriodEndForDisplay 用 PHPDoc を正しい位置に移し null 条件を追記。MemberSubscriptionSettingsTest に cancel/resume の InvalidArgumentException 業務文言の回帰を追加。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: 開催枠カレンダー日別一覧（GET selected・Blade 描画・Alpine sessionCalendarRoot 削除）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, public/assets/js/app.js, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php
+  notes: 外部PRレビュー指摘の採用はなし。CSP 版 Alpine による日別一覧非表示の修正のため。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: 開催枠カレンダー過去日の選択不可（UI・normalizeSelectedYmd）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, public/assets/css/pages/schedule.css, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
+  notes: 外部PRレビュー指摘の採用はなし。予約不可の過去日をリンク化しない・クエリ selected も拒否。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: 開催枠カレンダー過去日の視覚・pointer-events（クリック不可の明示）
+  adopted: no
+  classification: none
+  targets: resources/views/pages/schedule/index.blade.php, public/assets/css/pages/schedule.css, config/app.php, .cursor/review-feedback/log.md
+  notes: 外部PRレビュー指摘の採用はなし。過去日から daybtn 相当の見た目を外し muted 固定・pointer-events none。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: 開催枠カレンダー HTMX 部分更新（partials.schedule.interactive）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, resources/views/partials/schedule/interactive.blade.php, public/assets/css/pages/schedule.css, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php, tests/Feature/ViewDirectoryStructureTest.php, .cursor/review-feedback/log.md
+  notes: 外部PRレビュー指摘の採用はなし。HX-Request で部分テンプレートのみ返却。コミット時点でレビュー指摘の蓄積対象はなしと判定した。

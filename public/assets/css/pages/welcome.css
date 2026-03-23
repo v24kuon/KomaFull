@@ -1,27 +1,78 @@
 /* ==========================================================
-   公開トップページ
+   公開トップページ（サービス向けコピー・軽い入場アニメーション）
    ========================================================== */
 .p-welcome__hero {
     background:
-        radial-gradient(circle at top right, rgba(var(--app-brand-rgb), 0.16), transparent 32%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.96));
+        radial-gradient(circle at 18% 12%, rgba(var(--app-brand-rgb), 0.12), transparent 42%),
+        radial-gradient(circle at 88% 78%, rgba(var(--app-brand-rgb), 0.08), transparent 38%),
+        linear-gradient(180deg, #ffffff 0%, var(--app-surface-color) 100%);
 }
 
 .p-welcome__eyebrow,
 .p-welcome__section-label {
     color: var(--app-brand-color);
+    font-family: var(--app-font-heading), sans-serif;
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    letter-spacing: 0.14em;
 }
 
 .p-welcome__hero-panel {
-    background-color: rgba(255, 255, 255, 0.92);
+    background-color: rgba(255, 255, 255, 0.95);
     border-radius: 1.5rem;
 }
 
 .p-welcome__metric {
-    background-color: rgba(var(--app-brand-rgb), 0.06);
-    border: 1px solid rgba(var(--app-brand-rgb), 0.1);
+    background-color: rgba(var(--app-brand-rgb), 0.05);
+    border: 1px solid rgba(var(--app-brand-rgb), 0.12);
+}
+
+.p-welcome__metric-label {
+    color: var(--app-brand-color);
+    font-family: var(--app-font-heading), sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.p-welcome__metric h5,
+.p-welcome__metric h6 {
+    font-family: var(--app-font-heading), sans-serif;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .p-welcome__hero-intro,
+    .p-welcome__hero-aside,
+    .p-welcome__feature-card {
+        animation: p-welcome-fade-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .p-welcome__hero-aside {
+        animation-delay: 0.08s;
+    }
+
+    .p-welcome__feature-card:nth-child(1) {
+        animation-delay: 0.12s;
+    }
+
+    .p-welcome__feature-card:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .p-welcome__feature-card:nth-child(3) {
+        animation-delay: 0.28s;
+    }
+}
+
+@keyframes p-welcome-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(0.75rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

@@ -6,11 +6,17 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>@yield('title', config('app.name', 'KomaFull'))</title>
 
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700&family=Noto+Sans+JP:wght@400;500;600&display=swap">
+
         <link rel="stylesheet" href="{{ v_asset('assets/vendor/bootstrap/bootstrap.min.css') }}">
         <link rel="stylesheet" href="{{ v_asset('assets/css/app.css') }}">
         @stack('styles')
     </head>
-    <body hx-headers='{"X-CSRF-TOKEN":"{{ csrf_token() }}"}'>
+    <body class="d-flex flex-column min-vh-100" hx-headers='{"X-CSRF-TOKEN":"{{ csrf_token() }}"}'>
+        @include('partials.public.site-header')
+
         @if (session('success'))
             <div class="container pt-3">
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -27,7 +33,12 @@
                 </div>
             </div>
         @endif
-        @yield('content')
+
+        <main id="main-content" class="flex-grow-1">
+            @yield('content')
+        </main>
+
+        @include('partials.public.site-footer')
 
         <script defer src="{{ v_asset('assets/js/app.js') }}"></script>
         <script defer src="{{ v_asset('assets/vendor/alpine/alpine.csp.min.js') }}"></script>

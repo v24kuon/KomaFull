@@ -17,7 +17,14 @@ use Tests\TestCase;
  * | Case ID | Input / Precondition | Perspective (Equivalence / Boundary) | Expected Result | Notes |
  * |---------|----------------------|----------------------------------------|-----------------|-------|
  * | TC-N-01 | ゲスト、クエリなし | Equivalence – normal | 200、pages.schedule.index | 当月 |
- * | TC-N-02 | active プログラムの枠が1件 | Equivalence – payload | calendarPayload.sessionsByDay に該当日の行 | Alpine 描画はブラウザ前提。サーバー payload で検証 |
+ * | TC-N-02 | active プログラムの枠が1件 | Equivalence – payload | calendarPayload.sessionsByDay に該当日の行 | Blade で日別一覧を描画。payload で検証 |
+ * | TC-N-07 | selected=Y-m-d で枠あり | Equivalence – HTML | プログラム名・時刻が本文に含まれる | GET `selected` |
+ * | TC-N-08 | selected なし | Equivalence – HTML | 「日付を選択すると一覧が表示されます」 | selectedYmd null |
+ * | TC-N-09 | selected が表示月外 | Boundary – ignore | selectedYmd null、案内のみ | 正規化で月外は無効 |
+ * | TC-N-10 | selected 日に枠なし | Equivalence – empty | 「この日に表示できる開催枠はありません」 |  |
+ * | TC-N-11 | selected が今日より前 | Boundary – past | selectedYmd null | 手動 URL でも拒否 |
+ * | TC-N-12 | 過去日セル | Equivalence – UI | リンクなし・past クラス | TestNow で今日を固定 |
+ * | TC-N-13 | HX-Request | Equivalence – HTMX | partials.schedule.interactive、DOCTYPE なし | - |
  * | TC-N-03 | inactive プログラムの枠のみ | Equivalence – filter | 該当日が sessionsByDay に載らない | whereHas(active) |
  * | TC-A-01 | month=13 | Boundary – above max | リダイレクト、month エラー | HTML GET |
  * | TC-A-02 | year=1999 | Boundary – below min | リダイレクト、year エラー | HTML GET |
@@ -255,6 +262,165 @@ class ScheduleSessionCalendarTest extends TestCase
 
                 return true;
             });
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    /**
+     * TC-N-07: `selected` で日付を指定したとき HTML にその日のプログラム名・時刻が含まれる。
+     */
+    public function test_schedule_index_with_selected_renders_day_sessions_in_html(): void
+    {
+        $tz = config('app.timezone');
+        Carbon::setTestNow(Carbon::create(2026, 3, 15, 12, 0, 0, $tz));
+
+        try {
+            $starts = Carbon::create(2026, 3, 15, 10, 30, 0, $tz);
+
+            $program = Program::factory()->createOne([
+                'status' => Program::STATUS_ACTIVE,
+                'name' => 'HTML表示ヨガ',
+            ]);
+
+            $session = LessonSession::factory()->createOne([
+                'program_id' => $program->id,
+                'starts_at' => $starts,
+                'status' => LessonSession::STATUS_ACTIVE,
+            ]);
+
+            ReservationManagement::factory()->createOne([
+                'lesson_session_id' => $session->id,
+                'reserved_count' => 0,
+                'reserved_trial_count' => 0,
+            ]);
+
+            $response = $this->get(route('schedule.index', [
+                'year' => 2026,
+                'month' => 3,
+                'selected' => '2026-03-15',
+            ]));
+
+            $response->assertOk();
+            $response->assertViewHas('selectedYmd', '2026-03-15');
+            $response->assertSee('HTML表示ヨガ', false);
+            $response->assertSee('10:30', false);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    /**
+     * TC-N-08: `selected` なしのとき一覧案内のみ（日別テーブルは出さない）。
+     */
+    public function test_schedule_index_without_selected_shows_choose_date_prompt(): void
+    {
+        $response = $this->get(route('schedule.index', [
+            'year' => 2026,
+            'month' => 3,
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('selectedYmd', null);
+        $response->assertSee('日付を選択すると一覧が表示されます。', false);
+    }
+
+    /**
+     * TC-N-09: `selected` が表示中の月外なら無視し selectedYmd は null。
+     */
+    public function test_schedule_index_selected_outside_display_month_is_ignored(): void
+    {
+        $response = $this->get(route('schedule.index', [
+            'year' => 2026,
+            'month' => 4,
+            'selected' => '2026-03-15',
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('selectedYmd', null);
+        $response->assertSee('日付を選択すると一覧が表示されます。', false);
+    }
+
+    /**
+     * TC-N-10: `selected` は有効だがその日に枠がないときメッセージを表示する。
+     */
+    public function test_schedule_index_selected_day_with_no_sessions_shows_empty_message(): void
+    {
+        $tz = config('app.timezone');
+        Carbon::setTestNow(Carbon::create(2026, 3, 20, 12, 0, 0, $tz));
+
+        try {
+            $response = $this->get(route('schedule.index', [
+                'year' => 2026,
+                'month' => 3,
+                'selected' => '2026-03-20',
+            ]));
+
+            $response->assertOk();
+            $response->assertViewHas('selectedYmd', '2026-03-20');
+            $response->assertSee('この日に表示できる開催枠はありません。', false);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    /**
+     * TC-N-11: `selected` が今日より前のとき正規化で null（クエリ改ざんでも過去日は選べない）。
+     */
+    public function test_schedule_index_selected_past_date_is_rejected(): void
+    {
+        $tz = config('app.timezone');
+        Carbon::setTestNow(Carbon::create(2026, 3, 25, 12, 0, 0, $tz));
+
+        try {
+            $response = $this->get(route('schedule.index', [
+                'year' => 2026,
+                'month' => 3,
+                'selected' => '2026-03-15',
+            ]));
+
+            $response->assertOk();
+            $response->assertViewHas('selectedYmd', null);
+            $response->assertSee('日付を選択すると一覧が表示されます。', false);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    /**
+     * TC-N-13: HX-Request ではカレンダー部分テンプレートのみ返し DOCTYPE を含まない。
+     */
+    public function test_schedule_index_with_htmx_returns_interactive_partial_without_doctype(): void
+    {
+        $response = $this->withHeader('HX-Request', 'true')
+            ->get(route('schedule.index', [
+                'year' => 2026,
+                'month' => 3,
+            ]));
+
+        $response->assertOk();
+        $response->assertViewIs('partials.schedule.interactive');
+        $response->assertDontSee('<!DOCTYPE html>', false);
+    }
+
+    /**
+     * TC-N-12: 過去日はカレンダー上リンクにならない（selected= クエリを含まない）。
+     */
+    public function test_schedule_index_past_day_cells_are_not_selectable_links(): void
+    {
+        $tz = config('app.timezone');
+        Carbon::setTestNow(Carbon::create(2026, 3, 20, 12, 0, 0, $tz));
+
+        try {
+            $response = $this->get(route('schedule.index', [
+                'year' => 2026,
+                'month' => 3,
+            ]));
+
+            $response->assertOk();
+            $response->assertViewHas('todayYmd', '2026-03-20');
+            $response->assertSee('p-schedule__cell--past', false);
+            $response->assertDontSee('selected=2026-03-10', false);
         } finally {
             Carbon::setTestNow();
         }

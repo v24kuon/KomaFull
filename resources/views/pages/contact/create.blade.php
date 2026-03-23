@@ -114,7 +114,5 @@
             </div>
         </form>
     </div>
-
-    @include('partials.public.site-footer')
 </div>
 @endsection

@@ -18,8 +18,8 @@
             </nav>
             <h1 class="h2 mb-2">プログラム一覧</h1>
             <p class="text-secondary mb-0">
-                開講中のプログラムを一覧しています。カードから詳細をモーダルで確認するか、別ページで開いてください。
-                <a href="{{ route('schedule.index') }}" class="link-primary">開催枠カレンダー</a>から空き状況を月別に確認できます。
+                現在ご案内しているプログラムです。一覧から選ぶと概要を表示し、必要に応じて詳細ページへ進めます。
+                空き状況は<a href="{{ route('schedule.index') }}" class="link-primary">開催枠カレンダー</a>で月ごとにご確認ください。
             </p>
         </header>
 

@@ -9,6 +9,9 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4">
                     <h1 class="h4 text-center mb-4">会員登録</h1>
+                    <p class="small text-secondary text-center mb-4">
+                        登録後にメール認証へ進み、認証完了後に仮会員としてログインできます。続く体験の手順では、開催枠の選択とお支払い方法（クレジットカード／現地払い）をお選びください。
+                    </p>
 
                     <form method="POST" action="{{ route('register') }}" x-data="submitState()" x-on:submit="startSubmitting($event)">
                         @csrf
