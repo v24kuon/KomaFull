@@ -32,7 +32,7 @@ class DemoStoreDataSeeder extends Seeder
      *
      * トランザクション境界: 全体を `DB::transaction` 1 回に包み、途中で例外が出た場合は当該実行の変更をすべてロールバックする。
      *
-     * 再実行・冪等性: 内部は `updateOrCreate` 中心。`singleton_key` やマスタの `code` などで行を特定。開催枠は DB 上の concrete slot 一意（`program_id` + `location_id` + `staff_id` + `starts_at`）に合わせて upsert し、`lesson_sessions.code` はそのスロットを表す文字列に同期する（ローテーション順を変えても別枠へ `lesson_session_id` が付け替わらない）。`ReservationManagement` は `lesson_session_id` に対する行が無いときだけ `firstOrCreate` で 0 初期化し、既存行の `reserved_count` / `reserved_trial_count` は上書きしない（実予約とカウンタの整合を壊さない）。
+     * 再実行・冪等性: 内部は `updateOrCreate` 中心。`singleton_key` やマスタの `code` などで行を特定。開催枠は DB 上の concrete slot 一意（`program_id` + `location_id` + `staff_id` + `starts_at`）に合わせて upsert し、`lesson_sessions.code` はそのスロットを表す文字列に同期する（ローテーション順を変えても別枠へ `lesson_session_id` が付け替わらない）。`ReservationManagement` は `lesson_session_id` 一意に対し `createOrFirst` で欠損時のみ 0 初期化し、既存行の `reserved_count` / `reserved_trial_count` は上書きしない（`firstOrCreate` より unique 競合に強い。実予約とカウンタの整合を壊さない）。
      */
     public function run(): void
     {
@@ -310,7 +310,7 @@ class DemoStoreDataSeeder extends Seeder
      *
      * 各対象日について 10:00 / 14:00 / 18:00 の 3 枠を作る。`lesson_sessions` はマイグレーションの `lesson_sessions_concrete_slot_unique`（`program_id` + `location_id` + `staff_id` + `starts_at`）と同一粒度で `updateOrCreate` する。`code` は `LS-DEMO-P{program_id}-L{location_id}-S{staff_id}-{Ymd-Hi}` 形式でスロットと 1 対 1（`code` 列の unique も満たす）。
      *
-     * 既存データ更新方針: 上記 4 キーで行を特定し、定員・`code`・ステータスなどをデモ既定へ上書きする。ローテーション配列の順序だけ変えても、同一スロットは同一 `lesson_session_id` に留まる。`ReservationManagement` は `firstOrCreate(['lesson_session_id' => …], [初期値 0])` とし、行が既にあれば件数は変更しない（欠損時のみ作成）。
+     * 既存データ更新方針: 上記 4 キーで行を特定し、定員・`code`・ステータスなどをデモ既定へ上書きする。ローテーション配列の順序だけ変えても、同一スロットは同一 `lesson_session_id` に留まる。`ReservationManagement` は `createOrFirst(['lesson_session_id' => …], [初期値 0])` とし、挿入先行で unique 競合時は既存行を返す（件数は変更しない）。
      *
      * @param  array<int, Program>  $programs
      * @param  array<int, Location>  $locations
@@ -364,7 +364,7 @@ class DemoStoreDataSeeder extends Seeder
                         ]
                     );
 
-                    ReservationManagement::query()->firstOrCreate(
+                    ReservationManagement::query()->createOrFirst(
                         ['lesson_session_id' => $session->id],
                         [
                             'reserved_count' => 0,

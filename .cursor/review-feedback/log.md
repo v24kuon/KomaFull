@@ -18,6 +18,14 @@
 
 - date: 2026-03-24
   branch: design/ui-fixes
+  scope: PRレビュー（DemoStoreDataSeeder の ReservationManagement を createOrFirst に）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 任意提案を採用。`lesson_session_id` unique 下で並列時の取り違えを抑えるため `firstOrCreate` を `createOrFirst` に変更。RFP-003・ReservationService と整合。PHPDoc 更新。
+
+- date: 2026-03-24
+  branch: design/ui-fixes
   scope: PRレビュー（member/admin レイアウトに vendor-fonts.css を追加）
   adopted: yes
   classification: PR限定
