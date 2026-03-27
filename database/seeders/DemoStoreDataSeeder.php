@@ -32,7 +32,7 @@ class DemoStoreDataSeeder extends Seeder
      *
      * トランザクション境界: 全体を `DB::transaction` 1 回に包み、途中で例外が出た場合は当該実行の変更をすべてロールバックする。
      *
-     * 再実行・冪等性: 内部は `updateOrCreate` 中心。`code` / `singleton_key` / `LS-DEMO-{Ymd-Hi}` などの自然キーで行を特定し、再実行時は同一キーに対してデモ既定値へ上書きする（手動変更や本番データ混入を想定しない。開発・デモ DB での再実行向け）。`ReservationManagement` は `lesson_session_id` に対する行が無いときだけ `firstOrCreate` で 0 初期化し、既存行の `reserved_count` / `reserved_trial_count` は上書きしない（実予約とカウンタの整合を壊さない）。
+     * 再実行・冪等性: 内部は `updateOrCreate` 中心。`singleton_key` やマスタの `code` などで行を特定。開催枠は DB 上の concrete slot 一意（`program_id` + `location_id` + `staff_id` + `starts_at`）に合わせて upsert し、`lesson_sessions.code` はそのスロットを表す文字列に同期する（ローテーション順を変えても別枠へ `lesson_session_id` が付け替わらない）。`ReservationManagement` は `lesson_session_id` に対する行が無いときだけ `firstOrCreate` で 0 初期化し、既存行の `reserved_count` / `reserved_trial_count` は上書きしない（実予約とカウンタの整合を壊さない）。
      */
     public function run(): void
     {
@@ -308,9 +308,9 @@ class DemoStoreDataSeeder extends Seeder
      *
      * 生成対象日: `Carbon::now($tz)->startOfMonth()->addMonths($monthOffset)` からその月末までを日単位で走査し、`dayOfWeekIso` が 1〜6（月〜土）の日のみ対象とする（日曜はスキップ）。
      *
-     * 各対象日について 10:00 / 14:00 / 18:00 の 3 枠を作る。`lesson_sessions.code` は `LS-DEMO-{Ymd-Hi}` で一意（例: `LS-DEMO-20260315-1000`）。
+     * 各対象日について 10:00 / 14:00 / 18:00 の 3 枠を作る。`lesson_sessions` はマイグレーションの `lesson_sessions_concrete_slot_unique`（`program_id` + `location_id` + `staff_id` + `starts_at`）と同一粒度で `updateOrCreate` する。`code` は `LS-DEMO-P{program_id}-L{location_id}-S{staff_id}-{Ymd-Hi}` 形式でスロットと 1 対 1（`code` 列の unique も満たす）。
      *
-     * 既存データ更新方針: `LessonSession::updateOrCreate(['code' => $code], …)` により、同一 `code` の行があれば `program_id` / `location_id` / `staff_id` / `starts_at` / 定員などをデモ既定へ上書きする。`ReservationManagement` は `firstOrCreate(['lesson_session_id' => …], [初期値 0])` とし、行が既にあれば件数は変更しない（欠損時のみ作成）。
+     * 既存データ更新方針: 上記 4 キーで行を特定し、定員・`code`・ステータスなどをデモ既定へ上書きする。ローテーション配列の順序だけ変えても、同一スロットは同一 `lesson_session_id` に留まる。`ReservationManagement` は `firstOrCreate(['lesson_session_id' => …], [初期値 0])` とし、行が既にあれば件数は変更しない（欠損時のみ作成）。
      *
      * @param  array<int, Program>  $programs
      * @param  array<int, Location>  $locations
@@ -328,20 +328,36 @@ class DemoStoreDataSeeder extends Seeder
         while ($day->lte($monthEnd)) {
             if ($day->dayOfWeekIso >= 1 && $day->dayOfWeekIso <= 6) {
                 foreach ([10, 14, 18] as $hour) {
-                    $startsAt = $day->copy()->setTime($hour, 0, 0);
+                    $startsAt = Carbon::create(
+                        (int) $day->format('Y'),
+                        (int) $day->format('n'),
+                        (int) $day->format('j'),
+                        $hour,
+                        0,
+                        0,
+                        $tz
+                    );
                     $program = $programs[$programIndex % count($programs)];
                     $location = $locations[$programIndex % count($locations)];
                     $staff = $staffMembers[$programIndex % count($staffMembers)];
-                    $code = 'LS-DEMO-'.$startsAt->format('Ymd-Hi');
+                    $code = sprintf(
+                        'LS-DEMO-P%d-L%d-S%d-%s',
+                        $program->id,
+                        $location->id,
+                        $staff->id,
+                        $startsAt->format('Ymd-Hi')
+                    );
 
                     /** @var LessonSession $session */
                     $session = LessonSession::query()->updateOrCreate(
-                        ['code' => $code],
                         [
                             'program_id' => $program->id,
                             'location_id' => $location->id,
                             'staff_id' => $staff->id,
                             'starts_at' => $startsAt,
+                        ],
+                        [
+                            'code' => $code,
                             'capacity' => 12,
                             'trial_capacity' => 3,
                             'status' => LessonSession::STATUS_ACTIVE,

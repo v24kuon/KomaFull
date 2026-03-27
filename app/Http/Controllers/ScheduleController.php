@@ -31,7 +31,7 @@ class ScheduleController extends Controller
         $tz = config('app.timezone');
         $todayStart = Carbon::now($tz)->startOfDay();
         $todayYmd = $todayStart->format('Y-m-d');
-        $selectedYmd = $this->normalizeSelectedYmd($request->query('selected'), $year, $month, $todayYmd);
+        $selectedYmd = $this->normalizeSelectedYmd($request->query('selected'), $year, $month, $todayYmd, $tz);
 
         $monthStart = Carbon::create($year, $month, 1)->startOfDay();
         $monthEnd = $monthStart->copy()->endOfMonth();
@@ -117,8 +117,9 @@ class ScheduleController extends Controller
      * `$d->format('Y-m-d') === $raw` でラウンドトリップ検証し、暦上無効な文字列は null にする。
      *
      * @param  string  $todayYmd  `config('app.timezone')` 上の当日（Y-m-d）
+     * @param  string  $timezone  `index()` と同じく `config('app.timezone')`。日境界の解釈を既定 TZ に依存させない。
      */
-    private function normalizeSelectedYmd(mixed $raw, int $year, int $month, string $todayYmd): ?string
+    private function normalizeSelectedYmd(mixed $raw, int $year, int $month, string $todayYmd, string $timezone): ?string
     {
         if (! is_string($raw) || $raw === '') {
             return null;
@@ -129,7 +130,7 @@ class ScheduleController extends Controller
         }
 
         try {
-            $d = Carbon::createFromFormat('Y-m-d', $raw)->startOfDay();
+            $d = Carbon::createFromFormat('Y-m-d', $raw, $timezone)->startOfDay();
         } catch (\Throwable) {
             return null;
         }
@@ -138,7 +139,7 @@ class ScheduleController extends Controller
             return null;
         }
 
-        $start = Carbon::create($year, $month, 1)->startOfDay();
+        $start = Carbon::create($year, $month, 1, 0, 0, 0, $timezone)->startOfDay();
         $end = $start->copy()->endOfMonth();
 
         if ($d->lt($start) || $d->gt($end)) {

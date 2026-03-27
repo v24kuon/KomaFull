@@ -16,6 +16,22 @@
 
 ## Entries
 
+- date: 2026-03-24
+  branch: design/ui-fixes
+  scope: PRレビュー（member/admin レイアウトに vendor-fonts.css を追加）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/member.blade.php, resources/views/layouts/admin.blade.php, public/assets/css/app.css, config/app.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。app.css のフォント変数は全レイアウトで使うため、layouts.app と同様に `vendor-fonts.css` を member/admin に読み込み。app.css コメントを更新。`asset_version` を更新。
+
+- date: 2026-03-24
+  branch: design/ui-fixes
+  scope: PRレビュー（DemoStoreDataSeeder の開催枠を concrete slot キーで upsert）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`code` が starts_at のみ由来だとローテーション変更で同一 id が別スロットに付け替わり ReservationManagement と不整合。`lesson_sessions_concrete_slot_unique` に合わせ `program_id`+`location_id`+`staff_id`+`starts_at` で `updateOrCreate`、`code` は LS-DEMO-P-L-S-Ymd-Hi。`starts_at` は `Carbon::create(..., $tz)` で明示。
+
 - date: 2026-03-23
   branch: design/ui-fixes
   scope: PRレビュー（DemoStoreDataSeeder の ReservationManagement を firstOrCreate に）

@@ -9,7 +9,7 @@
  * 将来、ブラウザ対応と設計方針が固まれば color-mix() 等への寄せを検討してよい。
  */
 :root {
-    /* 見出し: Zen Kaku Gothic New / 本文: Noto Sans JP（layouts.app が vendor-fonts.css で自己ホスト。CDN は使わない） */
+    /* 見出し: Zen Kaku Gothic New / 本文: Noto Sans JP（layouts.app / member / admin で vendor-fonts.css を読み込み自己ホスト。CDN は使わない） */
     --app-font-heading: "Zen Kaku Gothic New", ui-sans-serif, system-ui, sans-serif;
     --app-font-body: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
     --app-brand-color: var(--bs-primary, #0d6efd);

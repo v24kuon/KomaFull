@@ -6,6 +6,8 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>@yield('title', 'マイページ') — {{ config('app.name', 'KomaFull') }}</title>
 
+        <link rel="stylesheet" href="{{ v_asset('assets/vendor/fonts/vendor-fonts.css') }}">
+
         <link rel="stylesheet" href="{{ v_asset('assets/vendor/bootstrap/bootstrap.min.css') }}">
         <link rel="stylesheet" href="{{ v_asset('assets/css/app.css') }}">
         <link rel="stylesheet" href="{{ v_asset('assets/css/pages/member.css') }}">
