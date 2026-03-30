@@ -3,8 +3,8 @@
 @section('title', 'パスワード再設定')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center min-vh-100 align-items-center">
+<div class="container d-flex flex-grow-1 align-items-center py-4">
+    <div class="row justify-content-center w-100">
         <div class="col-sm-10 col-md-8 col-lg-5 col-xl-4">
             <div class="card shadow-sm">
                 <div class="card-body p-4">

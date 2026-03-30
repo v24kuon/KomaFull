@@ -9,9 +9,14 @@
  * 将来、ブラウザ対応と設計方針が固まれば color-mix() 等への寄せを検討してよい。
  */
 :root {
+    /* 見出し: Zen Kaku Gothic New / 本文: Noto Sans JP（layouts.app / member / admin で vendor-fonts.css を読み込み自己ホスト。CDN は使わない） */
+    --app-font-heading: "Zen Kaku Gothic New", ui-sans-serif, system-ui, sans-serif;
+    --app-font-body: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
     --app-brand-color: var(--bs-primary, #0d6efd);
     --app-brand-rgb: 13, 110, 253;
     --app-brand-color-contrast: #ffffff;
+    /* 中立な白（グラデーション・半透明パネル等）。rgba(var(--app-white-rgb), α) で利用 */
+    --app-white-rgb: 255, 255, 255;
     --app-surface-color: var(--bs-light, #f8f9fa);
     --app-text-color: var(--bs-body-color, #212529);
     --app-space-xs: 0.25rem;
@@ -39,4 +44,30 @@
 body {
     background-color: var(--app-surface-color);
     color: var(--app-text-color);
+    font-family: var(--app-font-body);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+.display-5 {
+    font-family: var(--app-font-heading);
+}
+
+.c-site-header__brand {
+    font-family: var(--app-font-heading);
+    letter-spacing: 0.02em;
+}
+
+.c-site-header .nav-link.active {
+    font-weight: 600;
 }

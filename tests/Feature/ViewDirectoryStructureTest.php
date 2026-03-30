@@ -117,6 +117,19 @@ class ViewDirectoryStructureTest extends TestCase
     }
 
     /**
+     * TC-A-03: HTMX 開催枠カレンダーは partials 配下の interactive のみを返すこと。
+     */
+    public function test_schedule_index_htmx_request_uses_partials_directory_view(): void
+    {
+        $response = $this->withHeader('HX-Request', 'true')
+            ->get(route('schedule.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('partials.schedule.interactive');
+        $response->assertDontSee('<!DOCTYPE html>', false);
+    }
+
+    /**
      * TC-N-09: 公開店舗一覧は pages 配下の view を使うこと。
      */
     public function test_stores_index_uses_pages_directory_view(): void

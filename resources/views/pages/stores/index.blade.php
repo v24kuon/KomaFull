@@ -44,7 +44,5 @@
             </ul>
         @endif
     </div>
-
-    @include('partials.public.site-footer')
 </div>
 @endsection

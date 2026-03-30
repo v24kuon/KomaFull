@@ -16,6 +16,94 @@
 
 ## Entries
 
+- date: 2026-03-24
+  branch: design/ui-fixes
+  scope: PRレビュー（DemoStoreDataSeeder の ReservationManagement を createOrFirst に）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 任意提案を採用。`lesson_session_id` unique 下で並列時の取り違えを抑えるため `firstOrCreate` を `createOrFirst` に変更。RFP-003・ReservationService と整合。PHPDoc 更新。
+
+- date: 2026-03-24
+  branch: design/ui-fixes
+  scope: PRレビュー（member/admin レイアウトに vendor-fonts.css を追加）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/member.blade.php, resources/views/layouts/admin.blade.php, public/assets/css/app.css, config/app.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。app.css のフォント変数は全レイアウトで使うため、layouts.app と同様に `vendor-fonts.css` を member/admin に読み込み。app.css コメントを更新。`asset_version` を更新。
+
+- date: 2026-03-24
+  branch: design/ui-fixes
+  scope: PRレビュー（DemoStoreDataSeeder の開催枠を concrete slot キーで upsert）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`code` が starts_at のみ由来だとローテーション変更で同一 id が別スロットに付け替わり ReservationManagement と不整合。`lesson_sessions_concrete_slot_unique` に合わせ `program_id`+`location_id`+`staff_id`+`starts_at` で `updateOrCreate`、`code` は LS-DEMO-P-L-S-Ymd-Hi。`starts_at` は `Carbon::create(..., $tz)` で明示。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（DemoStoreDataSeeder の ReservationManagement を firstOrCreate に）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`updateOrCreate` で件数を毎回 0 に戻すと実予約とカウンタが不整合になる。欠損時のみ `firstOrCreate` で作成し既存行は上書きしない。run / seedLessonSessionsForMonthRange の PHPDoc を整合。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（DemoStoreDataSeeder の run / seedLessonSessionsForMonthRange に PHPDoc）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。トランザクション境界・冪等性・再実行時の上書き、対象曜日・時刻・code 形式・updateOrCreate 方針を PHPDoc に明示。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（ScheduleController: normalizeSelectedYmd PHPDoc・Vary: HX-Request）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。normalizeSelectedYmd に責務・前提・更新方針を追記。同一 URL のフル/HTMX 2 表現に `Vary: HX-Request`。ScheduleSessionCalendarTest でヘッダ検証。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（review-feedback log の開催枠カレンダー none エントリ4件の統合）
+  adopted: yes
+  classification: PR限定
+  targets: .cursor/review-feedback/log.md
+  notes: 任意提案を採用。同一 branch・日付・adopted:none の重複4件を1エントリに統合し、元トピックの内訳は統合先の notes に記載。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（認証ページの縦中央を main 領域基準に揃える）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/app.blade.php, resources/views/pages/auth/*.blade.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。サイトヘッダー追加後も `min-vh-100` がビューポート基準のままだと中央がずれる。`main` を `d-flex flex-column` にし、認証系は `container` を `flex-grow-1` + `align-items-center` に変更（ヘッダーは維持）。AuthViewsTest 等を実行。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（normalizeSelectedYmd の暦無効日をラウンドトリップで却下）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, tests/Feature/ScheduleSessionCalendarTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`Carbon::createFromFormat` が 2026-02-30 を翌日へ繰り上げる場合でも raw を返していた。`$d->format('Y-m-d') === $raw` で却下。TC-A-06 を追加。ScheduleSessionCalendarTest を実行。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（app.css のフォント読み込みコメントを自己ホスト実装に整合）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/app.css, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`:root` のコメントが Google Fonts 読込と記載されていたが、同一PRで vendor-fonts.css + woff2 に切替済み。layouts.app / vendor-fonts.css の事実に合わせて文言を修正。挙動変更なし。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（DatabaseSeeder から DemoStoreDataSeeder を外し明示実行のみに）
+  adopted: yes
+  classification: PR限定
+  targets: database/seeders/DatabaseSeeder.php, database/seeders/DemoStoreDataSeeder.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`php artisan db:seed` デフォルトでデモ店舗・開催枠等が入るのは本番誤実行時のリスクが大きい。`DemoStoreDataSeeder` は `--class` のみ。PHPDoc で意図を明示。
+
 - date: 2026-03-22
   branch: feat/ph10-3-1-member-settings
   scope: PRレビュー（SettingsPasswordController の password 更新を forceFill から fill へ）
@@ -1903,3 +1991,35 @@
   classification: PR限定
   targets: app/Http/Controllers/Member/SettingsSubscriptionController.php, app/Http/Requests/Member/{Swap,Cancel,Resume}MemberSubscriptionRequest.php, resources/views/pages/member/settings/subscription.blade.php, tests/Feature/Member/MemberSubscriptionSettingsTest.php, .cursor/review-feedback/log.md
   notes: レビュー反映。Cancel/Resume/Swap の withValidator で基礎ルール失敗時は after の状態検証をスキップ。swap フォームの form-errors と @error に bag=swap。SettingsSubscriptionController で resolveSubscriptionCurrentPeriodEndForDisplay 用 PHPDoc を正しい位置に移し null 条件を追記。MemberSubscriptionSettingsTest に cancel/resume の InvalidArgumentException 業務文言の回帰を追加。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: 開催枠カレンダー（selected 日別一覧・過去日不可・視覚・HTMX 部分更新）
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/ScheduleController.php, resources/views/pages/schedule/index.blade.php, resources/views/partials/schedule/interactive.blade.php, public/assets/js/app.js, public/assets/css/pages/schedule.css, config/app.php, tests/Feature/ScheduleSessionCalendarTest.php, tests/Feature/ViewDirectoryStructureTest.php, .cursor/review-feedback/log.md
+  notes: 外部PRレビュー指摘の採用はなし。同一ブランチ・同日の記録を可読化のため1件に統合。内訳: (1) GET selected 日別一覧・CSP 版 Alpine による非表示対策・sessionCalendarRoot 削除 (2) 過去日の normalizeSelectedYmd と UI でリンク・クエリ拒否 (3) 過去日セルの muted・pointer-events (4) HX-Request で partials.schedule.interactive のみ返却。コミット時点でレビュー指摘の蓄積対象はなしと判定した。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（welcome.css の白色を app.css トークンに統一）
+  adopted: yes
+  classification: PR限定
+  targets: public/assets/css/app.css, public/assets/css/pages/welcome.css, config/app.php
+  notes: 指摘は有効。`#ffffff` と `rgba(255,255,255,0.95)` を `--app-white-rgb`（`--app-brand-rgb` と同型）に集約し、ヒーローグラデとパネル背景を `rgb(var(--app-white-rgb))` / `rgba(var(--app-white-rgb), 0.95)` に変更。`asset_version` を更新。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（Google Fonts CDN をやめ public/assets/vendor/fonts に自己ホスト）
+  adopted: yes
+  classification: PR限定
+  targets: resources/views/layouts/app.blade.php, public/assets/vendor/fonts/, config/app.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。no-build-convention 4.1 により SRI 不可の Google Fonts CDN を廃止。Fontsource 由来の日本語 woff2（Noto Sans JP 400/500/600、Zen Kaku Gothic New 500/700）を vendor/fonts に配置し vendor-fonts.css で @font-face。preconnect 削除。CSP style-src/font-src の self のみと整合。`asset_version` 更新。WelcomePage・CSP ReportOnly の Feature テストを実行。
+
+- date: 2026-03-23
+  branch: design/ui-fixes
+  scope: PRレビュー（ScheduleController の「今日」を Carbon::now 1 回に統一）
+  adopted: yes
+  classification: PR限定
+  targets: app/Http/Controllers/ScheduleController.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`index()` で `$todayStart = Carbon::now($tz)->startOfDay()` を1回だけ取得し `$todayYmd` と `buildCalendarWeeks(..., $todayStart)` で共有。境界時刻の理論的不整合を排除。PHPDoc 更新。ScheduleSessionCalendarTest を実行。
