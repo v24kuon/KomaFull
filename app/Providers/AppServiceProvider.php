@@ -3,10 +3,14 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateProvisionalMemberProfile;
+use App\Contracts\CreatesStripeCheckoutSession;
+use App\Contracts\EnsuresStripeCustomer;
 use App\Http\Responses\LoginResponse;
 use App\Jobs\ProcessSubscriptionPaymentWebhookJob;
 use App\Jobs\RouteCheckoutSessionWebhookJob;
 use App\Models\User;
+use App\Services\Checkout\CashierStripeCheckoutSession;
+use App\Services\Checkout\CashierStripeCustomerEnsurer;
 use App\Services\WebhookEventIdGuard;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
@@ -24,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
+        $this->app->singleton(CreatesStripeCheckoutSession::class, CashierStripeCheckoutSession::class);
+        $this->app->singleton(EnsuresStripeCustomer::class, CashierStripeCustomerEnsurer::class);
     }
 
     /**

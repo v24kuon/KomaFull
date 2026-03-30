@@ -2023,3 +2023,11 @@
   classification: PR限定
   targets: app/Http/Controllers/ScheduleController.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。`index()` で `$todayStart = Carbon::now($tz)->startOfDay()` を1回だけ取得し `$todayYmd` と `buildCalendarWeeks(..., $todayStart)` で共有。境界時刻の理論的不整合を排除。PHPDoc 更新。ScheduleSessionCalendarTest を実行。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PH11-2-1 Stripe Checkout セッション作成サービス（Contracts + Cashier 実装 + Feature テスト）
+  adopted: no
+  classification: none
+  targets: app/Contracts/CreatesStripeCheckoutSession.php, app/Contracts/EnsuresStripeCustomer.php, app/Services/Checkout/CashierStripeCheckoutSession.php, app/Services/Checkout/CashierStripeCustomerEnsurer.php, app/Services/Checkout/TrialCheckoutSessionService.php, app/Providers/AppServiceProvider.php, tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: 外部レビュー指摘の採用はなし。体験カード用 Checkout Session 作成を `TrialCheckoutSessionService` に集約。Cashier 経由の薄いゲートウェイでテスト時にモック可能にした。採用済みレビュー指摘の蓄積対象はなしと判定。
