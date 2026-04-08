@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\RedirectResponse;
 use InvalidArgumentException;
 use Mockery;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Stripe\Checkout\Session;
 use Stripe\Exception\InvalidRequestException;
 use Tests\TestCase;
@@ -48,15 +49,22 @@ class TrialCheckoutSessionServiceTest extends TestCase
             'url' => 'https://checkout.stripe.com/c/pay/cs_test_abc123',
         ]);
 
+        $trialKey = $trial->getKey();
+
         $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
         $checkoutMock->shouldReceive('create')
             ->once()
-            ->with(Mockery::on(function (array $params): bool {
-                return $params['mode'] === 'payment'
-                    && $params['customer'] === 'cus_test_1'
-                    && $params['line_items'][0]['price_data']['unit_amount'] === 1500
-                    && $params['line_items'][0]['price_data']['currency'] === 'jpy';
-            }))
+            ->with(
+                Mockery::on(function (array $params): bool {
+                    return $params['mode'] === 'payment'
+                        && $params['customer'] === 'cus_test_1'
+                        && $params['line_items'][0]['price_data']['unit_amount'] === 1500
+                        && $params['line_items'][0]['price_data']['currency'] === 'jpy';
+                }),
+                [
+                    'idempotency_key' => sprintf('trial-checkout-%s', $trialKey),
+                ]
+            )
             ->andReturn($session);
 
         $customerMock = Mockery::mock(EnsuresStripeCustomer::class);
@@ -323,6 +331,122 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->assertSame('cs_test_after_missing', $trial->stripe_checkout_session_id);
     }
 
+    /**
+     * open かつ Checkout URL が欠落している場合は session id をクリアし、新規 create へ進む（自己回復）。
+     */
+    public function test_open_session_without_checkout_url_clears_id_and_creates_new(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->create(['price' => 1500]);
+        $lessonSession = LessonSession::factory()->create(['program_id' => $program->id]);
+
+        $trial = TrialApplication::factory()->create([
+            'user_id' => $user->id,
+            'lesson_session_id' => $lessonSession->id,
+            'payment_method' => TrialApplication::PAYMENT_METHOD_CARD,
+            'status' => TrialApplication::STATUS_PENDING_PAYMENT,
+            'stripe_checkout_session_id' => 'cs_open_no_url',
+        ]);
+
+        $openNoUrl = Session::constructFrom([
+            'id' => 'cs_open_no_url',
+            'object' => 'checkout.session',
+            'status' => 'open',
+            'url' => '',
+        ]);
+
+        $newSession = Session::constructFrom([
+            'id' => 'cs_new_after_open_no_url',
+            'object' => 'checkout.session',
+            'status' => 'open',
+            'url' => 'https://checkout.stripe.com/c/pay/cs_new_after_open_no_url',
+        ]);
+
+        $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
+        $checkoutMock->shouldReceive('retrieve')
+            ->once()
+            ->with('cs_open_no_url')
+            ->andReturn($openNoUrl);
+        $checkoutMock->shouldReceive('create')
+            ->once()
+            ->andReturn($newSession);
+
+        $customerMock = Mockery::mock(EnsuresStripeCustomer::class);
+        $customerMock->shouldReceive('ensureStripeCustomerId')->once()->with(Mockery::type(User::class))->andReturn('cus_test_1');
+
+        $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
+        $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
+
+        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+            $trial,
+            'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
+            'https://example.test/cancel'
+        );
+
+        $this->assertSame('https://checkout.stripe.com/c/pay/cs_new_after_open_no_url', $response->getTargetUrl());
+
+        $trial->refresh();
+        $this->assertSame('cs_new_after_open_no_url', $trial->stripe_checkout_session_id);
+    }
+
+    /**
+     * complete かつ payment_status が unpaid の場合は session id をクリアし、新規 create へ進む（自己回復）。
+     */
+    public function test_complete_unpaid_session_clears_id_and_creates_new(): void
+    {
+        $user = User::factory()->create();
+        $program = Program::factory()->create(['price' => 1500]);
+        $lessonSession = LessonSession::factory()->create(['program_id' => $program->id]);
+
+        $trial = TrialApplication::factory()->create([
+            'user_id' => $user->id,
+            'lesson_session_id' => $lessonSession->id,
+            'payment_method' => TrialApplication::PAYMENT_METHOD_CARD,
+            'status' => TrialApplication::STATUS_PENDING_PAYMENT,
+            'stripe_checkout_session_id' => 'cs_complete_unpaid',
+        ]);
+
+        $completeUnpaid = Session::constructFrom([
+            'id' => 'cs_complete_unpaid',
+            'object' => 'checkout.session',
+            'status' => 'complete',
+            'payment_status' => 'unpaid',
+        ]);
+
+        $newSession = Session::constructFrom([
+            'id' => 'cs_new_after_complete_unpaid',
+            'object' => 'checkout.session',
+            'status' => 'open',
+            'url' => 'https://checkout.stripe.com/c/pay/cs_new_after_complete_unpaid',
+        ]);
+
+        $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
+        $checkoutMock->shouldReceive('retrieve')
+            ->once()
+            ->with('cs_complete_unpaid')
+            ->andReturn($completeUnpaid);
+        $checkoutMock->shouldReceive('create')
+            ->once()
+            ->andReturn($newSession);
+
+        $customerMock = Mockery::mock(EnsuresStripeCustomer::class);
+        $customerMock->shouldReceive('ensureStripeCustomerId')->once()->with(Mockery::type(User::class))->andReturn('cus_test_1');
+
+        $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
+        $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
+
+        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+            $trial,
+            'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
+            'https://example.test/cancel'
+        );
+
+        $this->assertSame('https://checkout.stripe.com/c/pay/cs_new_after_complete_unpaid', $response->getTargetUrl());
+
+        $trial->refresh();
+        $this->assertSame('cs_new_after_complete_unpaid', $trial->stripe_checkout_session_id);
+    }
+
     public function test_complete_paid_session_redirects_to_success_url_without_second_create(): void
     {
         $user = User::factory()->create();
@@ -432,17 +556,91 @@ class TrialCheckoutSessionServiceTest extends TestCase
             'url' => 'https://checkout.stripe.com/c/pay/cs_test_usd',
         ]);
 
+        $trialKey = $trial->getKey();
+
         $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
         $checkoutMock->shouldReceive('create')
             ->once()
-            ->with(Mockery::on(function (array $params): bool {
-                return $params['line_items'][0]['price_data']['unit_amount'] === 1200
-                    && $params['line_items'][0]['price_data']['currency'] === 'usd';
-            }))
+            ->with(
+                Mockery::on(function (array $params): bool {
+                    return $params['line_items'][0]['price_data']['unit_amount'] === 1200
+                        && $params['line_items'][0]['price_data']['currency'] === 'usd';
+                }),
+                [
+                    'idempotency_key' => sprintf('trial-checkout-%s', $trialKey),
+                ]
+            )
             ->andReturn($session);
 
         $customerMock = Mockery::mock(EnsuresStripeCustomer::class);
         $customerMock->shouldReceive('ensureStripeCustomerId')->once()->andReturn('cus_test_usd');
+
+        $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
+        $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
+
+        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+            $trial,
+            'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
+            'https://example.test/cancel'
+        );
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+    }
+
+    /**
+     * Stripe は ISK/UGX を ISO minor 0 ではなく 100 倍の最小単位で表す（例: 5 → unit_amount 500）。
+     *
+     * @return list<array{0: non-empty-string}>
+     */
+    public static function stripeIskUgxCurrencyProvider(): array
+    {
+        return [
+            'isk' => ['isk'],
+            'ugx' => ['ugx'],
+        ];
+    }
+
+    #[DataProvider('stripeIskUgxCurrencyProvider')]
+    public function test_isk_and_ugx_multiply_major_units_by_100_for_stripe_unit_amount(string $currency): void
+    {
+        config(['cashier.currency' => $currency]);
+
+        $user = User::factory()->create();
+        $program = Program::factory()->create(['price' => 5]);
+        $lessonSession = LessonSession::factory()->create(['program_id' => $program->id]);
+
+        $trial = TrialApplication::factory()->create([
+            'user_id' => $user->id,
+            'lesson_session_id' => $lessonSession->id,
+            'payment_method' => TrialApplication::PAYMENT_METHOD_CARD,
+            'status' => TrialApplication::STATUS_PENDING_PAYMENT,
+            'stripe_checkout_session_id' => null,
+        ]);
+
+        $session = Session::constructFrom([
+            'id' => 'cs_test_isk_ugx',
+            'object' => 'checkout.session',
+            'url' => 'https://checkout.stripe.com/c/pay/cs_test_isk_ugx',
+        ]);
+
+        $trialKey = $trial->getKey();
+
+        $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
+        $checkoutMock->shouldReceive('create')
+            ->once()
+            ->with(
+                Mockery::on(function (array $params) use ($currency): bool {
+                    return $params['line_items'][0]['price_data']['unit_amount'] === 500
+                        && $params['line_items'][0]['price_data']['currency'] === $currency;
+                }),
+                [
+                    'idempotency_key' => sprintf('trial-checkout-%s', $trialKey),
+                ]
+            )
+            ->andReturn($session);
+
+        $customerMock = Mockery::mock(EnsuresStripeCustomer::class);
+        $customerMock->shouldReceive('ensureStripeCustomerId')->once()->andReturn('cus_test_1');
 
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);

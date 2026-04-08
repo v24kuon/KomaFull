@@ -42,6 +42,10 @@ class TrialCheckoutSessionService
      *
      * 冪等性・再実行: `stripe_checkout_session_id` が既にある場合は Stripe `checkout.sessions.retrieve` で状態を確認する。`open` なら同一 URL へ再誘導（新規 create はしない）。`expired`・Stripe 上に存在しない id（`resource_missing`）・`complete` かつ未払い（`unpaid`）では DB の id をクリアしてから新規 Session を作成する。`complete` かつ `paid` で申込が未更新の場合は Webhook 遅延を想定し `success_url` の `{CHECKOUT_SESSION_ID}` を埋めてリダイレクトする（二重課金を避ける）。Stripe Checkout Session 作成 API には本メソから `Idempotency-Key` を付与していない（必要なら呼び出し側またはゲートウェイ層で追加を検討する）。
      *
+     * 処理順序（新規 Session 作成経路）: `unitAmountForStripe` による通貨・金額の検証を `ensureStripeCustomerId` より前に実行する。未対応通貨（`config('cashier.currency')` が ISO 4217 として解決できない等）では Stripe Customer 作成 API を呼ばずに失敗させる。この順序を変更すると不要な Stripe 呼び出しや `tests/Feature/TrialCheckoutSessionServiceTest::test_it_rejects_unknown_iso_currency_before_calling_stripe` の期待と不整合になり得る。
+     *
+     * Idempotency: 新規 `checkout.sessions.create` には `CreatesStripeCheckoutSession::create` の第2引数で `idempotency_key` を渡す。同一試行の再送で Stripe 上に重複 Session が作られにくくする（キーは申込主キー由来。ペイロードが変わる再試行は Stripe の idempotency 仕様どおり衝突し得る）。
+     *
      * @param  non-empty-string  $successUrl  Stripe の `success_url`（例: `{CHECKOUT_SESSION_ID}` placeholder を含む）
      * @param  non-empty-string  $cancelUrl  Stripe の `cancel_url`
      *
@@ -119,6 +123,8 @@ class TrialCheckoutSessionService
                     'trial_application_id' => (string) $trial->getKey(),
                     'type' => 'trial',
                 ],
+            ], [
+                'idempotency_key' => $this->idempotencyKeyForTrialCheckoutSessionCreate($trial),
             ]);
 
             $this->persistSessionId($trial, $session);
@@ -226,6 +232,16 @@ class TrialCheckoutSessionService
     }
 
     /**
+     * `checkout.sessions.create` に渡す Idempotency-Key。申込主キー単位で安定させ、同一再送で重複 Session 作成を抑止する。
+     *
+     * @return non-empty-string
+     */
+    private function idempotencyKeyForTrialCheckoutSessionCreate(TrialApplication $trial): string
+    {
+        return sprintf('trial-checkout-%s', $trial->getKey());
+    }
+
+    /**
      * ロック済み `trial` 行に Checkout Session id を保存する。呼び出しは `redirectToCheckout` のトランザクション内に限定する。
      */
     private function persistSessionId(TrialApplication $trial, Session $session): void
@@ -244,12 +260,20 @@ class TrialCheckoutSessionService
     /**
      * `programs.price` は主通貨の単位（例: JPY なら円、USD ならドル）を整数で保持する。
      *
-     * Stripe の `unit_amount` は最小通貨単位。ISO 4217 の `minorUnit`（`moneyphp/money` の `ISOCurrencies::subunitFor()`、Cashier が既に依存）で 10^minor へ換算し、手動のゼロデシマル一覧と Stripe 公式リストの乖離を避ける。
+     * Stripe の `unit_amount` は最小通貨単位。原則として ISO 4217 の `minorUnit`（`moneyphp/money` の `ISOCurrencies::subunitFor()`）で 10^minor へ換算する。
+     *
+     * 例外: Stripe は ISK / UGX を ISO の minor 0 ではなく、常に「2 桁相当」の最小単位（100 倍）で表す（例: 5 ISK → `unit_amount` 500）。`subunitFor` が 0 を返すまま送ると実額が 1/100 になる。
      *
      * @param  non-empty-string  $currencyLower  `config('cashier.currency')` を小文字化したもの（呼び出し側で1回だけ取得して渡す）
      */
     private function unitAmountForStripe(int $amountInMajorUnits, string $currencyLower): int
     {
+        $normalized = strtolower($currencyLower);
+
+        if (in_array($normalized, ['isk', 'ugx'], true)) {
+            return $amountInMajorUnits * 100;
+        }
+
         $currencies = new ISOCurrencies;
 
         try {

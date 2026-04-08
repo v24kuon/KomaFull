@@ -18,6 +18,38 @@
 
 - date: 2026-03-30
   branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionService: ISK/UGX の Stripe unit_amount を ISO minor ではなく 100 倍で送る）
+  adopted: yes
+  classification: 機能固有
+  targets: app/Services/Checkout/TrialCheckoutSessionService.php, tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。ISOCurrencies の minor 0 のままでは Stripe 仕様と乖離し実額が 1/100 になるため isk/ugx を先行分岐。DataProvider で両通貨を検証。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（CashierStripeCheckoutSession: checkout.sessions.create に idempotency_key を渡せるよう拡張）
+  adopted: yes
+  classification: 機能固有
+  targets: app/Contracts/CreatesStripeCheckoutSession.php, app/Services/Checkout/CashierStripeCheckoutSession.php, app/Services/Checkout/TrialCheckoutSessionService.php, tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: CodeRabbit 指摘は有効。CreatesStripeCheckoutSession::create に第2引数 requestOptions を追加し Cashier 実装で Stripe に転送。TrialCheckoutSessionService は trial-checkout-{id} を付与。テストの create 期待を更新。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionServiceTest: open+URL 欠落・complete+unpaid の自己回復テスト追加）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。maybeRedirectUsingExistingCheckoutSession の open かつ url 空、complete かつ payment_status=unpaid で ID クリア後に create する経路を Feature テストで固定。実装変更なし。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionService: unitAmount と ensureStripeCustomerId の呼び出し順を PHPDoc に明記）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Checkout/TrialCheckoutSessionService.php, .cursor/review-feedback/log.md
+  notes: bot 指摘は事実。新規作成経路で通貨検証を Customer API より先に行う意図を redirectToCheckout の PHPDoc に追記。挙動変更なし。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
   scope: PRレビュー（TrialCheckoutSessionService 未完了 Session 自己回復・AppServiceProvider 完了系のみ）
   adopted: yes
   classification: 機能固有

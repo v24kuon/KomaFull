@@ -11,9 +11,11 @@ class CashierStripeCheckoutSession implements CreatesStripeCheckoutSession
     /**
      * {@inheritdoc}
      */
-    public function create(array $params): Session
+    public function create(array $params, array $requestOptions = []): Session
     {
-        return Cashier::stripe()->checkout->sessions->create($params);
+        $opts = $requestOptions === [] ? null : $requestOptions;
+
+        return Cashier::stripe()->checkout->sessions->create($params, $opts);
     }
 
     /**

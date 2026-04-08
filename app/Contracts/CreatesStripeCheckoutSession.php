@@ -23,10 +23,11 @@ interface CreatesStripeCheckoutSession
      *     client_reference_id?: string,
      *     metadata?: array<string, string>,
      * }|array<string, mixed>  $params  Stripe `checkout.sessions.create` のリクエストボディ。左の形状は本アプリの体験カード（`mode`=`payment`）で `TrialCheckoutSessionService` が渡す最低限のキー例。それ以外のキーや別 `mode` 用のペイロードは `array<string, mixed>` 側として許容する。
+     * @param  array<string, mixed>  $requestOptions  Stripe PHP のリクエストオプション（例: `idempotency_key`）。空配列のときは実装側で Stripe へは渡さない。
      *
      * @throws \Stripe\Exception\ApiErrorException 実装が Stripe API を呼び出した結果エラーとなった場合（実装依存）
      */
-    public function create(array $params): Session;
+    public function create(array $params, array $requestOptions = []): Session;
 
     /**
      * 既存の Checkout Session を id で取得する（Stripe `checkout.sessions.retrieve`）。
