@@ -40,7 +40,7 @@ class TrialCheckoutSessionService
      *
      * ロック戦略: トランザクション内で対象 `trial_applications` 行を `lockForUpdate()` してから `assertCardPendingPayment` と既存 Session の retrieve を行う。同一行への並行リクエストは一方がロック解放まで待機し、先に完了した側が `stripe_checkout_session_id` を埋めたあと、後続は `open` な Session の再利用で二重の create を避ける。
      *
-     * 冪等性・再実行: `stripe_checkout_session_id` が既にある場合は Stripe `checkout.sessions.retrieve` で状態を確認する。`open` なら同一 URL へ再誘導（新規 create はしない）。`expired`・Stripe 上に存在しない id（`resource_missing`）・`complete` かつ未払い（`unpaid`）では DB の id をクリアしてから新規 Session を作成する。`complete` かつ `paid` で申込が未更新の場合は Webhook 遅延を想定し `success_url` の `{CHECKOUT_SESSION_ID}` を埋めてリダイレクトする（二重課金を避ける）。Stripe Checkout Session 作成 API には本メソから `Idempotency-Key` を付与していない（必要なら呼び出し側またはゲートウェイ層で追加を検討する）。
+     * 冪等性・再実行: `stripe_checkout_session_id` が既にある場合は Stripe `checkout.sessions.retrieve` で状態を確認する。`open` なら同一 URL へ再誘導（新規 create はしない）。`expired`・Stripe 上に存在しない id（`resource_missing`）・`complete` かつ未払い（`unpaid`）では DB の id をクリアしてから新規 Session を作成する。`complete` かつ `paid` で申込が未更新の場合は Webhook 遅延を想定し `success_url` の `{CHECKOUT_SESSION_ID}` を埋めてリダイレクトする（二重課金を避ける）。新規 `checkout.sessions.create` の Stripe 側重複抑止は下記「Idempotency」を参照。
      *
      * 処理順序（新規 Session 作成経路）: `unitAmountForStripe` による通貨・金額の検証を `ensureStripeCustomerId` より前に実行する。未対応通貨（`config('cashier.currency')` が ISO 4217 として解決できない等）では Stripe Customer 作成 API を呼ばずに失敗させる。この順序を変更すると不要な Stripe 呼び出しや `tests/Feature/TrialCheckoutSessionServiceTest::test_it_rejects_unknown_iso_currency_before_calling_stripe` の期待と不整合になり得る。
      *

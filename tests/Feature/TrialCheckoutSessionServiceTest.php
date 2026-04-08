@@ -29,6 +29,14 @@ class TrialCheckoutSessionServiceTest extends TestCase
         config(['cashier.currency' => 'jpy']);
     }
 
+    /**
+     * コンテナから `TrialCheckoutSessionService` を解決する。`CreatesStripeCheckoutSession` / `EnsuresStripeCustomer` をモックするテストでは、`$this->app->instance` 登録後に呼ぶこと（setUp 時点ではモック未登録のためプロパティ保持にできない）。
+     */
+    private function trialCheckoutSessionService(): TrialCheckoutSessionService
+    {
+        return app(TrialCheckoutSessionService::class);
+    }
+
     public function test_redirect_to_checkout_updates_trial_and_redirects_to_stripe(): void
     {
         $user = User::factory()->create();
@@ -73,7 +81,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
-        $service = app(TrialCheckoutSessionService::class);
+        $service = $this->trialCheckoutSessionService();
 
         $response = $service->redirectToCheckout(
             $trial,
@@ -129,7 +137,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
-        $service = app(TrialCheckoutSessionService::class);
+        $service = $this->trialCheckoutSessionService();
 
         $first = $service->redirectToCheckout(
             $trial,
@@ -165,7 +173,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('card');
 
-        app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -189,7 +197,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('pending_payment');
 
-        app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -213,7 +221,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('positive');
 
-        app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -262,7 +270,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
-        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $response = $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -319,7 +327,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
-        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $response = $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -377,7 +385,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
-        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $response = $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -435,7 +443,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
-        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $response = $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -481,7 +489,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
-        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $response = $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?sid={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -527,7 +535,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('unexpected state');
 
-        app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -578,7 +586,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
-        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $response = $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -645,7 +653,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
         $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
-        $response = app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $response = $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'
@@ -682,7 +690,7 @@ class TrialCheckoutSessionServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Unsupported currency');
 
-        app(TrialCheckoutSessionService::class)->redirectToCheckout(
+        $this->trialCheckoutSessionService()->redirectToCheckout(
             $trial,
             'https://example.test/success?session_id={CHECKOUT_SESSION_ID}',
             'https://example.test/cancel'

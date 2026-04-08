@@ -18,6 +18,22 @@
 
 - date: 2026-03-30
   branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionServiceTest: app 解決の集約・RFP-007）
+  adopted: yes
+  classification: 汎用
+  targets: tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘の重複削減は妥当。各テストでモック instance 後に解決する必要があるため setUp プロパティは不可。private trialCheckoutSessionService() に集約し PHPDoc で理由を記載。RFP-007 意図に沿う。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionService: redirectToCheckout PHPDoc の冪等性と Idempotency の矛盾解消）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/Checkout/TrialCheckoutSessionService.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。行43末尾の「Idempotency-Key 未付与」は実装・行47と矛盾していたため削除し、新規 create の重複抑止は Idempotency 節参照に一本化。RFP-009 整合。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
   scope: PRレビュー（TrialCheckoutSessionService: ISK/UGX の Stripe unit_amount を ISO minor ではなく 100 倍で送る）
   adopted: yes
   classification: 機能固有
