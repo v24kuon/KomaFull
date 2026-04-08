@@ -18,6 +18,22 @@
 
 - date: 2026-03-30
   branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionServiceTest: バリデーション失敗系で CreatesStripeCheckoutSession::create / EnsuresStripeCustomerId を never で明示）
+  adopted: yes
+  classification: PR限定
+  targets: tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。非カード・非 pending_payment・価格0 は `test_it_rejects_unknown_iso_currency_before_calling_stripe` と同様にモック never() で Stripe 未呼び出しを固定。実装の assertCardPendingPayment / program price チェック順と整合。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionService: idempotency key に updated_at を含め期限切れ再作成の Stripe キャッシュ応答ループを回避）
+  adopted: yes
+  classification: 機能固有
+  targets: app/Services/Checkout/TrialCheckoutSessionService.php, tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: devin 指摘は有効。申込 ID 固定キーだとセッションクリア後も同一キーで create がキャッシュ応答を返し得るため、キーを trial-checkout-{id}-{updated_at 秒} に変更。Feature テストは DB 上の updated_at と一致するよう matchesExpectedTrialCheckoutIdempotencyKey で検証。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
   scope: PRレビュー（TrialCheckoutSessionServiceTest: app 解決の集約・RFP-007）
   adopted: yes
   classification: 汎用

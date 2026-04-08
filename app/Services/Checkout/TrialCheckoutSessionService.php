@@ -44,7 +44,7 @@ class TrialCheckoutSessionService
      *
      * 処理順序（新規 Session 作成経路）: `unitAmountForStripe` による通貨・金額の検証を `ensureStripeCustomerId` より前に実行する。未対応通貨（`config('cashier.currency')` が ISO 4217 として解決できない等）では Stripe Customer 作成 API を呼ばずに失敗させる。この順序を変更すると不要な Stripe 呼び出しや `tests/Feature/TrialCheckoutSessionServiceTest::test_it_rejects_unknown_iso_currency_before_calling_stripe` の期待と不整合になり得る。
      *
-     * Idempotency: 新規 `checkout.sessions.create` には `CreatesStripeCheckoutSession::create` の第2引数で `idempotency_key` を渡す。同一試行の再送で Stripe 上に重複 Session が作られにくくする（キーは申込主キー由来。ペイロードが変わる再試行は Stripe の idempotency 仕様どおり衝突し得る）。
+     * Idempotency: 新規 `checkout.sessions.create` には `CreatesStripeCheckoutSession::create` の第2引数で `idempotency_key` を渡す。キーは申込主キーと `updated_at`（Unix 秒）から構成し、同一 HTTP 再送では同一キーで Stripe の重複作成を抑止しつつ、`stripe_checkout_session_id` をクリアした再作成（例: 期限切れ後）では `updated_at` が変わるためキーも変わり、Stripe の idempotency キャッシュに古い Session 応答が返るのを避ける（ペイロードが変わる再試行は Stripe の idempotency 仕様どおり衝突し得る）。
      *
      * @param  non-empty-string  $successUrl  Stripe の `success_url`（例: `{CHECKOUT_SESSION_ID}` placeholder を含む）
      * @param  non-empty-string  $cancelUrl  Stripe の `cancel_url`
@@ -232,13 +232,25 @@ class TrialCheckoutSessionService
     }
 
     /**
-     * `checkout.sessions.create` に渡す Idempotency-Key。申込主キー単位で安定させ、同一再送で重複 Session 作成を抑止する。
+     * `checkout.sessions.create` に渡す Idempotency-Key。
+     *
+     * 同一試行のネットワーク再送ではキーが不変のまま Stripe が重複作成を抑止できる一方、`maybeRedirectUsingExistingCheckoutSession` で `stripe_checkout_session_id` をクリアすると `updated_at` が更新されるためキーも変わり、期限切れ後の再作成で Stripe の idempotency キャッシュが古い Session を返し続ける問題を避ける。
      *
      * @return non-empty-string
      */
     private function idempotencyKeyForTrialCheckoutSessionCreate(TrialApplication $trial): string
     {
-        return sprintf('trial-checkout-%s', $trial->getKey());
+        $updatedAt = $trial->updated_at;
+
+        if ($updatedAt === null) {
+            return sprintf('trial-checkout-%s', $trial->getKey());
+        }
+
+        return sprintf(
+            'trial-checkout-%s-%s',
+            $trial->getKey(),
+            $updatedAt->getTimestamp()
+        );
     }
 
     /**

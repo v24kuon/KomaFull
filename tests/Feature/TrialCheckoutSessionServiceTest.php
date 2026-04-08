@@ -37,6 +37,24 @@ class TrialCheckoutSessionServiceTest extends TestCase
         return app(TrialCheckoutSessionService::class);
     }
 
+    /**
+     * `TrialCheckoutSessionService::idempotencyKeyForTrialCheckoutSessionCreate` と同一形式（create 呼び出し時点の DB 上の `updated_at` を使う）。
+     *
+     * @param  array<string, mixed>  $requestOptions
+     */
+    private function matchesExpectedTrialCheckoutIdempotencyKey(TrialApplication $trial, array $requestOptions): bool
+    {
+        $row = TrialApplication::query()->find($trial->getKey());
+
+        if ($row === null || $row->updated_at === null) {
+            return false;
+        }
+
+        $expected = sprintf('trial-checkout-%s-%s', $row->getKey(), $row->updated_at->getTimestamp());
+
+        return ($requestOptions['idempotency_key'] ?? '') === $expected;
+    }
+
     public function test_redirect_to_checkout_updates_trial_and_redirects_to_stripe(): void
     {
         $user = User::factory()->create();
@@ -57,8 +75,6 @@ class TrialCheckoutSessionServiceTest extends TestCase
             'url' => 'https://checkout.stripe.com/c/pay/cs_test_abc123',
         ]);
 
-        $trialKey = $trial->getKey();
-
         $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
         $checkoutMock->shouldReceive('create')
             ->once()
@@ -69,9 +85,9 @@ class TrialCheckoutSessionServiceTest extends TestCase
                         && $params['line_items'][0]['price_data']['unit_amount'] === 1500
                         && $params['line_items'][0]['price_data']['currency'] === 'jpy';
                 }),
-                [
-                    'idempotency_key' => sprintf('trial-checkout-%s', $trialKey),
-                ]
+                Mockery::on(function (array $opts) use ($trial): bool {
+                    return $this->matchesExpectedTrialCheckoutIdempotencyKey($trial, $opts);
+                })
             )
             ->andReturn($session);
 
@@ -170,6 +186,15 @@ class TrialCheckoutSessionServiceTest extends TestCase
             'stripe_checkout_session_id' => null,
         ]);
 
+        $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
+        $checkoutMock->shouldReceive('create')->never();
+
+        $customerMock = Mockery::mock(EnsuresStripeCustomer::class);
+        $customerMock->shouldReceive('ensureStripeCustomerId')->never();
+
+        $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
+        $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
+
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('card');
 
@@ -194,6 +219,15 @@ class TrialCheckoutSessionServiceTest extends TestCase
             'stripe_checkout_session_id' => null,
         ]);
 
+        $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
+        $checkoutMock->shouldReceive('create')->never();
+
+        $customerMock = Mockery::mock(EnsuresStripeCustomer::class);
+        $customerMock->shouldReceive('ensureStripeCustomerId')->never();
+
+        $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
+        $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
+
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('pending_payment');
 
@@ -217,6 +251,15 @@ class TrialCheckoutSessionServiceTest extends TestCase
             'status' => TrialApplication::STATUS_PENDING_PAYMENT,
             'stripe_checkout_session_id' => null,
         ]);
+
+        $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
+        $checkoutMock->shouldReceive('create')->never();
+
+        $customerMock = Mockery::mock(EnsuresStripeCustomer::class);
+        $customerMock->shouldReceive('ensureStripeCustomerId')->never();
+
+        $this->app->instance(CreatesStripeCheckoutSession::class, $checkoutMock);
+        $this->app->instance(EnsuresStripeCustomer::class, $customerMock);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('positive');
@@ -564,8 +607,6 @@ class TrialCheckoutSessionServiceTest extends TestCase
             'url' => 'https://checkout.stripe.com/c/pay/cs_test_usd',
         ]);
 
-        $trialKey = $trial->getKey();
-
         $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
         $checkoutMock->shouldReceive('create')
             ->once()
@@ -574,9 +615,9 @@ class TrialCheckoutSessionServiceTest extends TestCase
                     return $params['line_items'][0]['price_data']['unit_amount'] === 1200
                         && $params['line_items'][0]['price_data']['currency'] === 'usd';
                 }),
-                [
-                    'idempotency_key' => sprintf('trial-checkout-%s', $trialKey),
-                ]
+                Mockery::on(function (array $opts) use ($trial): bool {
+                    return $this->matchesExpectedTrialCheckoutIdempotencyKey($trial, $opts);
+                })
             )
             ->andReturn($session);
 
@@ -631,8 +672,6 @@ class TrialCheckoutSessionServiceTest extends TestCase
             'url' => 'https://checkout.stripe.com/c/pay/cs_test_isk_ugx',
         ]);
 
-        $trialKey = $trial->getKey();
-
         $checkoutMock = Mockery::mock(CreatesStripeCheckoutSession::class);
         $checkoutMock->shouldReceive('create')
             ->once()
@@ -641,9 +680,9 @@ class TrialCheckoutSessionServiceTest extends TestCase
                     return $params['line_items'][0]['price_data']['unit_amount'] === 500
                         && $params['line_items'][0]['price_data']['currency'] === $currency;
                 }),
-                [
-                    'idempotency_key' => sprintf('trial-checkout-%s', $trialKey),
-                ]
+                Mockery::on(function (array $opts) use ($trial): bool {
+                    return $this->matchesExpectedTrialCheckoutIdempotencyKey($trial, $opts);
+                })
             )
             ->andReturn($session);
 
