@@ -261,6 +261,7 @@ class ScheduleController extends Controller
      * @return array{
      *     id: int,
      *     code: string,
+     *     sessionCode: string,
      *     startsAtIso: string,
      *     timeLabel: string,
      *     programName: string,
@@ -282,6 +283,7 @@ class ScheduleController extends Controller
         return [
             'id' => $session->id,
             'code' => $session->code,
+            'sessionCode' => $session->code,
             'startsAtIso' => $startsLocal->toIso8601String(),
             'timeLabel' => $startsLocal->format('H:i'),
             'programName' => $program?->name ?? '—',

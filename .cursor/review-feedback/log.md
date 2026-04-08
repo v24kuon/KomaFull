@@ -2159,3 +2159,11 @@
   classification: 汎用
   targets: app/Contracts/CreatesStripeCheckoutSession.php, app/Services/Checkout/CashierStripeCheckoutSession.php, .cursor/review-feedback/log.md
   notes: 指摘は有効。契約に Checkout Session 作成境界の説明、`@param array{...}|array<string, mixed>`（体験決済の例形状と Stripe 拡張の許容）、`@throws ApiErrorException` を記載。`CashierStripeCheckoutSession` は `@inheritdoc` に統一。
+
+- date: 2026-04-08
+  branch: feat/ph11-5-1-booking-flow-ui
+  scope: PH11-5-1 予約導線（体験・通常）と決済結果待機画面の新規実装
+  adopted: no
+  classification: none
+  targets: app/Http/Controllers/Booking/TrialBookingController.php, app/Http/Controllers/Booking/NormalBookingController.php, app/Services/Booking/TrialOnsiteBookingService.php, app/Services/Booking/NormalReservationBookingService.php, app/Http/Requests/StoreTrialBookingRequest.php, app/Http/Requests/StoreNormalBookingRequest.php, app/Models/User.php, app/Models/LessonSession.php, database/factories/UserFactory.php, routes/web.php, app/Http/Controllers/ScheduleController.php, resources/views/pages/booking/trial/show.blade.php, resources/views/pages/booking/trial/pending.blade.php, resources/views/pages/booking/normal/show.blade.php, resources/views/partials/schedule/interactive.blade.php, public/assets/js/app.js, tests/Feature/Booking/TrialOnsiteBookingTest.php, tests/Feature/Booking/NormalReservationBookingTest.php, .cursor/review-feedback/log.md
+  notes: 外部レビュー指摘の採用はなし。体験（カード/現地）・通常予約のルート/画面/サービス、Stripe 復帰後の pending ポーリングと `EnsureMemberRole` 整合のため `users.role` を Factory で明示付与する。採用済みレビュー指摘の蓄積対象はなしと判定。

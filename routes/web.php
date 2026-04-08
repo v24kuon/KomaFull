@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\ProgramRepetitionRuleGenerationController;
 use App\Http\Controllers\Admin\ProgramTypeController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\StoreSettingsController;
+use App\Http\Controllers\Booking\NormalBookingController;
+use App\Http\Controllers\Booking\TrialBookingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
@@ -50,6 +52,22 @@ Route::get('/legal/tokushoho', [LegalController::class, 'tokushoho'])->name('leg
 Route::middleware(['auth', 'member.role', 'member.not_withdrawn'])->prefix('mypage')->name('member.')->group(function (): void {
     Route::get('/settings/email', [SettingsEmailController::class, 'edit'])->name('settings.email.edit');
     Route::put('/settings/email', [SettingsEmailController::class, 'update'])->name('settings.email.update');
+});
+
+Route::middleware(['auth', 'member.role', 'verified', 'member.not_withdrawn'])->prefix('booking')->name('booking.')->group(function (): void {
+    Route::get('/trial/{lesson_session:code}', [TrialBookingController::class, 'show'])->name('trial.show');
+    Route::post('/trial', [TrialBookingController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('trial.store');
+    Route::get('/trial/payment/pending', [TrialBookingController::class, 'pending'])->name('trial.pending');
+    Route::get('/trial/payment/status', [TrialBookingController::class, 'paymentStatus'])
+        ->middleware('throttle:120,1')
+        ->name('trial.payment.status');
+
+    Route::get('/normal/{lesson_session:code}', [NormalBookingController::class, 'show'])->name('normal.show');
+    Route::post('/normal', [NormalBookingController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('normal.store');
 });
 
 Route::middleware(['auth', 'member.role', 'verified', 'member.not_withdrawn'])->prefix('mypage')->name('member.')->group(function (): void {

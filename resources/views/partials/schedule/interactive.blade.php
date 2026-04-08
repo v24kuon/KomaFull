@@ -139,6 +139,7 @@
                             <th scope="col">場所</th>
                             <th scope="col">担当</th>
                             <th scope="col" class="text-end">残席（一般 / 体験）</th>
+                            <th scope="col" class="text-end">予約</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -154,6 +155,24 @@
                                     {{ $row['normalRemaining'] }}
                                     <span class="text-muted"> / </span>
                                     {{ $row['trialRemaining'] }}
+                                </td>
+                                <td class="text-end small">
+                                    @auth
+                                        @php
+                                            $mp = auth()->user()->memberProfile;
+                                        @endphp
+                                        @if ($mp !== null && $mp->member_status === \App\Models\MemberProfile::STATUS_PROVISIONAL && $row['trialRemaining'] > 0)
+                                            <a class="d-inline-block mb-1" href="{{ route('booking.trial.show', $row['sessionCode']) }}">体験</a>
+                                        @endif
+                                        @if ($mp !== null && $mp->member_status === \App\Models\MemberProfile::STATUS_ACTIVE && $row['normalRemaining'] > 0)
+                                            <a class="d-inline-block mb-1" href="{{ route('booking.normal.show', $row['sessionCode']) }}">通常</a>
+                                        @endif
+                                        @if ($mp === null)
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    @else
+                                        <a href="{{ route('login') }}">ログイン</a>
+                                    @endauth
                                 </td>
                             </tr>
                         @endforeach
