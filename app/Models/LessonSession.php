@@ -80,4 +80,12 @@ class LessonSession extends Model
     {
         return $this->hasOne(ReservationManagement::class);
     }
+
+    /**
+     * 公開ルートのルートキーは `lesson_sessions.code`（一意）を用いる。
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'code';
+    }
 }
