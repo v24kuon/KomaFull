@@ -18,6 +18,14 @@
 
 - date: 2026-03-30
   branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionService::unitAmountForStripe で Iso4217Currency に strtoupper($normalized) を使用）
+  adopted: yes
+  classification: PR限定
+  targets: app/Services/Checkout/TrialCheckoutSessionService.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。283 行で `strtolower` 済みの `$normalized` があるのに 293 行で `$currencyLower` を直接 `strtoupper` していたため、`strtoupper($normalized)` に統一。挙動は同等（呼び出しは小文字想定）。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
   scope: PRレビュー（TrialCheckoutSessionServiceTest: バリデーション失敗系で CreatesStripeCheckoutSession::create / EnsuresStripeCustomerId を never で明示）
   adopted: yes
   classification: PR限定

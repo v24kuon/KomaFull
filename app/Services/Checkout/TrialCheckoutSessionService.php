@@ -290,7 +290,7 @@ class TrialCheckoutSessionService
 
         try {
             $minorUnit = $currencies->subunitFor(
-                new Iso4217Currency(strtoupper($currencyLower))
+                new Iso4217Currency(strtoupper($normalized))
             );
         } catch (UnknownCurrencyException) {
             throw new InvalidArgumentException(
