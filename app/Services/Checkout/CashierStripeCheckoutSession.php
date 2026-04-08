@@ -9,10 +9,18 @@ use Stripe\Checkout\Session;
 class CashierStripeCheckoutSession implements CreatesStripeCheckoutSession
 {
     /**
-     * @param  array<string, mixed>  $params
+     * {@inheritdoc}
      */
     public function create(array $params): Session
     {
         return Cashier::stripe()->checkout->sessions->create($params);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function retrieve(string $sessionId): Session
+    {
+        return Cashier::stripe()->checkout->sessions->retrieve($sessionId);
     }
 }

@@ -7,6 +7,11 @@ use App\Models\User;
 
 class CashierStripeCustomerEnsurer implements EnsuresStripeCustomer
 {
+    /**
+     * {@inheritdoc}
+     *
+     * 実装: `$user->createOrGetStripeCustomer()`（Cashier `ManagesCustomer`）を呼び出す。
+     */
     public function ensureStripeCustomerId(User $user): string
     {
         $user->createOrGetStripeCustomer();

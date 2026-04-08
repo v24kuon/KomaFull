@@ -16,6 +16,14 @@
 
 ## Entries
 
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionService 未完了 Session 自己回復・AppServiceProvider 完了系のみ）
+  adopted: yes
+  classification: 機能固有
+  targets: app/Contracts/CreatesStripeCheckoutSession.php, app/Services/Checkout/CashierStripeCheckoutSession.php, app/Services/Checkout/TrialCheckoutSessionService.php, tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は概ね有効。常時拒否 guard は Stripe retrieve で open 再利用・expired/resource_missing/unpaid 時は ID クリア後に再作成で解消。URL 欠落時の DB 孤立は同一 connection トランザクションでロールバックされるため別途修正不要。Webhook で cancel/expired を扱わない点は本変更では App 側 retrieve に寄せて補完。AppServiceProvider は未変更。
+
 - date: 2026-03-24
   branch: design/ui-fixes
   scope: PRレビュー（DemoStoreDataSeeder の ReservationManagement を createOrFirst に）
@@ -2031,3 +2039,51 @@
   classification: none
   targets: app/Contracts/CreatesStripeCheckoutSession.php, app/Contracts/EnsuresStripeCustomer.php, app/Services/Checkout/CashierStripeCheckoutSession.php, app/Services/Checkout/CashierStripeCustomerEnsurer.php, app/Services/Checkout/TrialCheckoutSessionService.php, app/Providers/AppServiceProvider.php, tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
   notes: 外部レビュー指摘の採用はなし。体験カード用 Checkout Session 作成を `TrialCheckoutSessionService` に集約。Cashier 経由の薄いゲートウェイでテスト時にモック可能にした。採用済みレビュー指摘の蓄積対象はなしと判定。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionService の assertEligible と persistSessionId 間の TOCTOU・二重 Checkout Session）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/Checkout/TrialCheckoutSessionService.php, tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`lockForUpdate()` 取得後に資格再検証し、Stripe Session 作成と `stripe_checkout_session_id` 更新を `ConnectionInterface::transaction` 内で直列化。`ConnectionInterface` を注入（RFP-006）。連続リダイレクトで Stripe が2回呼ばれないことを Feature テストで確認。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionService.redirectToCheckout の RFP-009: PHPDoc にトランザクション・ロック・冪等性）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/Checkout/TrialCheckoutSessionService.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`redirectToCheckout` と `persistSessionId` にトランザクション境界・`lockForUpdate` 戦略・冪等性（再試行・Idempotency-Key 未付与の明示）を PHPDoc 記載。クラス PHPDoc をメソッド詳細への参照に整理。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（TrialCheckoutSessionService の config('cashier.currency') 二重取得の DRY 化）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/Checkout/TrialCheckoutSessionService.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。`redirectToCheckout` 内で通貨を1回取得し、`unitAmountForStripe` に小文字通貨を引数で渡すよう変更。`TrialCheckoutSessionServiceTest` で回帰確認。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（isZeroDecimalCurrency ハードコードと Stripe 公式リストの乖離リスク）
+  adopted: yes
+  classification: 汎用
+  targets: app/Services/Checkout/TrialCheckoutSessionService.php, tests/Feature/TrialCheckoutSessionServiceTest.php, .cursor/review-feedback/log.md
+  notes: 指摘は妥当。Stripe SDKに同等APIは見当たらず、`moneyphp/money` の `ISOCurrencies::subunitFor()`（ISO 4217・Cashier既存依存）で最小通貨単位へ換算。未知通貨は `InvalidArgumentException`。Feature テストで未知通貨・既存 JPY/USD ケースを確認。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（EnsuresStripeCustomer 契約に副作用・冪等性・トランザクション注意の PHPDoc）
+  adopted: yes
+  classification: 汎用
+  targets: app/Contracts/EnsuresStripeCustomer.php, app/Services/Checkout/CashierStripeCustomerEnsurer.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。インターフェースに責務・Stripe/users 副作用・createOrGet の冪等性・呼び出し側トランザクションとの関係を記載。実装クラスに `@inheritdoc` と実装要点を追記。
+
+- date: 2026-03-30
+  branch: feat/ph11-2-1-stripe-checkout
+  scope: PRレビュー（CreatesStripeCheckoutSession 契約 PHPDoc の具体化と array shape）
+  adopted: yes
+  classification: 汎用
+  targets: app/Contracts/CreatesStripeCheckoutSession.php, app/Services/Checkout/CashierStripeCheckoutSession.php, .cursor/review-feedback/log.md
+  notes: 指摘は有効。契約に Checkout Session 作成境界の説明、`@param array{...}|array<string, mixed>`（体験決済の例形状と Stripe 拡張の許容）、`@throws ApiErrorException` を記載。`CashierStripeCheckoutSession` は `@inheritdoc` に統一。
